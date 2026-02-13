@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { MOCK_PRODUCTS } from '../data/mockProducts'
+import { fetchTable, fetchTableRaw } from '../lib/nocoApi'
+import { NOCO_TABLES } from '../lib/nocoConfig'
 import type { Category, Product, Variant } from '../types'
 
 const mockCategories: Category[] = [
@@ -40,138 +41,150 @@ const mockCategories: Category[] = [
   },
 ]
 
-const mockVariants: Variant[] = [
-  {
-    id: 'var-lux-15-pro-noir',
-    product_id: 'prod-case-lux-15-pro',
-    sku: 'KOK-CLMP15P-NM',
-    option1_name: 'Couleur',
-    option1_value: 'Noir Minuit',
-    price: 39.9,
-    stock_quantity: 42,
-    cj_vid: 'cj-1001',
-  },
-  {
-    id: 'var-lux-15-pro-sable',
-    product_id: 'prod-case-lux-15-pro',
-    sku: 'KOK-CLMP15P-SD',
-    option1_name: 'Couleur',
-    option1_value: 'Sable Doré',
-    price: 41.9,
-    stock_quantity: 30,
-    cj_vid: 'cj-1002',
-  },
-  {
-    id: 'var-lux-15-pro-bleu',
-    product_id: 'prod-case-lux-15-pro',
-    sku: 'KOK-CLMP15P-BP',
-    option1_name: 'Couleur',
-    option1_value: 'Bleu Profond',
-    price: 41.9,
-    stock_quantity: 18,
-    cj_vid: 'cj-1003',
-  },
-  {
-    id: 'var-clear-15-transparent',
-    product_id: 'prod-case-clear-15',
-    sku: 'KOK-CTAC15-TR',
-    option1_name: 'Finition',
-    option1_value: 'Transparent',
-    price: 29.9,
-    stock_quantity: 56,
-    cj_vid: 'cj-2001',
-  },
-  {
-    id: 'var-clear-15-fume',
-    product_id: 'prod-case-clear-15',
-    sku: 'KOK-CTAC15-FM',
-    option1_name: 'Finition',
-    option1_value: 'Fumé',
-    price: 31.9,
-    stock_quantity: 40,
-    cj_vid: 'cj-2002',
-  },
-  {
-    id: 'var-vegan-15-pro-max-foret',
-    product_id: 'prod-case-vegan-15-pro-max',
-    sku: 'KOK-CCV15PM-VF',
-    option1_name: 'Couleur',
-    option1_value: 'Vert Forêt',
-    price: 49.9,
-    stock_quantity: 22,
-    cj_vid: 'cj-3001',
-  },
-  {
-    id: 'var-vegan-15-pro-max-cognac',
-    product_id: 'prod-case-vegan-15-pro-max',
-    sku: 'KOK-CCV15PM-CO',
-    option1_name: 'Couleur',
-    option1_value: 'Cognac',
-    price: 52.9,
-    stock_quantity: 15,
-    cj_vid: 'cj-3002',
-  },
-  {
-    id: 'var-glass-9h-15',
-    product_id: 'prod-glass-9h',
-    sku: 'KOK-VT9H-15',
-    option1_name: 'Modèle',
-    option1_value: 'iPhone 15 / 15 Pro',
-    price: 19.9,
-    stock_quantity: 80,
-    cj_vid: 'cj-4001',
-  },
-  {
-    id: 'var-glass-9h-15-pro-max',
-    product_id: 'prod-glass-9h',
-    sku: 'KOK-VT9H-15PM',
-    option1_name: 'Modèle',
-    option1_value: 'iPhone 15 Pro Max',
-    price: 21.9,
-    stock_quantity: 62,
-    cj_vid: 'cj-4002',
-  },
-  {
-    id: 'var-magsafe-20w-blanc',
-    product_id: 'prod-magsafe-20w',
-    sku: 'KOK-MSF20W-WH',
-    option1_name: 'Couleur',
-    option1_value: 'Blanc Perle',
-    price: 59,
-    stock_quantity: 27,
-    cj_vid: 'cj-5001',
-  },
-  {
-    id: 'var-magsafe-20w-noir',
-    product_id: 'prod-magsafe-20w',
-    sku: 'KOK-MSF20W-BK',
-    option1_name: 'Couleur',
-    option1_value: 'Noir Graphite',
-    price: 59,
-    stock_quantity: 24,
-    cj_vid: 'cj-5002',
-  },
-  {
-    id: 'var-usbc-braided-1m',
-    product_id: 'prod-usbc-braided',
-    sku: 'KOK-USBC-1M',
-    option1_name: 'Longueur',
-    option1_value: '1 m',
-    price: 24.9,
-    stock_quantity: 75,
-    cj_vid: 'cj-6001',
-  },
-  {
-    id: 'var-usbc-braided-2m',
-    product_id: 'prod-usbc-braided',
-    sku: 'KOK-USBC-2M',
-    option1_name: 'Longueur',
-    option1_value: '2 m',
-    price: 29.9,
-    stock_quantity: 50,
-    cj_vid: 'cj-6002',
-  },
-]
+const toStringValue = (value: unknown) => {
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  return ''
+}
+
+const toNumberValue = (value: unknown) => {
+  if (typeof value === 'number') return value
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const extractId = (value: unknown): string => {
+  if (Array.isArray(value) && value.length > 0) {
+    return extractId(value[0])
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value)
+  }
+  if (value && typeof value === 'object' && 'id' in value) {
+    return toStringValue((value as { id?: unknown }).id)
+  }
+  return ''
+}
+
+const createSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+
+const normalizeImageUrl = (value: unknown): string => {
+  if (!value) return ''
+  if (typeof value === 'string') {
+    return value.startsWith('http') ? value : ''
+  }
+  if (Array.isArray(value) && value.length > 0) {
+    const first = value[0]
+    if (typeof first === 'string') {
+      return first.startsWith('http') ? first : ''
+    }
+    if (first && typeof first === 'object') {
+      const url = toStringValue(
+        (first as Record<string, unknown>).url ??
+          (first as Record<string, unknown>).path,
+      )
+      return url.startsWith('http') ? url : ''
+    }
+    return ''
+  }
+  if (typeof value === 'object') {
+    const url = toStringValue(
+      (value as Record<string, unknown>).url ??
+        (value as Record<string, unknown>).path,
+    )
+    return url.startsWith('http') ? url : ''
+  }
+  return ''
+}
+
+const mapProduct = (row: Record<string, unknown>): Product => {
+  const title = toStringValue(row.title ?? row.name)
+  const slug = toStringValue(row.slug) || createSlug(title) || extractId(row.id)
+
+  return {
+    id: extractId(row.id ?? row.ID ?? row.Id) || slug,
+    title,
+    slug,
+    description: toStringValue(row.description),
+    base_price: toNumberValue(
+      row.base_price ?? row.basePrice ?? row.price ?? row.Price,
+    ),
+    category_id: extractId(
+      row.category_id ?? row.categoryId ?? row.category ?? row.Category,
+    ),
+    image_url: normalizeImageUrl(
+      row.image_url ?? row.imageUrl ?? row.image ?? row.Image,
+    ),
+  }
+}
+
+const mapCategory = (row: Record<string, unknown>): Category => {
+  const name = toStringValue(row.name ?? row.title)
+  const slug = toStringValue(row.slug) || createSlug(name) || extractId(row.id)
+
+  return {
+    id: extractId(row.id ?? row.ID ?? row.Id) || slug,
+    name,
+    slug,
+    image_url: normalizeImageUrl(
+      row.image_url ?? row.imageUrl ?? row.image ?? row.Image,
+    ),
+  }
+}
+
+const mapVariant = (row: Record<string, unknown>): Variant => {
+  return {
+    id: extractId(row.id ?? row.ID ?? row.Id),
+    product_id: extractId(
+      row.product_id ?? row.productId ?? row.product ?? row.Product,
+    ),
+    sku: toStringValue(row.sku ?? row.SKU),
+    option1_name: toStringValue(row.option1_name ?? row.optionName ?? row.option),
+    option1_value: toStringValue(
+      row.option1_value ?? row.optionValue ?? row.value,
+    ),
+    price: toNumberValue(row.price ?? row.Price ?? row.base_price),
+    stock_quantity: toNumberValue(
+      row.stock_quantity ?? row.stockQuantity ?? row.quantity,
+    ),
+    cj_vid: toStringValue(row.cj_vid ?? row.cjVid ?? row.vendor_id),
+  }
+}
+
+const fetchProducts = async (): Promise<Product[]> => {
+  const data = await fetchTableRaw<Record<string, unknown>>(NOCO_TABLES.products)
+  console.log('Raw API Data:', data)
+  const rows = Array.isArray(data.list) ? data.list : []
+  if (rows.length === 0) return []
+  const mappedProducts = rows.map(mapProduct)
+  console.log('Mapped Products:', mappedProducts)
+  // DEBUG: ne pas filtrer pour voir toutes les entrées retournées par l'API.
+  return mappedProducts
+}
+
+const fetchCategories = async (): Promise<Category[]> => {
+  const rows = await fetchTable<Record<string, unknown>>(NOCO_TABLES.categories)
+  if (rows.length === 0) return []
+  return rows
+    .map(mapCategory)
+    .filter((category) => category.id && category.name)
+}
+
+const fetchVariants = async (): Promise<Variant[]> => {
+  const rows = await fetchTable<Record<string, unknown>>(NOCO_TABLES.variants)
+  if (rows.length === 0) return []
+  return rows
+    .map(mapVariant)
+    .filter((variant) => variant.id && variant.product_id)
+}
 
 type ProductsState = {
   categories: Category[]
@@ -188,16 +201,79 @@ export const useProducts = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setState({
-        categories: mockCategories,
-        products: MOCK_PRODUCTS,
-        variants: mockVariants,
+    const baseUrl = import.meta.env.VITE_API_URL as string | undefined
+    const token = import.meta.env.VITE_API_TOKEN as string | undefined
+    const projectName = import.meta.env.VITE_PROJECT_NAME as string | undefined
+
+    if (!baseUrl || !projectName) {
+      console.warn('NocoDB env manquant pour meta tables')
+      return
+    }
+
+    const endpoint = new URL(
+      `/api/v1/db/meta/projects/${projectName}/tables`,
+      baseUrl,
+    )
+
+    fetch(endpoint.toString(), {
+      headers: {
+        'xc-token': token ?? '',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`NocoDB meta tables error: ${response.status}`)
+        }
+        return response.json()
       })
-      setLoading(false)
+      .then((tables) => {
+        console.log('AVAILABLE TABLES:', tables)
+      })
+      .catch((error) => {
+        console.error('Erreur NocoDB meta tables', error)
+      })
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+    const timer = setTimeout(() => {
+      const load = async () => {
+        try {
+          const [products, categories, variants] = await Promise.all([
+            fetchProducts(),
+            fetchCategories(),
+            fetchVariants(),
+          ])
+
+          if (!isMounted) return
+
+          setState({
+            categories: categories.length > 0 ? categories : mockCategories,
+            products,
+            variants: variants.length > 0 ? variants : [],
+          })
+        } catch (error) {
+          console.error('Erreur lors du chargement NocoDB', error)
+          if (!isMounted) return
+          setState({
+            categories: mockCategories,
+            products: [],
+            variants: [],
+          })
+        } finally {
+          if (isMounted) {
+            setLoading(false)
+          }
+        }
+      }
+
+      void load()
     }, 250)
 
-    return () => clearTimeout(timer)
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
   }, [])
 
   const getProductBySlug = useCallback(

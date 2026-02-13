@@ -59,9 +59,7 @@ const CatalogPage = () => {
           </div>
         )}
         {!loading && filteredProducts.length === 0 && (
-          <p className="mt-6 text-sm text-gray-500">
-            Aucun produit disponible pour cette catégorie.
-          </p>
+          <p className="mt-6 text-sm text-gray-500">Aucun produit trouvé.</p>
         )}
       </div>
     </div>
