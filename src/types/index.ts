@@ -13,6 +13,7 @@ export type Product = {
   base_price: number
   category_id: string
   image_url: string
+  brand: string
 }
 
 export type Variant = {

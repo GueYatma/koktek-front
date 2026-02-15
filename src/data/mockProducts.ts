@@ -27,6 +27,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[0],
+    brand: 'Koktek',
     isNew: true,
   },
   {
@@ -37,6 +38,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 49.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[1],
+    brand: 'Koktek',
     isBestSeller: true,
   },
   {
@@ -47,6 +49,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 29.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[2],
+    brand: 'Koktek',
   },
   {
     id: 'prod-004',
@@ -56,6 +59,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 34.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[3],
+    brand: 'Koktek',
   },
   {
     id: 'prod-005',
@@ -65,6 +69,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 44.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[4],
+    brand: 'Koktek',
     isBestSeller: true,
   },
   {
@@ -75,6 +80,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 32.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[5],
+    brand: 'Koktek',
   },
   {
     id: 'prod-007',
@@ -84,6 +90,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 36.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[6],
+    brand: 'Koktek',
   },
   {
     id: 'prod-008',
@@ -93,6 +100,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 42.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[7],
+    brand: 'Koktek',
     isNew: true,
   },
   {
@@ -103,6 +111,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[8],
+    brand: 'Koktek',
   },
   {
     id: 'prod-010',
@@ -112,6 +121,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 27.9,
     category_id: 'cat-iphone-cases',
     image_url: IMAGE_POOL[9],
+    brand: 'Koktek',
   },
   {
     id: 'prod-011',
@@ -121,6 +131,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 19.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[2],
+    brand: 'Koktek',
     isBestSeller: true,
   },
   {
@@ -131,6 +142,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 29.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[0],
+    brand: 'Koktek',
   },
   {
     id: 'prod-013',
@@ -140,6 +152,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 24.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[1],
+    brand: 'Koktek',
   },
   {
     id: 'prod-014',
@@ -149,6 +162,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 23.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[3],
+    brand: 'Koktek',
   },
   {
     id: 'prod-015',
@@ -158,6 +172,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 21.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[4],
+    brand: 'Koktek',
     isNew: true,
   },
   {
@@ -168,6 +183,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 22.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[5],
+    brand: 'Koktek',
   },
   {
     id: 'prod-017',
@@ -177,6 +193,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 26.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[6],
+    brand: 'Koktek',
   },
   {
     id: 'prod-018',
@@ -186,6 +203,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 27.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[7],
+    brand: 'Koktek',
   },
   {
     id: 'prod-019',
@@ -195,6 +213,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 25.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[8],
+    brand: 'Koktek',
   },
   {
     id: 'prod-020',
@@ -204,6 +223,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 19.9,
     category_id: 'cat-screen',
     image_url: IMAGE_POOL[9],
+    brand: 'Koktek',
     isNew: true,
   },
   {
@@ -214,6 +234,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 59.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[0],
+    brand: 'Koktek',
     isBestSeller: true,
   },
   {
@@ -224,6 +245,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 59.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[1],
+    brand: 'Koktek',
   },
   {
     id: 'prod-023',
@@ -233,6 +255,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 49.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[2],
+    brand: 'Koktek',
   },
   {
     id: 'prod-024',
@@ -242,6 +265,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 44.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[3],
+    brand: 'Koktek',
     isNew: true,
   },
   {
@@ -252,6 +276,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[4],
+    brand: 'Koktek',
   },
   {
     id: 'prod-026',
@@ -261,6 +286,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[5],
+    brand: 'Koktek',
   },
   {
     id: 'prod-027',
@@ -270,6 +296,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 59.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[6],
+    brand: 'Koktek',
     isBestSeller: true,
   },
   {
@@ -280,6 +307,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 34.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[7],
+    brand: 'Koktek',
   },
   {
     id: 'prod-029',
@@ -289,6 +317,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[8],
+    brand: 'Koktek',
   },
   {
     id: 'prod-030',
@@ -298,6 +327,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 54.9,
     category_id: 'cat-magsafe',
     image_url: IMAGE_POOL[9],
+    brand: 'Koktek',
   },
   {
     id: 'prod-031',
@@ -307,6 +337,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 24.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[2],
+    brand: 'Koktek',
   },
   {
     id: 'prod-032',
@@ -316,6 +347,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 29.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[3],
+    brand: 'Koktek',
   },
   {
     id: 'prod-033',
@@ -325,6 +357,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 24.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[4],
+    brand: 'Koktek',
     isBestSeller: true,
   },
   {
@@ -335,6 +368,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 29.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[5],
+    brand: 'Koktek',
   },
   {
     id: 'prod-035',
@@ -344,6 +378,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 27.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[6],
+    brand: 'Koktek',
   },
   {
     id: 'prod-036',
@@ -353,6 +388,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[7],
+    brand: 'Koktek',
     isNew: true,
   },
   {
@@ -363,6 +399,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 19.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[8],
+    brand: 'Koktek',
   },
   {
     id: 'prod-038',
@@ -372,6 +409,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 34.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[9],
+    brand: 'Koktek',
   },
   {
     id: 'prod-039',
@@ -381,6 +419,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 24.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[0],
+    brand: 'Koktek',
   },
   {
     id: 'prod-040',
@@ -390,6 +429,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 22.9,
     category_id: 'cat-cables',
     image_url: IMAGE_POOL[1],
+    brand: 'Koktek',
   },
   {
     id: 'prod-041',
@@ -399,6 +439,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[2],
+    brand: 'Koktek',
     isBestSeller: true,
   },
   {
@@ -409,6 +450,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 44.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[3],
+    brand: 'Koktek',
   },
   {
     id: 'prod-043',
@@ -418,6 +460,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 34.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[4],
+    brand: 'Koktek',
   },
   {
     id: 'prod-044',
@@ -427,6 +470,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 29.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[5],
+    brand: 'Koktek',
   },
   {
     id: 'prod-045',
@@ -436,6 +480,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 32.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[6],
+    brand: 'Koktek',
   },
   {
     id: 'prod-046',
@@ -445,6 +490,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 59.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[7],
+    brand: 'Koktek',
     isNew: true,
   },
   {
@@ -455,6 +501,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 49.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[8],
+    brand: 'Koktek',
   },
   {
     id: 'prod-048',
@@ -464,6 +511,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 24.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[9],
+    brand: 'Koktek',
   },
   {
     id: 'prod-049',
@@ -473,6 +521,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 39.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[0],
+    brand: 'Koktek',
   },
   {
     id: 'prod-050',
@@ -482,6 +531,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     base_price: 54.9,
     category_id: 'cat-car-mount',
     image_url: IMAGE_POOL[1],
+    brand: 'Koktek',
     isBestSeller: true,
   },
 ]

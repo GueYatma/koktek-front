@@ -2,10 +2,81 @@ import { Link } from 'react-router-dom'
 import { useProducts } from '../hooks/useProducts'
 import ProductCard from '../components/ProductCard'
 
+const BRAND_SHOWCASE = [
+  {
+    name: 'Apple',
+    slug: 'Apple',
+    subtitle: 'Tout pour votre iPhone & iPad',
+    iconUrl: '',
+  },
+  {
+    name: 'Samsung',
+    slug: 'Samsung',
+    subtitle: "L'univers Galaxy sublimé",
+    iconUrl: '',
+  },
+  {
+    name: 'Xiaomi',
+    slug: 'Xiaomi',
+    subtitle: 'Innovation pour tous',
+    iconUrl: '',
+  },
+  {
+    name: 'Redmi',
+    slug: 'Redmi',
+    subtitle: 'Performance accessible',
+    iconUrl: '',
+  },
+  {
+    name: 'Huawei',
+    slug: 'Huawei',
+    subtitle: 'Design et puissance',
+    iconUrl: '',
+  },
+  {
+    name: 'Honor',
+    slug: 'Honor',
+    subtitle: 'Style et technologie',
+    iconUrl: '',
+  },
+  {
+    name: 'Google Pixel',
+    slug: 'Google',
+    subtitle: "L'expérience Android pure",
+    iconUrl: '',
+  },
+  {
+    name: 'Oppo',
+    slug: 'Oppo',
+    subtitle: 'Innovation et design',
+    iconUrl: '',
+  },
+  {
+    name: 'Sony',
+    slug: 'Sony',
+    subtitle: "L'excellence Xperia",
+    iconUrl: '',
+  },
+  {
+    name: 'Autres',
+    slug: 'Générique',
+    subtitle: 'Et bien plus encore...',
+    iconUrl: '',
+  },
+]
+
 const HomePage = () => {
   const { categories, products, loading } = useProducts()
-  const featuredProducts = products.slice(0, 4)
-  const featuredCategories = categories.slice(0, 4)
+  const featuredProducts = products
+  const featuredCategories = categories
+  const categoryPlaceholders = [
+    'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?q=80&w=1600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1487014679447-9f8336841d58?q=80&w=1600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1600&auto=format&fit=crop',
+  ]
   const heroImage =
     products[0]?.image_url ??
     'https://images.unsplash.com/photo-1510557880182-3f8e6db3c525?q=80&w=1600&auto=format&fit=crop'
@@ -72,14 +143,14 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-              Collections
+              Catégories
             </p>
             <h2 className="text-2xl font-semibold text-gray-900">
-              Catégories premium
+              Nos Catégories
             </h2>
           </div>
           <Link
@@ -89,8 +160,8 @@ const HomePage = () => {
             Tout voir
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {featuredCategories.map((category) => (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {featuredCategories.map((category, index) => (
             <Link
               key={category.id}
               to="/catalogue"
@@ -98,7 +169,9 @@ const HomePage = () => {
             >
               <div className="h-36 overflow-hidden bg-gray-100">
                 <img
-                  src={category.image_url}
+                  src={
+                    categoryPlaceholders[index % categoryPlaceholders.length]
+                  }
                   alt={category.name}
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
@@ -116,6 +189,43 @@ const HomePage = () => {
           {!loading && featuredCategories.length === 0 && (
             <p className="text-sm text-gray-500">Aucune catégorie.</p>
           )}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
+        <div className="mb-8">
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+            Vos appareils
+          </p>
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Rechercher par marque
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          {BRAND_SHOWCASE.map((brand) => (
+            <Link
+              key={brand.name}
+              to={`/catalogue?brand=${encodeURIComponent(brand.slug)}`}
+              className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="flex h-32 items-center justify-center bg-white px-6">
+                {brand.iconUrl ? (
+                  <img
+                    src={brand.iconUrl}
+                    alt={brand.name}
+                    className="h-12 w-28 object-contain"
+                  />
+                ) : (
+                  <span className="text-xl font-bold text-gray-800">
+                    {brand.name}
+                  </span>
+                )}
+              </div>
+              <div className="border-t border-gray-200 px-4 py-3">
+                <p className="text-xs text-gray-500">{brand.subtitle}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 

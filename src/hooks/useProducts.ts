@@ -109,6 +109,10 @@ const mapProduct = (row: Record<string, unknown>): Product => {
   const title = toStringValue(row.title ?? row.name)
   const slug = toStringValue(row.slug) || createSlug(title) || extractId(row.id)
 
+  const brand = toStringValue(
+    row.brand ?? row.Brand ?? row.marque ?? row.Marque,
+  ).trim()
+
   return {
     id: extractId(row.id ?? row.ID ?? row.Id) || slug,
     title,
@@ -123,6 +127,7 @@ const mapProduct = (row: Record<string, unknown>): Product => {
     image_url: normalizeImageUrl(
       row.image_url ?? row.imageUrl ?? row.image ?? row.Image,
     ),
+    brand: brand.length > 0 ? brand : 'Générique',
   }
 }
 
@@ -166,6 +171,7 @@ const fetchProducts = async (): Promise<Product[]> => {
   if (rows.length === 0) return []
   const mappedProducts = rows.map(mapProduct)
   console.log('Mapped Products:', mappedProducts)
+  console.log('Marques trouvées:', mappedProducts.map((product) => product.brand))
   // DEBUG: ne pas filtrer pour voir toutes les entrées retournées par l'API.
   return mappedProducts
 }

@@ -25,6 +25,7 @@ export const fetchTableRaw = async <T>(
     `/api/v1/db/data/v1/${projectName}/${tableName}`,
     baseUrl,
   )
+  endpoint.searchParams.set('limit', '1000')
 
   const response = await fetch(endpoint.toString(), {
     headers: {
