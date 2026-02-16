@@ -4,35 +4,36 @@ import { formatPrice } from '../utils/format'
 
 type ProductCardProps = {
   product: Product
+  categoryName?: string
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, categoryName }: ProductCardProps) => {
   return (
-    <div className="group overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-      <div className="relative h-56 overflow-hidden bg-gray-100">
+    <Link
+      to={`/produit/${product.slug}`}
+      className="block overflow-hidden rounded-3xl border border-gray-200 bg-white"
+    >
+      <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 p-4">
         <img
           src={product.image_url}
           alt={product.title}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          className="h-full w-full object-contain"
         />
       </div>
-      <div className="space-y-3 p-5">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            {product.title}
-          </h3>
-          <p className="text-sm text-gray-500">
-            À partir de {formatPrice(product.base_price)}
+      <div className="space-y-2 p-4">
+        {categoryName && (
+          <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">
+            {categoryName}
           </p>
-        </div>
-        <Link
-          to={`/produit/${product.slug}`}
-          className="inline-flex items-center justify-center rounded-xl border border-gray-900 px-4 py-2 text-sm font-medium text-gray-900 transition hover:bg-gray-900 hover:text-white"
-        >
-          Voir
-        </Link>
+        )}
+        <h3 className="font-display text-sm font-medium text-gray-800 line-clamp-2">
+          {product.title}
+        </h3>
+        <p className="font-display text-base font-bold text-black">
+          {formatPrice(product.retail_price)}
+        </p>
       </div>
-    </div>
+    </Link>
   )
 }
 

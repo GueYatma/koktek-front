@@ -51,7 +51,7 @@ const CheckoutPage = () => {
                         {item.variant.option1_value}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="font-display text-sm font-bold text-gray-900">
                       {formatPrice(item.variant.price * item.quantity)}
                     </span>
                   </div>
@@ -70,7 +70,9 @@ const CheckoutPage = () => {
             <div className="mt-4 space-y-2 text-sm text-gray-600">
               <div className="flex items-center justify-between">
                 <span>Sous-total</span>
-                <span>{formatPrice(total)}</span>
+                <span className="font-display font-bold text-gray-900">
+                  {formatPrice(total)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Livraison</span>
@@ -78,7 +80,9 @@ const CheckoutPage = () => {
               </div>
               <div className="flex items-center justify-between font-semibold text-gray-900">
                 <span>Total</span>
-                <span>{formatPrice(total)}</span>
+                <span className="font-display font-bold text-gray-900">
+                  {formatPrice(total)}
+                </span>
               </div>
             </div>
             <button

@@ -105,6 +105,17 @@ const normalizeImageUrl = (value: unknown): string => {
   return ''
 }
 
+const normalizeImageList = (value: unknown): string[] => {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((entry) => normalizeImageList(entry))
+      .filter((url) => url.length > 0)
+  }
+  const url = normalizeImageUrl(value)
+  return url ? [url] : []
+}
+
 const mapProduct = (row: Record<string, unknown>): Product => {
   const title = toStringValue(row.title ?? row.name)
   const slug = toStringValue(row.slug) || createSlug(title) || extractId(row.id)
@@ -112,6 +123,23 @@ const mapProduct = (row: Record<string, unknown>): Product => {
   const brand = toStringValue(
     row.brand ?? row.Brand ?? row.marque ?? row.Marque,
   ).trim()
+
+  const images = normalizeImageList(
+    row.images ??
+      row.gallery ??
+      row.image_urls ??
+      row.imageUrls ??
+      row.image_url ??
+      row.imageUrl ??
+      row.image ??
+      row.Image,
+  )
+
+  const primaryImage =
+    images[0] ||
+    normalizeImageUrl(
+      row.image_url ?? row.imageUrl ?? row.image ?? row.Image,
+    )
 
   return {
     id: extractId(row.id ?? row.ID ?? row.Id) || slug,
@@ -121,12 +149,26 @@ const mapProduct = (row: Record<string, unknown>): Product => {
     base_price: toNumberValue(
       row.base_price ?? row.basePrice ?? row.price ?? row.Price,
     ),
+    retail_price: toNumberValue(
+      row.retail_price ??
+        row.retailPrice ??
+        row.retail ??
+        row.RetailPrice ??
+        row.base_price ??
+        row.basePrice ??
+        row.price ??
+        row.Price,
+    ),
     category_id: extractId(
-      row.category_id ?? row.categoryId ?? row.category ?? row.Category,
+      row.nc_category_id ??
+        row.ncCategoryId ??
+        row.category_id ??
+        row.categoryId ??
+        row.category ??
+        row.Category,
     ),
-    image_url: normalizeImageUrl(
-      row.image_url ?? row.imageUrl ?? row.image ?? row.Image,
-    ),
+    image_url: primaryImage,
+    images,
     brand: brand.length > 0 ? brand : 'Générique',
   }
 }
@@ -136,7 +178,9 @@ const mapCategory = (row: Record<string, unknown>): Category => {
   const slug = toStringValue(row.slug) || createSlug(name) || extractId(row.id)
 
   return {
-    id: extractId(row.id ?? row.ID ?? row.Id) || slug,
+    id:
+      extractId(row.nc_category_id ?? row.ncCategoryId ?? row.id ?? row.ID ?? row.Id) ||
+      slug,
     name,
     slug,
     image_url: normalizeImageUrl(
@@ -149,7 +193,12 @@ const mapVariant = (row: Record<string, unknown>): Variant => {
   return {
     id: extractId(row.id ?? row.ID ?? row.Id),
     product_id: extractId(
-      row.product_id ?? row.productId ?? row.product ?? row.Product,
+      row.product_id ??
+        row.productId ??
+        row.products ??
+        row.Products ??
+        row.product ??
+        row.Product,
     ),
     sku: toStringValue(row.sku ?? row.SKU),
     option1_name: toStringValue(row.option1_name ?? row.optionName ?? row.option),
@@ -164,16 +213,44 @@ const mapVariant = (row: Record<string, unknown>): Variant => {
   }
 }
 
-const fetchProducts = async (): Promise<Product[]> => {
-  const data = await fetchTableRaw<Record<string, unknown>>(NOCO_TABLES.products)
+const fetchProducts = async (): Promise<{
+  products: Product[]
+  variants: Variant[]
+}> => {
+  const data = await fetchTableRaw<Record<string, unknown>>(
+    NOCO_TABLES.products,
+    {
+      where: '(status,eq,published)',
+      params: { 'nested[product_variants][fields]': '*' },
+    },
+  )
   console.log('Raw API Data:', data)
   const rows = Array.isArray(data.list) ? data.list : []
-  if (rows.length === 0) return []
+  if (rows.length === 0) {
+    return { products: [], variants: [] }
+  }
+
   const mappedProducts = rows.map(mapProduct)
+  const nestedVariants = rows.flatMap((row, index) => {
+    const productId =
+      mappedProducts[index]?.id ?? extractId(row.id ?? row.ID ?? row.Id)
+    const nested = Array.isArray(row.product_variants)
+      ? row.product_variants
+      : []
+
+    return nested.map((variantRow) => {
+      const variant = mapVariant(variantRow as Record<string, unknown>)
+      if (!variant.product_id && productId) {
+        return { ...variant, product_id: productId }
+      }
+      return variant
+    })
+  })
+
   console.log('Mapped Products:', mappedProducts)
   console.log('Marques trouvées:', mappedProducts.map((product) => product.brand))
   // DEBUG: ne pas filtrer pour voir toutes les entrées retournées par l'API.
-  return mappedProducts
+  return { products: mappedProducts, variants: nestedVariants }
 }
 
 const fetchCategories = async (): Promise<Category[]> => {
@@ -245,7 +322,7 @@ export const useProducts = () => {
     const timer = setTimeout(() => {
       const load = async () => {
         try {
-          const [products, categories, variants] = await Promise.all([
+          const [productPayload, categories, variants] = await Promise.all([
             fetchProducts(),
             fetchCategories(),
             fetchVariants(),
@@ -253,10 +330,15 @@ export const useProducts = () => {
 
           if (!isMounted) return
 
+          const mergedVariants =
+            productPayload.variants.length > 0
+              ? productPayload.variants
+              : variants
+
           setState({
             categories: categories.length > 0 ? categories : mockCategories,
-            products,
-            variants: variants.length > 0 ? variants : [],
+            products: productPayload.products,
+            variants: mergedVariants.length > 0 ? mergedVariants : [],
           })
         } catch (error) {
           console.error('Erreur lors du chargement NocoDB', error)

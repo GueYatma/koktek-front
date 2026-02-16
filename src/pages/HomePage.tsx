@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useProducts } from '../hooks/useProducts'
 import ProductCard from '../components/ProductCard'
@@ -69,6 +70,17 @@ const HomePage = () => {
   const { categories, products, loading } = useProducts()
   const featuredProducts = products
   const featuredCategories = categories
+  const categoryNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    categories.forEach((category) => {
+      const idKey = String(category.id)
+      map.set(idKey, category.name)
+      if (category.slug) {
+        map.set(category.slug, category.name)
+      }
+    })
+    return map
+  }, [categories])
   const categoryPlaceholders = [
     'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1600&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?q=80&w=1600&auto=format&fit=crop',
@@ -244,7 +256,13 @@ const HomePage = () => {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  categoryName={categoryNameById.get(
+                    String(product.category_id),
+                  )}
+                />
               ))}
             </div>
           )}

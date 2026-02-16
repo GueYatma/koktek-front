@@ -21,6 +21,7 @@ const ProductPage = () => {
   )
 
   const [selectedVariantId, setSelectedVariantId] = useState('')
+  const [selectedImage, setSelectedImage] = useState('')
 
   useEffect(() => {
     if (variants.length > 0) {
@@ -33,6 +34,22 @@ const ProductPage = () => {
   const selectedVariant = variants.find(
     (variant) => variant.id === selectedVariantId,
   )
+
+  const images = useMemo(() => {
+    if (!product) return []
+    if (product.images && product.images.length > 0) {
+      return product.images
+    }
+    return product.image_url ? [product.image_url] : []
+  }, [product])
+
+  useEffect(() => {
+    if (images.length > 0) {
+      setSelectedImage(images[0])
+    } else {
+      setSelectedImage('')
+    }
+  }, [images])
 
   if (loading) {
     return (
@@ -65,13 +82,38 @@ const ProductPage = () => {
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
       <div className="grid gap-10 lg:grid-cols-2">
         <div className="space-y-6">
-          <div className="overflow-hidden rounded-[32px] bg-gray-100">
+          <div className="overflow-hidden rounded-[32px] bg-gray-50 p-6">
             <img
-              src={product.image_url}
+              src={selectedImage || product.image_url}
               alt={product.title}
-              className="h-[420px] w-full object-cover"
+              className="h-[420px] w-full object-contain"
             />
           </div>
+          {images.length > 1 && (
+            <div className="flex flex-wrap gap-3">
+              {images.map((image) => {
+                const isActive = image === selectedImage
+                return (
+                  <button
+                    key={image}
+                    type="button"
+                    onClick={() => setSelectedImage(image)}
+                    className={`h-20 w-20 overflow-hidden rounded-2xl border ${
+                      isActive
+                        ? 'border-gray-900'
+                        : 'border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={product.title}
+                      className="h-full w-full object-contain bg-gray-50 p-2"
+                    />
+                  </button>
+                )
+              })}
+            </div>
+          )}
           <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
               Détails
@@ -89,19 +131,24 @@ const ProductPage = () => {
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
               Collection Koktek
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-gray-900">
+            <h1 className="mt-2 text-2xl font-medium text-gray-900">
               {product.title}
             </h1>
-            <p className="mt-3 text-base text-gray-600">
-              {product.description}
-            </p>
+            <div
+              className="mt-3 prose prose-sm text-gray-600"
+              dangerouslySetInnerHTML={{
+                __html: product.description || '',
+              }}
+            />
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">Prix</span>
-              <span className="text-2xl font-semibold text-gray-900">
-                {formatPrice(selectedVariant?.price ?? product.base_price)}
+              <span className="font-display text-2xl font-bold text-gray-900">
+                {formatPrice(
+                  selectedVariant?.price ?? product.retail_price,
+                )}
               </span>
             </div>
             <div className="mt-4">

@@ -12,6 +12,18 @@ const CatalogPage = () => {
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [searchParams] = useSearchParams()
 
+  const categoryNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    categories.forEach((category) => {
+      const idKey = String(category.id)
+      map.set(idKey, category.name)
+      if (category.slug) {
+        map.set(category.slug, category.name)
+      }
+    })
+    return map
+  }, [categories])
+
   const brands = useMemo(
     () => {
       const uniqueBrands = [
@@ -185,9 +197,15 @@ const CatalogPage = () => {
         {loading ? (
           <p className="text-sm text-gray-500">Chargement...</p>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                categoryName={categoryNameById.get(
+                  String(product.category_id),
+                )}
+              />
             ))}
           </div>
         )}

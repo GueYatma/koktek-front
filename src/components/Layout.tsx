@@ -14,7 +14,7 @@ const Layout = () => {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <Link
             to="/"
-            className="text-lg font-semibold tracking-[0.3em] text-gray-900"
+            className="font-display text-lg font-bold uppercase tracking-[0.45em] text-gray-900"
           >
             KOKTEK
           </Link>
@@ -61,7 +61,7 @@ const Layout = () => {
       <footer className="mt-20 border-t border-gray-200 bg-gray-100">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+            <p className="font-display text-xs uppercase tracking-[0.35em] text-gray-500">
               KOKTEK
             </p>
             <p className="mt-3 text-sm text-gray-600">

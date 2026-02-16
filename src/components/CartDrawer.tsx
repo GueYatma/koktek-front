@@ -115,7 +115,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="font-display text-sm font-bold text-gray-900">
                         {formatPrice(item.variant.price * item.quantity)}
                       </span>
                     </div>
@@ -129,7 +129,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         <div className="border-t border-gray-200 px-6 py-5">
           <div className="flex items-center justify-between text-sm text-gray-500">
             <span>Total estimé</span>
-            <span className="text-lg font-semibold text-gray-900">
+            <span className="font-display text-lg font-bold text-gray-900">
               {formatPrice(total)}
             </span>
           </div>

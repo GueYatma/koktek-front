@@ -11,9 +11,11 @@ export type Product = {
   slug: string
   description: string
   base_price: number
+  retail_price: number
   category_id: string
   image_url: string
   brand: string
+  images?: string[]
 }
 
 export type Variant = {
