@@ -13,3 +13,6 @@ dist/
 .env
 .env.local
 .DS_Store
+deploy_key
+deploy_key.pub
+setup.sh

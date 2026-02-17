@@ -1,17 +1,36 @@
 services:
-  koktek-front:
-    build: .
-    container_name: koktek_front
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: koktek_admin
     restart: always
+    volumes:
+      - ../nc_data:/usr/app/data
+    networks:
+      - root_traefik-net
+    environment:
+      - NC_AUTH_JWT_SECRET=SecretKoktek2026ChangeMoi
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.koktek-front.rule=Host(`next.koktek.com`)"
-      - "traefik.http.routers.koktek-front.entrypoints=websecure"
-      - "traefik.http.routers.koktek-front.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.nocodb.rule=Host(`app.koktek.com`)"
+      - "traefik.http.routers.nocodb.entrypoints=websecure"
+      - "traefik.http.routers.nocodb.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.nocodb.loadbalancer.server.port=8080"
+
+  frontend:
+    image: nginx:alpine
+    container_name: koktek_front
+    restart: always
+    volumes:
+      - ./dist:/usr/share/nginx/html
     networks:
-      - traefik-net
+      - root_traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`koktek.com`) || Host(`www.koktek.com`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
 
 networks:
-  traefik-net:
+  root_traefik-net:
     external: true
-    name: root_traefik-net
