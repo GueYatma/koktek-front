@@ -1,73 +1,78 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import { useProducts } from '../hooks/useProducts'
 import ProductCard from '../components/ProductCard'
 
 const BRAND_SHOWCASE = [
   {
     name: 'Apple',
-    slug: 'Apple',
-    subtitle: 'Tout pour votre iPhone & iPad',
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
+    query: 'Apple',
   },
   {
     name: 'Samsung',
-    slug: 'Samsung',
-    subtitle: "L'univers Galaxy sublimé",
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/2560px-Samsung_Logo.svg.png',
+    query: 'Samsung',
   },
   {
     name: 'Xiaomi',
-    slug: 'Xiaomi',
-    subtitle: 'Innovation pour tous',
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg',
+    query: 'Xiaomi',
   },
   {
     name: 'Redmi',
-    slug: 'Redmi',
-    subtitle: 'Performance accessible',
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Redmi_Logo.svg/1024px-Redmi_Logo.svg.png',
+    query: 'Redmi',
   },
   {
     name: 'Huawei',
-    slug: 'Huawei',
-    subtitle: 'Design et puissance',
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Huawei_Logo.svg/1024px-Huawei_Logo.svg.png',
+    query: 'Huawei',
   },
   {
     name: 'Honor',
-    slug: 'Honor',
-    subtitle: 'Style et technologie',
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Honor_Logo_%282020%29.svg/1024px-Honor_Logo_%282020%29.svg.png',
+    query: 'Honor',
   },
   {
     name: 'Google Pixel',
-    slug: 'Google',
-    subtitle: "L'expérience Android pure",
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+    query: 'Google',
   },
   {
     name: 'Oppo',
-    slug: 'Oppo',
-    subtitle: 'Innovation et design',
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b8/OPPO_Logo.svg',
+    query: 'Oppo',
   },
   {
     name: 'Sony',
-    slug: 'Sony',
-    subtitle: "L'excellence Xperia",
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Sony_logo.svg/1024px-Sony_logo.svg.png',
+    query: 'Sony',
   },
   {
     name: 'Autres',
-    slug: 'Générique',
-    subtitle: 'Et bien plus encore...',
-    iconUrl: '',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Plus_symbol.svg/500px-Plus_symbol.svg.png',
+    query: 'Autres',
   },
 ]
 
+const BRAND_SUBTITLES: Record<string, string> = {
+  Apple: 'Tout pour votre iPhone & iPad',
+  Samsung: "L'univers Galaxy sublimé",
+  Xiaomi: 'Innovation pour tous',
+  Redmi: 'Performance accessible',
+  Huawei: 'Design et puissance',
+  Honor: 'Style et technologie',
+  'Google Pixel': "L'expérience Android pure",
+  Oppo: 'Innovation et design',
+  Sony: "L'excellence Xperia",
+  Autres: 'Et bien plus encore...',
+}
+
 const HomePage = () => {
   const { categories, products, loading } = useProducts()
+  const [logoErrors, setLogoErrors] = useState<Record<string, boolean>>({})
   const featuredProducts = products
   const featuredCategories = categories
   const categoryNameById = useMemo(() => {
@@ -176,7 +181,7 @@ const HomePage = () => {
           {featuredCategories.map((category, index) => (
             <Link
               key={category.id}
-              to="/catalogue"
+              to={`/catalogue?category=${encodeURIComponent(category.name)}`}
               className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
             >
               <div className="h-36 overflow-hidden bg-gray-100">
@@ -217,24 +222,30 @@ const HomePage = () => {
           {BRAND_SHOWCASE.map((brand) => (
             <Link
               key={brand.name}
-              to={`/catalogue?brand=${encodeURIComponent(brand.slug)}`}
+              to={`/catalogue?brand=${encodeURIComponent(brand.query)}`}
               className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
             >
               <div className="flex h-32 items-center justify-center bg-white px-6">
-                {brand.iconUrl ? (
+                {brand.logo && !logoErrors[brand.name] ? (
                   <img
-                    src={brand.iconUrl}
+                    src={brand.logo}
                     alt={brand.name}
                     className="h-12 w-28 object-contain"
+                    onError={() =>
+                      setLogoErrors((prev) => ({ ...prev, [brand.name]: true }))
+                    }
                   />
                 ) : (
-                  <span className="text-xl font-bold text-gray-800">
-                    {brand.name}
-                  </span>
+                  <div className="flex flex-col items-center gap-2 text-gray-700">
+                    <Plus className="h-8 w-8" />
+                    <span className="text-sm font-semibold">{brand.name}</span>
+                  </div>
                 )}
               </div>
               <div className="border-t border-gray-200 px-4 py-3">
-                <p className="text-xs text-gray-500">{brand.subtitle}</p>
+                <p className="text-xs text-gray-500">
+                  {BRAND_SUBTITLES[brand.name] ?? ''}
+                </p>
               </div>
             </Link>
           ))}

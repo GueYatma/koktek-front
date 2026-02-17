@@ -1,56 +1,104 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { ShoppingBag } from 'lucide-react'
+import { Search, ShoppingBag, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { useUI } from '../context/UIContext'
+import { useAuth } from '../context/AuthContext'
 import CartDrawer from './CartDrawer'
+import ContactDrawer from './ContactDrawer'
+import AuthModal from './AuthModal'
+import ProfileDrawer from './ProfileDrawer'
 
 const Layout = () => {
   const { itemCount } = useCart()
+  const { isContactOpen, openContact, closeContact } = useUI()
+  const { user } = useAuth()
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-white text-black">
-      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+      <header className="sticky top-0 z-40 bg-white shadow-[0_4px_20px_-5px_rgba(0,0,0,0.1)]">
+        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-5 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="font-display text-lg font-bold uppercase tracking-[0.45em] text-gray-900"
+            className="logo-koktek text-3xl font-black uppercase text-gray-900 sm:text-4xl"
           >
             KOKTEK
           </Link>
-          <nav className="hidden items-center gap-8 text-sm font-medium text-gray-500 md:flex">
-            {[
-              { to: '/', label: 'Accueil', end: true },
-              { to: '/catalogue', label: 'Catalogue' },
-              { to: '/checkout', label: 'Panier' },
-            ].map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.end}
-                className={({ isActive }) =>
-                  `transition ${
-                    isActive ? 'text-gray-900' : 'hover:text-gray-900'
-                  }`
-                }
+          <div className="flex flex-1 items-center justify-center">
+            <nav className="hidden items-center gap-8 text-lg font-bold text-gray-800 md:flex">
+              {[
+                { to: '/', label: 'Accueil', end: true },
+                { to: '/catalogue', label: 'Catalogue' },
+              ].map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.end}
+                  className={({ isActive }) =>
+                    `transition ${
+                      isActive ? 'text-gray-900' : 'hover:text-gray-900'
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+              <button
+                type="button"
+                onClick={openContact}
+                className="whitespace-nowrap transition hover:text-gray-900"
               >
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
-          <button
-            type="button"
-            onClick={() => setIsCartOpen(true)}
-            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            Panier
-            {itemCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-semibold text-white">
-                {itemCount}
-              </span>
+                Contact
+              </button>
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="relative inline-flex items-center gap-2 rounded-full border-2 border-gray-200 px-3 py-2 text-sm font-bold text-gray-800 transition hover:border-gray-900 hover:text-gray-900 sm:px-4"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span className="hidden sm:inline">Panier</span>
+              {itemCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-semibold text-white">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+            <div className="hidden md:block">
+              <div className="relative w-56">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="search"
+                  placeholder="Rechercher..."
+                  className="w-full rounded-full border-2 border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                />
+              </div>
+            </div>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
+              >
+                <User className="h-4 w-4" />
+                <span>Mon Profil</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAuthOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
+              >
+                <User className="h-4 w-4" />
+                <span>Se connecter</span>
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </header>
 
@@ -98,6 +146,12 @@ const Layout = () => {
       </footer>
 
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <ContactDrawer open={isContactOpen} onClose={closeContact} />
+      <AuthModal open={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <ProfileDrawer
+        open={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
     </div>
   )
 }

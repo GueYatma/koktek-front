@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Outfit:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@900&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,9 +9,47 @@
     color-scheme: light;
   }
   body {
-    @apply bg-white text-black antialiased font-sans;
+    @apply bg-white text-black antialiased font-sans font-medium;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+  }
+}
+
+@layer utilities {
+  .text-shadow-logo {
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+  }
+  .logo-koktek {
+    font-family: 'Nunito', sans-serif;
+    letter-spacing: -0.05em;
+    text-shadow: 0px 4px 3px rgba(0, 0, 0, 0.2),
+      0px 8px 13px rgba(0, 0, 0, 0.1),
+      0px 18px 23px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  .font-nunito {
+    font-family: 'Nunito', sans-serif;
+  }
+  @keyframes float {
+    0% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-10px) rotate(1deg);
+    }
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

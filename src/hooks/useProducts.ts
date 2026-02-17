@@ -3,6 +3,10 @@ import { fetchTable, fetchTableRaw } from '../lib/nocoApi'
 import { NOCO_TABLES } from '../lib/nocoConfig'
 import type { Category, Product, Variant } from '../types'
 
+type VariantWithImage = Variant & {
+  image_url?: string
+}
+
 const mockCategories: Category[] = [
   {
     id: 'cat-iphone-cases',
@@ -119,10 +123,15 @@ const normalizeImageList = (value: unknown): string[] => {
 const mapProduct = (row: Record<string, unknown>): Product => {
   const title = toStringValue(row.title ?? row.name)
   const slug = toStringValue(row.slug) || createSlug(title) || extractId(row.id)
+  const productId = extractId(row.id ?? row.ID ?? row.Id) || slug
 
   const brand = toStringValue(
     row.brand ?? row.Brand ?? row.marque ?? row.Marque,
   ).trim()
+
+  const status = toStringValue(row.status ?? row.Status ?? row.STATUS)
+  const categories =
+    row.categories ?? row.category ?? row.Category ?? row.category_name
 
   const images = normalizeImageList(
     row.images ??
@@ -141,8 +150,19 @@ const mapProduct = (row: Record<string, unknown>): Product => {
       row.image_url ?? row.imageUrl ?? row.image ?? row.Image,
     )
 
+  const rawVariants = Array.isArray(row.product_variants)
+    ? row.product_variants
+    : []
+  const product_variants = rawVariants.map((variantRow) => {
+    const variant = mapVariant(variantRow as Record<string, unknown>)
+    if (!variant.product_id && productId) {
+      return { ...variant, product_id: productId }
+    }
+    return variant
+  })
+
   return {
-    id: extractId(row.id ?? row.ID ?? row.Id) || slug,
+    id: productId,
     title,
     slug,
     description: toStringValue(row.description),
@@ -159,6 +179,7 @@ const mapProduct = (row: Record<string, unknown>): Product => {
         row.price ??
         row.Price,
     ),
+    status,
     category_id: extractId(
       row.nc_category_id ??
         row.ncCategoryId ??
@@ -167,6 +188,8 @@ const mapProduct = (row: Record<string, unknown>): Product => {
         row.category ??
         row.Category,
     ),
+    categories,
+    product_variants,
     image_url: primaryImage,
     images,
     brand: brand.length > 0 ? brand : 'Générique',
@@ -189,11 +212,13 @@ const mapCategory = (row: Record<string, unknown>): Category => {
   }
 }
 
-const mapVariant = (row: Record<string, unknown>): Variant => {
+function mapVariant(row: Record<string, unknown>): VariantWithImage {
   return {
     id: extractId(row.id ?? row.ID ?? row.Id),
     product_id: extractId(
-      row.product_id ??
+      row.product_uuid ??
+        row.productUuid ??
+        row.product_id ??
         row.productId ??
         row.products ??
         row.Products ??
@@ -210,6 +235,9 @@ const mapVariant = (row: Record<string, unknown>): Variant => {
       row.stock_quantity ?? row.stockQuantity ?? row.quantity,
     ),
     cj_vid: toStringValue(row.cj_vid ?? row.cjVid ?? row.vendor_id),
+    image_url: normalizeImageUrl(
+      row.image_url ?? row.imageUrl ?? row.image ?? row.Image,
+    ),
   }
 }
 
@@ -220,8 +248,10 @@ const fetchProducts = async (): Promise<{
   const data = await fetchTableRaw<Record<string, unknown>>(
     NOCO_TABLES.products,
     {
-      where: '(status,eq,published)',
-      params: { 'nested[product_variants][fields]': '*' },
+      params: {
+        'nested[product_variants]': 'true',
+        'nested[product_variants][fields]': '*',
+      },
     },
   )
   console.log('Raw API Data:', data)
@@ -230,7 +260,11 @@ const fetchProducts = async (): Promise<{
     return { products: [], variants: [] }
   }
 
-  const mappedProducts = rows.map(mapProduct)
+  const mappedProducts = rows
+    .map(mapProduct)
+    .filter(
+      (product) => (product.status ?? '').toLowerCase() === 'published',
+    )
   const nestedVariants = rows.flatMap((row, index) => {
     const productId =
       mappedProducts[index]?.id ?? extractId(row.id ?? row.ID ?? row.Id)
@@ -375,9 +409,23 @@ export const useProducts = () => {
   )
 
   const getVariantsByProductId = useCallback(
-    (productId: string) =>
-      state.variants.filter((variant) => variant.product_id === productId),
-    [state.variants],
+    async (productId: string): Promise<Variant[]> => {
+      if (!productId) return []
+      try {
+        const rows = await fetchTable<Record<string, unknown>>(
+          NOCO_TABLES.variants,
+          { where: `(product_uuid,eq,${productId})` },
+        )
+        if (rows.length === 0) return []
+        return rows
+          .map(mapVariant)
+          .filter((variant) => variant.id && variant.product_id)
+      } catch (error) {
+        console.error('Erreur lors du chargement des variantes', error)
+        return []
+      }
+    },
+    [],
   )
 
   return {
