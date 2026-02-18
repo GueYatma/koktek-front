@@ -1,0 +1,26 @@
+# AGENTS
+
+## Git push protocol (KOKTEK)
+When the user says "push to GitHub":
+- Create a short French commit message with a French prefix from the list below.
+- Push to GitHub.
+- Verify the GitHub Actions run if possible. If access is blocked, ask the user for the run link or share a manual check.
+- Verify deployment using the build stamp on the site and report the result.
+
+## French commit prefixes
+- `ajout:` Nouvelle fonctionnalité.
+- `corr:` Correction de bug.
+- `refacto:` Refactorisation sans changement fonctionnel.
+- `doc:` Documentation uniquement.
+- `test:` Ajout ou modification de tests.
+- `perf:` Amélioration des performances.
+- `style:` Mise en forme, CSS, ou ajustements visuels sans logique métier.
+- `deps:` Mise à jour des dépendances.
+- `ci:` Pipeline CI/CD ou scripts d’automatisation.
+- `config:` Configuration ou paramètres d’environnement.
+- `maintenance:` Nettoyage, tâches techniques diverses.
+- `revert:` Annulation d’un commit.
+
+## Build stamp
+- Build stamp uses `VITE_BUILD_ID` (set from `GITHUB_SHA` in CI).
+- Stamp is shown in the footer to confirm the deployed version.

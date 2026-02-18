@@ -10,6 +10,20 @@ import AuthModal from './AuthModal'
 import ProfileDrawer from './ProfileDrawer'
 
 const Layout = () => {
+  const buildId = import.meta.env.VITE_BUILD_ID as string | undefined
+  const buildDate = import.meta.env.VITE_BUILD_DATE as string | undefined
+  const buildLabel = buildId ? buildId.slice(0, 7) : ''
+  const buildDateLabel = buildDate
+    ? new Date(buildDate).toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      })
+    : ''
+
   const { itemCount } = useCart()
   const { isContactOpen, openContact, closeContact } = useUI()
   const { user } = useAuth()
@@ -209,6 +223,12 @@ const Layout = () => {
         </div>
         <div className="border-t border-gray-200 py-6 text-center text-xs text-gray-500">
           © 2026 KOKTEK. Tous droits réservés.
+          {buildLabel && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500">
+              Build {buildLabel}
+              {buildDateLabel ? ` · ${buildDateLabel}` : ''}
+            </span>
+          )}
         </div>
       </footer>
 
