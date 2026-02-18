@@ -170,11 +170,6 @@ const Layout = () => {
       </div>
 
       <main>
-        <div className="pointer-events-none fixed left-1/2 top-1/2 z-50 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl bg-red-600 shadow-2xl">
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-            TEST
-          </span>
-        </div>
         <Outlet />
       </main>
 
