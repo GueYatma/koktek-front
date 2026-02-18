@@ -24,6 +24,11 @@ const Layout = () => {
         timeZoneName: 'short',
       })
     : ''
+  const buildMessageLabel = buildMessage
+    ? buildMessage.length > 70
+      ? `${buildMessage.slice(0, 67)}…`
+      : buildMessage
+    : 'Nouveau build déployé'
   const shouldShowBuildToast = Boolean(buildLabel)
   const [isBuildToastVisible, setIsBuildToastVisible] = useState(false)
 
@@ -202,30 +207,29 @@ const Layout = () => {
 
       <main>
         {isBuildToastVisible && (
-          <div className="pointer-events-none fixed bottom-6 right-6 z-50 w-[min(90vw,22rem)] animate-[toast-in_0.35s_ease-out]">
-            <div className="pointer-events-auto rounded-[28px] border border-gray-200 bg-white/95 px-4 py-4 shadow-[0_18px_40px_-14px_rgba(0,0,0,0.35)] backdrop-blur">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 h-2.5 w-2.5 rounded-full bg-gray-900" />
-                <div className="flex-1">
+          <div className="pointer-events-none fixed bottom-6 right-6 z-50 h-56 w-56">
+            <div className="toast-cube pointer-events-auto relative h-full w-full animate-[toast-cube-in_0.55s_ease-out] rounded-[28px] border border-gray-200 bg-white/95 shadow-[0_22px_50px_-18px_rgba(0,0,0,0.45)] backdrop-blur">
+              <button
+                type="button"
+                onClick={() => setIsBuildToastVisible(false)}
+                className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-xs font-semibold text-gray-600 transition hover:border-gray-900 hover:text-gray-900"
+                aria-label="Fermer la notification de mise à jour"
+              >
+                ×
+              </button>
+              <div className="flex h-full flex-col justify-between px-4 pb-4 pt-6">
+                <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">
                     Mise à jour
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {buildMessage ?? 'Nouveau build disponible'}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Build {buildLabel}
-                    {buildDateLabel ? ` · ${buildDateLabel}` : ''}
+                  <p className="mt-2 text-sm font-semibold text-gray-900">
+                    {buildMessageLabel}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsBuildToastVisible(false)}
-                  className="rounded-full border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-600 transition hover:border-gray-900 hover:text-gray-900"
-                  aria-label="Fermer la notification de mise à jour"
-                >
-                  Fermer
-                </button>
+                <p className="text-[11px] text-gray-500">
+                  Build {buildLabel}
+                  {buildDateLabel ? ` · ${buildDateLabel}` : ''}
+                </p>
               </div>
             </div>
           </div>
