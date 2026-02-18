@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { Product } from '../types'
+import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
 
 type ProductCardProps = {
@@ -18,9 +19,11 @@ const ProductCard = ({ product, categoryName }: ProductCardProps) => {
       className="block overflow-hidden rounded-2xl border border-gray-200 bg-white"
     >
       <img
-        src={product.image_url}
+        src={resolveImageUrl(product.image_url)}
         alt={product.title}
-        className="h-64 w-full object-cover"
+        className="h-40 w-full object-cover sm:h-64"
+        loading="lazy"
+        decoding="async"
       />
       <div className="space-y-2 p-4">
         {categoryName && (

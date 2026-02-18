@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Minus, Plus, X } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { formatPrice } from '../utils/format'
+import { resolveImageUrl } from '../utils/image'
 
 type CartDrawerProps = {
   open: boolean
@@ -69,7 +70,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                   className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-4"
                 >
                   <img
-                    src={item.product.image_url}
+                    src={resolveImageUrl(item.product.image_url)}
                     alt={item.product.title}
                     className="h-20 w-20 rounded-xl object-cover"
                   />

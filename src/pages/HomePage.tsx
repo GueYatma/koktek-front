@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { useProducts } from '../hooks/useProducts'
+import { resolveImageUrl } from '../utils/image'
 import ProductCard from '../components/ProductCard'
 
 const BRAND_SHOWCASE = [
@@ -94,9 +95,10 @@ const HomePage = () => {
     'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1600&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1600&auto=format&fit=crop',
   ]
-  const heroImage =
-    products[0]?.image_url ??
-    'https://images.unsplash.com/photo-1510557880182-3f8e6db3c525?q=80&w=1600&auto=format&fit=crop'
+  const heroImage = resolveImageUrl(
+    products[0]?.image_url ?? '',
+    'https://images.unsplash.com/photo-1510557880182-3f8e6db3c525?q=80&w=1600&auto=format&fit=crop',
+  )
 
   return (
     <div>
@@ -265,7 +267,7 @@ const HomePage = () => {
           {loading ? (
             <p className="text-sm text-gray-500">Chargement...</p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
               {featuredProducts.map((product) => (
                 <ProductCard
                   key={product.id}

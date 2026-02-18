@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
-import type { Category } from "../types";
+import type { Category, Product } from "../types";
 
 // 🚨 TEMPORAIRE : Configuration "En Dur" pour débloquer l'affichage
 const FIXED_CATEGORIES: Category[] = [
@@ -44,6 +44,52 @@ const BRAND_FILTERS = [
   "Autres",
 ];
 
+const normalizeKey = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+const CATEGORY_ID_BY_KEY = new Map<string, string>([
+  [normalizeKey("Coques & Protections"), "3e40840a-5111-44ef-b264-a75b836b9138"],
+  [normalizeKey("coques-protections"), "3e40840a-5111-44ef-b264-a75b836b9138"],
+  [normalizeKey("Charge & Énergie"), "81c1a551-4ce4-40f7-a096-e85fc9f74a71"],
+  [normalizeKey("charge-energie"), "81c1a551-4ce4-40f7-a096-e85fc9f74a71"],
+  [normalizeKey("Audio & Son"), "64900192-a354-41c1-8f35-a1d13299352e"],
+  [normalizeKey("audio-son"), "64900192-a354-41c1-8f35-a1d13299352e"],
+  [normalizeKey("Supports & Fixations"), "46484275-e161-4bef-8a71-f67d51cb639f"],
+  [normalizeKey("supports-fixations"), "46484275-e161-4bef-8a71-f67d51cb639f"],
+  [normalizeKey("Décoration & Goodies"), "2070f06d-c3e0-4253-947d-374f8f46368a"],
+  [normalizeKey("decoration-goodies"), "2070f06d-c3e0-4253-947d-374f8f46368a"],
+  [normalizeKey("Autres"), "7167a98a-60dd-4f78-9a56-e206813d4a3c"],
+  [normalizeKey("autres"), "7167a98a-60dd-4f78-9a56-e206813d4a3c"],
+]);
+
+const CATEGORY_NAME_BY_ID = new Map<string, string>([
+  ["3e40840a-5111-44ef-b264-a75b836b9138", "Coques & Protections"],
+  ["81c1a551-4ce4-40f7-a096-e85fc9f74a71", "Charge & Énergie"],
+  ["64900192-a354-41c1-8f35-a1d13299352e", "Audio & Son"],
+  ["46484275-e161-4bef-8a71-f67d51cb639f", "Supports & Fixations"],
+  ["2070f06d-c3e0-4253-947d-374f8f46368a", "Décoration & Goodies"],
+  ["7167a98a-60dd-4f78-9a56-e206813d4a3c", "Autres"],
+]);
+
+const getProductCategoryId = (product: Product): string => {
+  const productRecord = product as Record<string, unknown>;
+  const rawCategory =
+    productRecord.categories_id ?? product.category_id ?? productRecord.category_id;
+  if (rawCategory && typeof rawCategory === "object") {
+    if ("id" in (rawCategory as { id?: unknown })) {
+      return String((rawCategory as { id?: unknown }).id ?? "");
+    }
+  }
+  if (rawCategory) return String(rawCategory);
+  return "";
+};
+
 const CatalogPage = () => {
   const { products, loading } = useProducts();
 
@@ -71,6 +117,12 @@ const CatalogPage = () => {
     return "";
   };
 
+  const resolveCategorySelection = useCallback((value: string | null) => {
+    if (!value) return "all";
+    const normalized = normalizeKey(value);
+    return CATEGORY_ID_BY_KEY.get(normalized) ?? "all";
+  }, []);
+
   // --- FILTRAGE ---
   const filteredProducts = useMemo(() => {
     let nextProducts = products;
@@ -78,7 +130,7 @@ const CatalogPage = () => {
     // Filtre par Catégorie
     if (selectedCategory !== "all") {
       nextProducts = nextProducts.filter(
-        (product) => getCategoryString(product.categories) === selectedCategory,
+        (product) => getProductCategoryId(product) === selectedCategory,
       );
     }
 
@@ -88,7 +140,7 @@ const CatalogPage = () => {
     }
 
     return nextProducts;
-  }, [products, selectedCategory, selectedBrand, getCategoryString]);
+  }, [products, selectedCategory, selectedBrand]);
 
   // Sync URL -> State
   useEffect(() => {
@@ -104,11 +156,11 @@ const CatalogPage = () => {
     }
 
     if (categoryParam) {
-      setSelectedCategory(categoryParam);
+      setSelectedCategory(resolveCategorySelection(categoryParam));
     } else if (!brandParam) {
       setSelectedCategory("all");
     }
-  }, [searchParams]);
+  }, [searchParams, resolveCategorySelection]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6 sm:pt-8">
@@ -143,22 +195,28 @@ const CatalogPage = () => {
             >
               Toutes
             </button>
-            {FIXED_CATEGORIES.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => {
-                  setSelectedCategory(category.name);
-                  setSelectedBrand("all");
-                }}
-                className={`pb-2 text-sm font-semibold transition ${
-                  selectedCategory === category.name
-                    ? "border-b-2 border-gray-900 text-gray-900"
-                    : "border-b-2 border-transparent text-gray-500 hover:text-gray-900"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+            {FIXED_CATEGORIES.map((category) => {
+              const categoryKey = normalizeKey(category.slug || category.name);
+              const categoryId = CATEGORY_ID_BY_KEY.get(categoryKey);
+              const isActive =
+                categoryId !== undefined && selectedCategory === categoryId;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setSelectedCategory(categoryId ?? "all");
+                    setSelectedBrand("all");
+                  }}
+                  className={`pb-2 text-sm font-semibold transition ${
+                    isActive
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "border-b-2 border-transparent text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  {category.name}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -205,14 +263,20 @@ const CatalogPage = () => {
         {loading ? (
           <p className="text-center text-sm text-gray-500">Chargement...</p>
         ) : (
-          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                categoryName={getCategoryString(product.categories) || undefined}
-              />
-            ))}
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
+            {filteredProducts.map((product) => {
+              const categoryLabel =
+                CATEGORY_NAME_BY_ID.get(getProductCategoryId(product)) ||
+                getCategoryString(product.categories) ||
+                undefined;
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  categoryName={categoryLabel}
+                />
+              );
+            })}
           </div>
         )}
         {!loading && filteredProducts.length === 0 && (

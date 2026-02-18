@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../hooks/useProducts'
 import type { Variant } from '../types'
+import { resolveImageUrl } from '../utils/image'
 
 type VariantWithImage = Variant & {
   image_url?: string
@@ -112,6 +113,8 @@ const ProductPage = () => {
           ? [product.image_url]
           : []
     return productImages
+      .map((image) => resolveImageUrl(image, ''))
+      .filter((image) => image.length > 0)
   }, [product])
 
   useEffect(() => {
@@ -122,12 +125,23 @@ const ProductPage = () => {
     }
   }, [images])
 
-  const fallbackImage = images[0] || product?.image_url || ''
+  useEffect(() => {
+    const variantImageRaw = selectedVariant?.image_url ?? ''
+    if (variantImageRaw.trim().length === 0) return
+    const resolvedVariantImage = resolveImageUrl(variantImageRaw, '')
+    if (resolvedVariantImage) {
+      setSelectedImage(resolvedVariantImage)
+    }
+  }, [selectedVariant])
+
+  const fallbackImage =
+    images[0] || resolveImageUrl(product?.image_url ?? '')
+  const variantImageRaw = selectedVariant?.image_url ?? ''
   const variantImage =
-    selectedVariant?.image_url && selectedVariant.image_url.trim().length > 0
-      ? selectedVariant.image_url
+    variantImageRaw.trim().length > 0
+      ? resolveImageUrl(variantImageRaw, '')
       : ''
-  const displayImage = variantImage || selectedImage || fallbackImage
+  const displayImage = selectedImage || variantImage || fallbackImage
 
   const variantPrice = Number(selectedVariant?.price)
   const displayPrice =
@@ -166,7 +180,7 @@ const ProductPage = () => {
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
         <div className="md:sticky md:top-24 md:self-start">
-          <div className="animate-float h-[420px] overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] sm:h-[520px]">
+          <div className="animate-float h-72 overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] md:h-[520px]">
             <img
               src={displayImage}
               alt={product.title}
@@ -182,16 +196,16 @@ const ProductPage = () => {
                     key={image}
                     type="button"
                     onClick={() => setSelectedImage(image)}
-                    className={`overflow-hidden rounded-2xl border bg-white p-2 transition ${
+                    className={`aspect-square overflow-hidden rounded-2xl border bg-white transition-shadow ${
                       isActive
-                        ? 'border-gray-900 shadow-md'
-                        : 'border-gray-200 hover:border-gray-400'
+                        ? 'border-gray-900 shadow-xl ring-2 ring-gray-900 ring-offset-2 ring-offset-white'
+                        : 'border-gray-200 shadow-sm hover:border-gray-400'
                     }`}
                   >
                     <img
                       src={image}
                       alt={product.title}
-                      className="h-20 w-full object-contain"
+                      className="h-full w-full object-cover"
                     />
                   </button>
                 )
@@ -219,7 +233,7 @@ const ProductPage = () => {
             />
           </div>
 
-          <div className="space-y-4 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="space-y-4 rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
                 Modèle
@@ -244,6 +258,8 @@ const ProductPage = () => {
                       key={variant.id}
                       type="button"
                       onClick={() => setSelectedVariant(variant)}
+                      aria-pressed={isSelected}
+                      aria-label={`Sélectionner le modèle ${label}`}
                       className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                         isSelected
                           ? 'border-black bg-black text-white'
@@ -265,6 +281,7 @@ const ProductPage = () => {
                     )
                     if (next) setSelectedVariant(next)
                   }}
+                  aria-label="Choisir un modèle"
                   className="h-12 w-full appearance-none rounded-2xl border-2 border-gray-200 bg-white px-4 pr-10 text-sm font-semibold text-gray-900 transition focus:border-black focus:outline-none"
                 >
                   {variants.map((variant) => {
@@ -308,7 +325,7 @@ const ProductPage = () => {
             </p>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+          <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 sm:p-6">
             <p className="text-sm font-semibold text-gray-900">Inclus</p>
             <p className="mt-3">
               Packaging premium, guide de pose et garantie Koktek 12 mois.

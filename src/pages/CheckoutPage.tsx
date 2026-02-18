@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { formatPrice } from '../utils/format'
+import { resolveImageUrl } from '../utils/image'
 
 const CheckoutPage = () => {
   const { items, total } = useCart()
@@ -37,7 +38,7 @@ const CheckoutPage = () => {
                 className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-5"
               >
                 <img
-                  src={item.product.image_url}
+                  src={resolveImageUrl(item.product.image_url)}
                   alt={item.product.title}
                   className="h-20 w-20 rounded-xl object-cover"
                 />
