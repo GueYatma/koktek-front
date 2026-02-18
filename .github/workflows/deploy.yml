@@ -10,10 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 1. Récupération du code
         uses: actions/checkout@v2
 
-      - name: Deploy to VPS via SSH
+      - name: 2. Construction du site (Sur GitHub, pas sur le VPS)
+        run: |
+          npm install
+          npm run build
+
+      - name: 3. Nettoyage du dossier actif (Via SSH)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -21,21 +26,17 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # 1. On va dans le dossier DE TRAVAIL (celui qu'on a cloné proprement)
-            cd /root/koktek-front
-
-            # 2. On récupère le code et on construit
-            git pull origin main
-            npm install
-            npm run build
-
-            # 3. LA LIVRAISON VERS LE VRAI SITE (Celui avec le tiret bas _)
-            echo "Déploiement vers le dossier actif /root/koktek_front..."
-
-            # On vide le dossier dist actif (Attention à l'orthographe du dossier destination)
+            # On vide le dossier cible pour être sûr que c'est propre
             rm -rf /root/koktek_front/dist/*
+            echo "Dossier /root/koktek_front/dist/ vidé."
 
-            # On copie le nouveau site construit vers le dossier actif
-            cp -r dist/* /root/koktek_front/dist/
-
-            echo "Succès ! Site mis à jour dans /root/koktek_front/dist/"
+      - name: 4. Envoi des fichiers (Via SCP)
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "dist/*"
+          target: "/root/koktek_front/dist/"
+          strip_components: 1
