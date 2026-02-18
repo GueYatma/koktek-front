@@ -10,20 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Deploy to VPS via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          cd /root/docker/nocodb/koktek-front
-          git pull origin main
-          npm install
-          npm run build
-          docker compose down --remove-orphans
-          docker compose up -d
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # 1. Aller dans le dossier du projet
+            cd /root/docker/nocodb/koktek-front
+
+            # 2. Récupérer le dernier code
+            git pull origin main
+
+            # 3. Construire le site
+            npm install
+            npm run build
+
+            # 4. LE TRANSFERT CRUCIAL (C'est la ligne magique)
+            # On vide l'ancien site et on met le nouveau
+            rm -rf /var/www/html/*
+            cp -r dist/* /var/www/html/
+
+            # 5. Redémarrer les services si nécessaire (Optionnel si Nginx sert juste le HTML)
+            docker compose down --remove-orphans
+            docker compose up -d
