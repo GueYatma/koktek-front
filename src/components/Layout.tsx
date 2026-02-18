@@ -202,14 +202,15 @@ const Layout = () => {
 
       <main>
         {isBuildToastVisible && (
-          <div className="pointer-events-none fixed left-1/2 top-24 z-50 w-[min(92vw,36rem)] -translate-x-1/2">
-            <div className="pointer-events-auto rounded-2xl border border-gray-200 bg-white/95 px-5 py-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] backdrop-blur">
-              <div className="flex items-start justify-between gap-4">
-                <div>
+          <div className="pointer-events-none fixed bottom-6 right-6 z-50 w-[min(90vw,22rem)] animate-[toast-in_0.35s_ease-out]">
+            <div className="pointer-events-auto rounded-[28px] border border-gray-200 bg-white/95 px-4 py-4 shadow-[0_18px_40px_-14px_rgba(0,0,0,0.35)] backdrop-blur">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2.5 w-2.5 rounded-full bg-gray-900" />
+                <div className="flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">
-                    Mise à jour déployée
+                    Mise à jour
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-gray-900">
+                  <p className="mt-1 text-sm font-semibold text-gray-900">
                     {buildMessage ?? 'Nouveau build disponible'}
                   </p>
                   <p className="mt-1 text-xs text-gray-500">
@@ -220,7 +221,7 @@ const Layout = () => {
                 <button
                   type="button"
                   onClick={() => setIsBuildToastVisible(false)}
-                  className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 transition hover:border-gray-900 hover:text-gray-900"
+                  className="rounded-full border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-600 transition hover:border-gray-900 hover:text-gray-900"
                   aria-label="Fermer la notification de mise à jour"
                 >
                   Fermer
