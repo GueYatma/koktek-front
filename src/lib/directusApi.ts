@@ -1,7 +1,6 @@
 import type { Category, Product, Variant } from "../types";
+import { DIRECTUS_BASE_URL } from "../utils/directus";
 import { resolveImageUrl } from "../utils/image";
-
-const DIRECTUS_BASE_URL = "http://82.29.173.57:8055";
 const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
   | string
   | undefined;

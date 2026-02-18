@@ -1,5 +1,4 @@
-const DIRECTUS_BASE_URL = "http://82.29.173.57:8055";
-const DIRECTUS_ASSET_BASE = `${DIRECTUS_BASE_URL}/assets`;
+import { DIRECTUS_ASSET_BASE } from './directus';
 
 export const FALLBACK_IMAGE_URL =
   "https://via.placeholder.com/300x400?text=Pas+d+image";
