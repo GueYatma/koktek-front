@@ -21,18 +21,21 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # 1. On va dans le NOUVEAU dossier qui existe enfin
+            # 1. On va dans le dossier DE TRAVAIL (celui qu'on a cloné proprement)
             cd /root/koktek-front
 
-            # 2. On met à jour le code
+            # 2. On récupère le code et on construit
             git pull origin main
-
-            # 3. On installe et on construit
             npm install
             npm run build
 
-            # 4. On déploie dans le dossier public (Nettoyage + Copie)
-            rm -rf /var/www/html/*
-            cp -r dist/* /var/www/html/
+            # 3. LA LIVRAISON VERS LE VRAI SITE (Celui avec le tiret bas _)
+            echo "Déploiement vers le dossier actif /root/koktek_front..."
 
-            echo "Succès ! Site déployé depuis /root/koktek-front vers /var/www/html"
+            # On vide le dossier dist actif (Attention à l'orthographe du dossier destination)
+            rm -rf /root/koktek_front/dist/*
+
+            # On copie le nouveau site construit vers le dossier actif
+            cp -r dist/* /root/koktek_front/dist/
+
+            echo "Succès ! Site mis à jour dans /root/koktek_front/dist/"
