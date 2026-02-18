@@ -21,21 +21,18 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # 1. On va dans le dossier où GitHub télécharge le code
-            cd /root/docker/nocodb/koktek-front
+            # 1. On va dans le NOUVEAU dossier qui existe enfin
+            cd /root/koktek-front
 
-            # 2. On récupère la dernière version
+            # 2. On met à jour le code
             git pull origin main
 
-            # 3. On construit le site (création du dossier dist)
+            # 3. On installe et on construit
             npm install
             npm run build
 
-            # 4. LE PONT MANQUANT : On déploie dans le dossier public
-            # On vide le dossier public actuel pour éviter les conflits
+            # 4. On déploie dans le dossier public (Nettoyage + Copie)
             rm -rf /var/www/html/*
-
-            # On copie le nouveau site vers le dossier public
             cp -r dist/* /var/www/html/
 
-            echo "Déploiement terminé : Les fichiers sont dans /var/www/html"
+            echo "Succès ! Site déployé depuis /root/koktek-front vers /var/www/html"
