@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { Menu, Search, ShoppingBag, User, X } from 'lucide-react'
 import { useCart } from '../context/CartContext'
@@ -12,6 +12,7 @@ import ProfileDrawer from './ProfileDrawer'
 const Layout = () => {
   const buildId = import.meta.env.VITE_BUILD_ID as string | undefined
   const buildDate = import.meta.env.VITE_BUILD_DATE as string | undefined
+  const buildMessage = import.meta.env.VITE_BUILD_MESSAGE as string | undefined
   const buildLabel = buildId ? buildId.slice(0, 7) : ''
   const buildDateLabel = buildDate
     ? new Date(buildDate).toLocaleString('fr-FR', {
@@ -23,6 +24,22 @@ const Layout = () => {
         timeZoneName: 'short',
       })
     : ''
+  const shouldShowBuildToast = Boolean(buildLabel)
+  const [isBuildToastVisible, setIsBuildToastVisible] = useState(false)
+
+  useEffect(() => {
+    if (!shouldShowBuildToast) return
+    if (typeof window === 'undefined') return
+    const storageKey = 'koktek:last_build_seen'
+    const lastSeen = window.localStorage.getItem(storageKey)
+    if (lastSeen === buildLabel) return
+    window.localStorage.setItem(storageKey, buildLabel)
+    setIsBuildToastVisible(true)
+    const timer = window.setTimeout(() => {
+      setIsBuildToastVisible(false)
+    }, 12000)
+    return () => window.clearTimeout(timer)
+  }, [shouldShowBuildToast, buildLabel, buildDateLabel, buildMessage])
 
   const { itemCount } = useCart()
   const { isContactOpen, openContact, closeContact } = useUI()
@@ -184,6 +201,34 @@ const Layout = () => {
       </div>
 
       <main>
+        {isBuildToastVisible && (
+          <div className="pointer-events-none fixed left-1/2 top-24 z-50 w-[min(92vw,36rem)] -translate-x-1/2">
+            <div className="pointer-events-auto rounded-2xl border border-gray-200 bg-white/95 px-5 py-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] backdrop-blur">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">
+                    Mise à jour déployée
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-gray-900">
+                    {buildMessage ?? 'Nouveau build disponible'}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Build {buildLabel}
+                    {buildDateLabel ? ` · ${buildDateLabel}` : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsBuildToastVisible(false)}
+                  className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 transition hover:border-gray-900 hover:text-gray-900"
+                  aria-label="Fermer la notification de mise à jour"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <Outlet />
       </main>
 

@@ -13,13 +13,19 @@ jobs:
       - name: 1. Récupération du code
         uses: actions/checkout@v2
 
-      - name: 2. Construction sur GitHub (Build)
+      - name: 2. Préparer les infos de build
+        run: |
+          echo "VITE_BUILD_ID=${GITHUB_SHA}" >> $GITHUB_ENV
+          echo "VITE_BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
+          printf "VITE_BUILD_MESSAGE<<EOF\n%s\nEOF\n" "$(git log -1 --pretty=%s)" >> $GITHUB_ENV
+
+      - name: 3. Construction sur GitHub (Build)
         # On prépare le site ici, sur les serveurs de GitHub
         run: |
           npm install
-          VITE_BUILD_ID=${GITHUB_SHA} VITE_BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) npm run build
+          npm run build
 
-      - name: 3. Nettoyage du VPS (Avant la copie)
+      - name: 4. Nettoyage du VPS (Avant la copie)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -32,7 +38,7 @@ jobs:
             rm -rf /root/koktek_front/dist/*
             echo "Ancien site supprimé. Le dossier est prêt."
 
-      - name: 4. Envoi du nouveau site (SCP)
+      - name: 5. Envoi du nouveau site (SCP)
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
