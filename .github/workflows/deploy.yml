@@ -13,12 +13,13 @@ jobs:
       - name: 1. Récupération du code
         uses: actions/checkout@v2
 
-      - name: 2. Construction du site (Sur GitHub, pas sur le VPS)
+      - name: 2. Construction sur GitHub (Build)
+        # On prépare le site ici, sur les serveurs de GitHub
         run: |
           npm install
           npm run build
 
-      - name: 3. Nettoyage du dossier actif (Via SSH)
+      - name: 3. Nettoyage du VPS (Avant la copie)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -26,11 +27,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # On vide le dossier cible pour être sûr que c'est propre
+            # On supprime TOUT le contenu de l'ancien dossier pour éviter les conflits
+            # C'est le chemin validé par ton test de l'erreur 500
             rm -rf /root/koktek_front/dist/*
-            echo "Dossier /root/koktek_front/dist/ vidé."
+            echo "Ancien site supprimé. Le dossier est prêt."
 
-      - name: 4. Envoi des fichiers (Via SCP)
+      - name: 4. Envoi du nouveau site (SCP)
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -40,3 +42,4 @@ jobs:
           source: "dist/*"
           target: "/root/koktek_front/dist/"
           strip_components: 1
+          # strip_components: 1 permet de copier le CONTENU du dossier dist directement à la racine de la cible
