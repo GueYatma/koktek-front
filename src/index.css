@@ -17,15 +17,6 @@
 }
 
 @layer utilities {
-  /* debug frame: remove after test */
-  .debug-frame::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    border: 6px solid #e11d48;
-    pointer-events: none;
-    z-index: 9999;
-  }
   .text-shadow-logo {
     text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
   }
