@@ -55,7 +55,7 @@ const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="debug-frame min-h-screen bg-white text-black">
       <header className="sticky top-0 z-40 bg-white shadow-[0_4px_20px_-5px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-5 sm:px-6 lg:px-8">
           <Link
