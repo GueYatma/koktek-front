@@ -1,36 +1,74 @@
+version: '3'
+
 services:
-  nocodb:
-    image: nocodb/nocodb:latest
-    container_name: koktek_admin
-    restart: always
-    volumes:
-      - ../nc_data:/usr/app/data
-    networks:
-      - root_traefik-net
+  # --- SERVICE 1 : DIRECTUS (Back-end) ---
+  koktek_directus:
+    image: directus/directus:latest
+    container_name: koktek_directus
+    restart: unless-stopped
+    ports:
+      - "8055:8055"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
     environment:
-      - NC_AUTH_JWT_SECRET=SecretKoktek2026ChangeMoi
+      KEY: "${DIRECTUS_KEY}"
+      SECRET: "${DIRECTUS_SECRET}"
+      ADMIN_EMAIL: "${DIRECTUS_ADMIN_EMAIL}"
+      ADMIN_PASSWORD: "${DIRECTUS_ADMIN_PASSWORD}"
+      DB_CLIENT: "pg"
+      DB_HOST: "host.docker.internal"
+      DB_PORT: "5432"
+      DB_DATABASE: "n8n_db"
+      DB_USER: "directus_user"
+      DB_PASSWORD: "${DIRECTUS_DB_PASSWORD}"
+      WEBSOCKETS_ENABLED: "true"
+      PUBLIC_URL: "https://directus.koktek.com"
+      CORS_ENABLED: 'true'
+      CORS_ORIGIN: 'https://koktek.com,https://www.koktek.com,http://localhost:5173'
+
+    volumes:
+      - ./uploads:/directus/uploads
+      - ./extensions:/directus/extensions
+    networks:
+      - traefik-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nocodb.rule=Host(`app.koktek.com`)"
-      - "traefik.http.routers.nocodb.entrypoints=websecure"
-      - "traefik.http.routers.nocodb.tls.certresolver=mytlschallenge"
-      - "traefik.http.services.nocodb.loadbalancer.server.port=8080"
+      - "traefik.http.routers.koktek-directus.rule=Host(`directus.koktek.com`)"
+      - "traefik.http.routers.koktek-directus.entrypoints=websecure"
+      - "traefik.http.routers.koktek-directus.tls=true"
+      - "traefik.http.routers.koktek-directus.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.koktek-directus.loadbalancer.server.port=8055"
 
-  frontend:
+  # --- SERVICE 2 : FRONTEND (Le Site React) ---
+  koktek_front:
     image: nginx:alpine
     container_name: koktek_front
-    restart: always
+    restart: unless-stopped
     volumes:
-      - ./dist:/usr/share/nginx/html
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+      - /root/koktek_front/dist:/usr/share/nginx/html
     networks:
-      - root_traefik-net
+      - traefik-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`koktek.com`) || Host(`www.koktek.com`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=mytlschallenge"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+      # --- ROUTER HTTPS (koktek.com + www) ---
+      - "traefik.http.routers.koktek-front.rule=Host(`koktek.com`) || Host(`www.koktek.com`)"
+      - "traefik.http.routers.koktek-front.entrypoints=websecure"
+      - "traefik.http.routers.koktek-front.tls=true"
+      - "traefik.http.routers.koktek-front.tls.certresolver=mytlschallenge"
+
+      # --- ROUTER HTTP -> REDIRECT HTTPS ---
+      - "traefik.http.routers.koktek-front-http.rule=Host(`koktek.com`) || Host(`www.koktek.com`)"
+      - "traefik.http.routers.koktek-front-http.entrypoints=web"
+      - "traefik.http.routers.koktek-front-http.middlewares=koktek-redirect-https"
+
+      # --- MIDDLEWARE REDIRECT ---
+      - "traefik.http.middlewares.koktek-redirect-https.redirectscheme.scheme=https"
 
 networks:
-  root_traefik-net:
+  traefik-net:
     external: true
+    name: root_traefik-net

@@ -5,13 +5,71 @@ if [ "${KOKTEK_SKIP_POST_PUSH_NOTIFY:-0}" = "1" ]; then
   exit 0
 fi
 
-if ! command -v terminal-notifier >/dev/null 2>&1; then
-  exit 0
-fi
+export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+
+log_file=""
+
+init_log() {
+  local git_dir
+  git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"
+  if [ -n "$git_dir" ]; then
+    log_file="${git_dir}/koktek-notify.log"
+  else
+    log_file="/tmp/koktek-notify.log"
+  fi
+}
+
+log_line() {
+  if [ -z "$log_file" ]; then
+    init_log
+  fi
+  printf '[%s] %s\n' "$(date +"%Y-%m-%d %H:%M:%S")" "$1" >> "$log_file" 2>/dev/null || true
+}
+
+escape_osascript() {
+  printf '%s' "$1" | tr '\n' ' ' | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+notify() {
+  local subtitle="$1"
+  local message="$2"
+  local tn_rc=127
+
+  if command -v terminal-notifier >/dev/null 2>&1; then
+    set +e
+    terminal-notifier -title "KOKTEK" -subtitle "$subtitle" -message "$message"
+    tn_rc=$?
+    set -e
+    if [ "$tn_rc" -eq 0 ]; then
+      log_line "terminal-notifier ok: ${subtitle} | ${message}"
+      return 0
+    fi
+    log_line "terminal-notifier failed rc=${tn_rc}: ${subtitle} | ${message}"
+  else
+    log_line "terminal-notifier missing: ${subtitle} | ${message}"
+  fi
+
+  if command -v osascript >/dev/null 2>&1; then
+    local esc_title esc_subtitle esc_message
+    esc_title="$(escape_osascript "KOKTEK")"
+    esc_subtitle="$(escape_osascript "$subtitle")"
+    esc_message="$(escape_osascript "$message")"
+    set +e
+    osascript -e "display notification \"${esc_message}\" with title \"${esc_title}\" subtitle \"${esc_subtitle}\""
+    tn_rc=$?
+    set -e
+    if [ "$tn_rc" -eq 0 ]; then
+      log_line "osascript ok: ${subtitle} | ${message}"
+      return 0
+    fi
+    log_line "osascript failed rc=${tn_rc}: ${subtitle} | ${message}"
+  else
+    log_line "osascript missing: ${subtitle} | ${message}"
+  fi
+
+  return 0
+}
 
 commit_subject="$(git log -1 --pretty=%s 2>/dev/null || echo "Commit")"
 
-terminal-notifier \
-  -title "KOKTEK" \
-  -subtitle "Push GitHub" \
-  -message "PUSH OK — ${commit_subject}"
+notify "Push GitHub" "PUSH OK — ${commit_subject}"

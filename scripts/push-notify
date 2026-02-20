@@ -1,21 +1,76 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! command -v terminal-notifier >/dev/null 2>&1; then
-  echo "terminal-notifier introuvable. Installe-le via: brew install terminal-notifier" >&2
-  exit 1
-fi
+export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+
+log_file=""
+
+init_log() {
+  local git_dir
+  git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"
+  if [ -n "$git_dir" ]; then
+    log_file="${git_dir}/koktek-notify.log"
+  else
+    log_file="/tmp/koktek-notify.log"
+  fi
+}
+
+log_line() {
+  if [ -z "$log_file" ]; then
+    init_log
+  fi
+  printf '[%s] %s\n' "$(date +"%Y-%m-%d %H:%M:%S")" "$1" >> "$log_file" 2>/dev/null || true
+}
+
+escape_osascript() {
+  printf '%s' "$1" | tr '\n' ' ' | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
 
 notify() {
   local subtitle="$1"
   local message="$2"
   local open_url="${3:-}"
+  local tn_rc=127
 
-  if [ -n "$open_url" ]; then
-    terminal-notifier -title "KOKTEK" -subtitle "$subtitle" -message "$message" -open "$open_url"
+  if command -v terminal-notifier >/dev/null 2>&1; then
+    set +e
+    if [ -n "$open_url" ]; then
+      terminal-notifier -title "KOKTEK" -subtitle "$subtitle" -message "$message" -open "$open_url"
+    else
+      terminal-notifier -title "KOKTEK" -subtitle "$subtitle" -message "$message"
+    fi
+    tn_rc=$?
+    set -e
+
+    if [ "$tn_rc" -eq 0 ]; then
+      log_line "terminal-notifier ok: ${subtitle} | ${message}"
+      return 0
+    fi
+
+    log_line "terminal-notifier failed rc=${tn_rc}: ${subtitle} | ${message}"
   else
-    terminal-notifier -title "KOKTEK" -subtitle "$subtitle" -message "$message"
+    log_line "terminal-notifier missing: ${subtitle} | ${message}"
   fi
+
+  if command -v osascript >/dev/null 2>&1; then
+    local esc_title esc_subtitle esc_message
+    esc_title="$(escape_osascript "KOKTEK")"
+    esc_subtitle="$(escape_osascript "$subtitle")"
+    esc_message="$(escape_osascript "$message")"
+    set +e
+    osascript -e "display notification \"${esc_message}\" with title \"${esc_title}\" subtitle \"${esc_subtitle}\""
+    tn_rc=$?
+    set -e
+    if [ "$tn_rc" -eq 0 ]; then
+      log_line "osascript ok: ${subtitle} | ${message}"
+      return 0
+    fi
+    log_line "osascript failed rc=${tn_rc}: ${subtitle} | ${message}"
+  else
+    log_line "osascript missing: ${subtitle} | ${message}"
+  fi
+
+  return 0
 }
 
 commit_subject="$(git log -1 --pretty=%s 2>/dev/null || echo "Commit")"
@@ -27,13 +82,16 @@ push_status=$?
 set -e
 
 if [ "$push_status" -ne 0 ]; then
+  log_line "push failed rc=${push_status}"
   notify "Push GitHub" "PUSH ÉCHEC — ${commit_subject}"
   exit "$push_status"
 fi
 
+log_line "push ok"
 notify "Push GitHub" "PUSH OK — ${commit_subject}"
 
 if ! command -v gh >/dev/null 2>&1; then
+  log_line "gh missing"
   notify "Déploiement VPS" "VPS — gh absent"
   exit 0
 fi
@@ -42,10 +100,11 @@ workflow_file="${KOKTEK_DEPLOY_WORKFLOW:-deploy.yml}"
 workflow_name="${KOKTEK_DEPLOY_NAME:-Deploy to VPS}"
 
 run_info="$(gh run list --workflow "$workflow_file" --branch "$branch" -L1 \
-  --json databaseId,status,conclusion,htmlUrl \
-  --jq '.[0] | [.databaseId,.status,.conclusion,.htmlUrl] | @tsv' 2>/dev/null || true)"
+  --json databaseId,status,conclusion,url \
+  --jq '.[0] | [.databaseId,.status,.conclusion,.url] | @tsv' 2>/dev/null || true)"
 
 if [ -z "$run_info" ]; then
+  log_line "workflow run not found (empty)"
   notify "Déploiement VPS" "VPS — run introuvable"
   exit 0
 fi
@@ -53,21 +112,26 @@ fi
 IFS=$'\t' read -r run_id run_status run_conclusion run_url <<< "$run_info" || true
 
 if [ -z "${run_id:-}" ]; then
+  log_line "workflow run not found (no id)"
   notify "Déploiement VPS" "VPS — run introuvable"
   exit 0
 fi
 
 if [ "$run_status" = "completed" ]; then
   if [ "$run_conclusion" = "success" ]; then
+    log_line "workflow completed success"
     notify "Déploiement VPS" "VPS OK — ${workflow_name}" "$run_url"
   else
+    log_line "workflow completed failure (${run_conclusion:-unknown})"
     notify "Déploiement VPS" "VPS ÉCHEC — ${workflow_name} (${run_conclusion:-unknown})" "$run_url"
   fi
   exit 0
 fi
 
 if gh run watch "$run_id" --exit-status >/dev/null 2>&1; then
+  log_line "workflow watch success"
   notify "Déploiement VPS" "VPS OK — ${workflow_name}" "$run_url"
 else
+  log_line "workflow watch failure"
   notify "Déploiement VPS" "VPS ÉCHEC — ${workflow_name}" "$run_url"
 fi
