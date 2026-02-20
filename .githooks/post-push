@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "${KOKTEK_SKIP_POST_PUSH_NOTIFY:-0}" = "1" ]; then
+  exit 0
+fi
+
+if ! command -v terminal-notifier >/dev/null 2>&1; then
+  exit 0
+fi
+
+commit_subject="$(git log -1 --pretty=%s 2>/dev/null || echo "Commit")"
+
+terminal-notifier \
+  -title "KOKTEK" \
+  -subtitle "Push GitHub" \
+  -message "PUSH OK — ${commit_subject}"

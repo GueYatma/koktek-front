@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v terminal-notifier >/dev/null 2>&1; then
+  echo "terminal-notifier introuvable. Installe-le via: brew install terminal-notifier" >&2
+  exit 1
+fi
+
+notify() {
+  local subtitle="$1"
+  local message="$2"
+  local open_url="${3:-}"
+
+  if [ -n "$open_url" ]; then
+    terminal-notifier -title "KOKTEK" -subtitle "$subtitle" -message "$message" -open "$open_url"
+  else
+    terminal-notifier -title "KOKTEK" -subtitle "$subtitle" -message "$message"
+  fi
+}
+
+commit_subject="$(git log -1 --pretty=%s 2>/dev/null || echo "Commit")"
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")"
+
+set +e
+KOKTEK_SKIP_POST_PUSH_NOTIFY=1 git push "$@"
+push_status=$?
+set -e
+
+if [ "$push_status" -ne 0 ]; then
+  notify "Push GitHub" "PUSH ÉCHEC — ${commit_subject}"
+  exit "$push_status"
+fi
+
+notify "Push GitHub" "PUSH OK — ${commit_subject}"
+
+if ! command -v gh >/dev/null 2>&1; then
+  notify "Déploiement VPS" "VPS — gh absent"
+  exit 0
+fi
+
+workflow_file="${KOKTEK_DEPLOY_WORKFLOW:-deploy.yml}"
+workflow_name="${KOKTEK_DEPLOY_NAME:-Deploy to VPS}"
+
+run_info="$(gh run list --workflow "$workflow_file" --branch "$branch" -L1 \
+  --json databaseId,status,conclusion,htmlUrl \
+  --jq '.[0] | [.databaseId,.status,.conclusion,.htmlUrl] | @tsv' 2>/dev/null || true)"
+
+if [ -z "$run_info" ]; then
+  notify "Déploiement VPS" "VPS — run introuvable"
+  exit 0
+fi
+
+IFS=$'\t' read -r run_id run_status run_conclusion run_url <<< "$run_info" || true
+
+if [ -z "${run_id:-}" ]; then
+  notify "Déploiement VPS" "VPS — run introuvable"
+  exit 0
+fi
+
+if [ "$run_status" = "completed" ]; then
+  if [ "$run_conclusion" = "success" ]; then
+    notify "Déploiement VPS" "VPS OK — ${workflow_name}" "$run_url"
+  else
+    notify "Déploiement VPS" "VPS ÉCHEC — ${workflow_name} (${run_conclusion:-unknown})" "$run_url"
+  fi
+  exit 0
+fi
+
+if gh run watch "$run_id" --exit-status >/dev/null 2>&1; then
+  notify "Déploiement VPS" "VPS OK — ${workflow_name}" "$run_url"
+else
+  notify "Déploiement VPS" "VPS ÉCHEC — ${workflow_name}" "$run_url"
+fi
