@@ -17,26 +17,6 @@
 }
 
 @layer utilities {
-  /* debug stamp: remove after test */
-  .debug-stamp {
-    position: fixed;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    pointer-events: none;
-    z-index: 9999;
-  }
-  .debug-stamp span {
-    border: 6px solid #e11d48;
-    color: #e11d48;
-    padding: 18px 26px;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    transform: rotate(-8deg);
-    background: rgba(255, 255, 255, 0.85);
-  }
   .text-shadow-logo {
     text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
   }
