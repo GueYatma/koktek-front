@@ -51,7 +51,7 @@ jobs:
           strip_components: 1
           # strip_components: 1 permet de copier le CONTENU du dossier dist directement à la racine de la cible
 
-      - name: 6. Bascule atomique vers le nouveau site
+      - name: 6. Synchronisation vers le dossier live (rsync)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -62,18 +62,19 @@ jobs:
             set -e
             NEW_DIR="/root/koktek_front/dist_tmp_${{ github.sha }}"
             LIVE_DIR="/root/koktek_front/dist"
-            BACKUP_DIR="/root/koktek_front/dist_prev"
 
             if [ ! -d "${NEW_DIR}" ]; then
               echo "Dossier temporaire introuvable: ${NEW_DIR}"
               exit 1
             fi
 
-            rm -rf "${BACKUP_DIR}"
-            if [ -d "${LIVE_DIR}" ]; then
-              mv "${LIVE_DIR}" "${BACKUP_DIR}"
-            fi
+            # Installer rsync si absent
+            which rsync > /dev/null 2>&1 || apt-get update -qq && apt-get install -y -qq rsync
 
-            mv "${NEW_DIR}" "${LIVE_DIR}"
-            rm -rf "${BACKUP_DIR}"
-            echo "Bascule terminée."
+            # rsync remplace le CONTENU du dossier sans changer l'inode du dossier parent.
+            # C'est essentiel pour les bind mounts Docker : le container Nginx continue
+            # de pointer vers le même dossier et voit immédiatement les nouveaux fichiers.
+            mkdir -p "${LIVE_DIR}"
+            rsync -a --delete "${NEW_DIR}/" "${LIVE_DIR}/"
+            rm -rf "${NEW_DIR}"
+            echo "Synchronisation terminée."
