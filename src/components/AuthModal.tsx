@@ -8,24 +8,18 @@ type AuthModalProps = {
 }
 
 const AuthModal = ({ open, onClose }: AuthModalProps) => {
-  const { login, register } = useAuth()
-  const [isRegister, setIsRegister] = useState(false)
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
 
   useEffect(() => {
     if (!open) {
-      setPassword('')
+      setEmail('')
     }
   }, [open])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (isRegister) {
-      await register(email, password)
-    } else {
-      await login(email, password)
-    }
+    await login(email.trim())
     onClose()
   }
 
@@ -51,10 +45,10 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
-                Bienvenue chez KOKTEK
+                Espace client KOKTEK
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Accedez a vos commandes
+                Accedez a vos commandes avec votre email
               </p>
             </div>
             <button
@@ -102,7 +96,7 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
 
           <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gray-400">
             <span className="h-px flex-1 bg-gray-200" />
-            Ou avec votre email
+            Email sans mot de passe
             <span className="h-px flex-1 bg-gray-200" />
           </div>
 
@@ -120,37 +114,13 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
                 required
               />
             </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                Mot de passe
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
-                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
-                required
-              />
-            </div>
             <button
               type="submit"
               className="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
             >
-              {isRegister ? "S'inscrire" : 'Se connecter'}
+              Acceder a mon espace
             </button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-gray-500">
-            {isRegister ? 'Deja un compte ?' : 'Pas de compte ?'}{' '}
-            <button
-              type="button"
-              onClick={() => setIsRegister((prev) => !prev)}
-              className="font-semibold text-gray-900 transition hover:text-black"
-            >
-              {isRegister ? 'Se connecter' : 'Creer un compte'}
-            </button>
-          </div>
         </div>
       </div>
     </div>

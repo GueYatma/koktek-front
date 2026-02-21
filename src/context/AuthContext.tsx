@@ -11,8 +11,6 @@ export type AuthUser = {
   email: string
   firstName?: string
   lastName?: string
-  birthdate?: string
-  gender?: 'Homme' | 'Femme'
   phone?: string
   addressLine1?: string
   addressLine2?: string
@@ -23,55 +21,70 @@ export type AuthUser = {
 
 type AuthContextValue = {
   user: AuthUser | null
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
+  login: (email: string) => Promise<void>
+  register: (email: string) => Promise<void>
   logout: () => void
   updateProfile: (data: Partial<AuthUser>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+const STORAGE_KEY = 'koktek_customer_profile_v1'
+
+const readStoredUser = (): AuthUser | null => {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    if (typeof parsed.email !== 'string' || !parsed.email.trim()) return null
+    return parsed as AuthUser
+  } catch {
+    return null
+  }
+}
+
+const writeStoredUser = (user: AuthUser | null) => {
+  if (typeof window === 'undefined') return
+  if (!user) {
+    window.localStorage.removeItem(STORAGE_KEY)
+    return
+  }
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser())
 
-  const login = useCallback(async (email: string, _password: string) => {
-    setUser({
-      email,
-      firstName: 'Camille',
-      lastName: 'Durand',
-      birthdate: '1992-04-15',
-      gender: 'Femme',
-      phone: '06 12 34 56 78',
-      addressLine1: '12 Avenue des Champs-Elysees',
-      addressLine2: 'Batiment B',
-      zip: '75008',
-      city: 'Paris',
-      country: 'France',
-    })
+  const login = useCallback(async (email: string) => {
+    const nextUser: AuthUser = { email }
+    setUser(nextUser)
+    writeStoredUser(nextUser)
   }, [])
 
-  const register = useCallback(async (email: string, _password: string) => {
-    setUser({
-      email,
-      firstName: '',
-      lastName: '',
-      birthdate: '',
-      gender: 'Homme',
-      phone: '',
-      addressLine1: '',
-      addressLine2: '',
-      zip: '',
-      city: '',
-      country: 'France',
-    })
+  const register = useCallback(async (email: string) => {
+    const nextUser: AuthUser = { email }
+    setUser(nextUser)
+    writeStoredUser(nextUser)
   }, [])
 
   const logout = useCallback(() => {
     setUser(null)
+    writeStoredUser(null)
   }, [])
 
   const updateProfile = useCallback((data: Partial<AuthUser>) => {
-    setUser((prev) => (prev ? { ...prev, ...data } : prev))
+    setUser((prev) => {
+      if (!prev) {
+        if (!data.email) return prev
+        const nextUser = { email: data.email, ...data }
+        writeStoredUser(nextUser)
+        return nextUser
+      }
+      const nextUser = { ...prev, ...data }
+      writeStoredUser(nextUser)
+      return nextUser
+    })
   }, [])
 
   const value = useMemo(

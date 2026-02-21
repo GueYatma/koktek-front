@@ -10,7 +10,7 @@ type CartDrawerProps = {
 }
 
 const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
-  const { items, total, updateQuantity, removeItem } = useCart()
+  const { items, total, updateQuantity, removeItem, clearCart } = useCart()
   const isCheckoutDisabled = items.length === 0
 
   return (
@@ -133,6 +133,20 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             <span className="font-display text-lg font-bold text-gray-900">
               {formatPrice(total)}
             </span>
+          </div>
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={clearCart}
+              disabled={items.length === 0}
+              className={`text-xs underline underline-offset-4 transition ${
+                items.length === 0
+                  ? 'cursor-not-allowed text-gray-300'
+                  : 'text-gray-400 hover:text-red-500'
+              }`}
+            >
+              Vider mon panier
+            </button>
           </div>
           <Link
             to="/checkout"

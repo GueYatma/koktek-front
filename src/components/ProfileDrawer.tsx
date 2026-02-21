@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { LogOut, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { formatPrice } from '../utils/format'
+import { resolveImageUrl } from '../utils/image'
+import { getOrdersForEmail, type StoredOrder } from '../utils/customerOrders'
+import OrderTicketModal from './OrderTicketModal'
 
 type ProfileDrawerProps = {
   open: boolean
@@ -11,21 +15,19 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
   const { user, updateProfile, logout } = useAuth()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [birthdate, setBirthdate] = useState('')
-  const [gender, setGender] = useState<'Homme' | 'Femme'>('Homme')
   const [phone, setPhone] = useState('')
   const [addressLine1, setAddressLine1] = useState('')
   const [addressLine2, setAddressLine2] = useState('')
   const [zip, setZip] = useState('')
   const [city, setCity] = useState('')
   const [country, setCountry] = useState('France')
+  const [orders, setOrders] = useState<StoredOrder[]>([])
+  const [activeOrder, setActiveOrder] = useState<StoredOrder | null>(null)
 
   useEffect(() => {
     if (!user) return
     setFirstName(user.firstName ?? '')
     setLastName(user.lastName ?? '')
-    setBirthdate(user.birthdate ?? '')
-    setGender(user.gender ?? 'Homme')
     setPhone(user.phone ?? '')
     setAddressLine1(user.addressLine1 ?? '')
     setAddressLine2(user.addressLine2 ?? '')
@@ -34,12 +36,18 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
     setCountry(user.country ?? 'France')
   }, [user, open])
 
+  useEffect(() => {
+    if (!user?.email || !open) {
+      setOrders([])
+      return
+    }
+    setOrders(getOrdersForEmail(user.email))
+  }, [user, open])
+
   const handleSave = () => {
     updateProfile({
       firstName,
       lastName,
-      birthdate,
-      gender,
       phone,
       addressLine1,
       addressLine2,
@@ -49,9 +57,14 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
     })
   }
 
+  const handleClose = () => {
+    setActiveOrder(null)
+    onClose()
+  }
+
   const handleLogout = () => {
     logout()
-    onClose()
+    handleClose()
   }
 
   return (
@@ -65,7 +78,7 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
         className={`absolute inset-0 bg-black/50 transition-opacity ${
           open ? 'opacity-100' : 'opacity-0'
         }`}
-        onClick={onClose}
+        onClick={handleClose}
       />
       <aside
         role="dialog"
@@ -86,7 +99,7 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
             aria-label="Fermer"
           >
@@ -126,46 +139,67 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                    Date de naissance
-                  </label>
-                  <input
-                    type="date"
-                    value={birthdate}
-                    onChange={(event) => setBirthdate(event.target.value)}
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-gray-900 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                    Genre
-                  </label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {(['Homme', 'Femme'] as const).map((option) => (
-                      <label
-                        key={option}
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition ${
-                          gender === option
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-200 bg-white text-gray-700'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="gender"
-                          value={option}
-                          checked={gender === option}
-                          onChange={() => setGender(option)}
-                          className="hidden"
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
-                </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
+                  Mes commandes
+                </p>
+                <p className="mt-2 text-sm text-gray-500">
+                  Vos bons de commande sont conserves ici.
+                </p>
               </div>
+              {orders.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
+                  Aucune commande enregistree pour le moment.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {orders.map((order) => (
+                    <button
+                      key={order.id}
+                      type="button"
+                      onClick={() => setActiveOrder(order)}
+                      className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-gray-300 hover:shadow-md"
+                      aria-label={`Ouvrir le bon de commande ${order.orderNumber}`}
+                    >
+                      <div className="flex gap-3">
+                        {order.imageUrl ? (
+                          <img
+                            src={resolveImageUrl(order.imageUrl)}
+                            alt={order.productName}
+                            className="h-16 w-16 rounded-xl object-contain bg-gray-50"
+                          />
+                        ) : null}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-gray-400">
+                            Bon de commande
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {order.orderNumber}
+                          </p>
+                          <p className="mt-1 text-sm text-gray-600">
+                            {order.productName}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {order.variantName || 'Modele'} :{' '}
+                            <span className="font-semibold text-gray-900">
+                              {order.variantValue || '—'}
+                            </span>
+                          </p>
+                          <div className="mt-3 flex items-center justify-between text-sm">
+                            <span className="text-gray-400">Total</span>
+                            <span className="font-semibold text-gray-900">
+                              {formatPrice(order.total)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -250,6 +284,15 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
                 </select>
               </div>
             </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
+                Retours
+              </p>
+              <p className="text-sm text-gray-500">
+                Suivez vos retours et reclamations directement depuis cet espace.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -271,6 +314,23 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
           </button>
         </div>
       </aside>
+
+      <OrderTicketModal
+        open={Boolean(activeOrder)}
+        onClose={() => setActiveOrder(null)}
+        orderNumber={activeOrder?.orderNumber ?? ''}
+        productName={activeOrder?.productName ?? 'Commande Koktek'}
+        variantName={activeOrder?.variantName ?? null}
+        variantValue={activeOrder?.variantValue ?? null}
+        imageUrl={activeOrder?.imageUrl ?? null}
+        customerName={
+          activeOrder?.customerName ||
+          [firstName, lastName].filter(Boolean).join(' ') ||
+          user?.email ||
+          null
+        }
+        total={activeOrder?.total ?? 0}
+      />
     </div>
   )
 }

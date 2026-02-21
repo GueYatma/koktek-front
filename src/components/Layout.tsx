@@ -140,7 +140,7 @@ const Layout = () => {
                 className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
               >
                 <User className="h-4 w-4" />
-                <span>Mon Profil</span>
+                <span>Espace client</span>
               </button>
             ) : (
               <button
@@ -149,7 +149,7 @@ const Layout = () => {
                 className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
               >
                 <User className="h-4 w-4" />
-                <span>Se connecter</span>
+                <span>Espace client</span>
               </button>
             )}
           </div>

@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import CatalogPage from './pages/CatalogPage'
 import ProductPage from './pages/ProductPage'
 import CheckoutPage from './pages/CheckoutPage'
+import VendorValidationPage from './pages/VendorValidationPage'
 
 const App = () => {
   return (
@@ -16,6 +17,10 @@ const App = () => {
             <Route path="/catalogue" element={<CatalogPage />} />
             <Route path="/produit/:slug" element={<ProductPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route
+              path="/validation-vendeur"
+              element={<VendorValidationPage />}
+            />
             <Route
               path="*"
               element={
