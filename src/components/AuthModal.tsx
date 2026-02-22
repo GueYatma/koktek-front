@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Facebook, Instagram, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -11,16 +11,15 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
 
-  useEffect(() => {
-    if (!open) {
-      setEmail('')
-    }
-  }, [open])
+  const handleClose = () => {
+    setEmail('')
+    onClose()
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     await login(email.trim())
-    onClose()
+    handleClose()
   }
 
   return (
@@ -34,7 +33,7 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
         className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity ${
           open ? 'opacity-100' : 'opacity-0'
         }`}
-        onClick={onClose}
+        onClick={handleClose}
       />
       <div className="relative flex min-h-screen items-center justify-center px-4 py-8">
         <div
@@ -53,7 +52,7 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
               aria-label="Fermer"
             >

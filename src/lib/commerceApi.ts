@@ -1,4 +1,4 @@
-import { createDirectus, readItem, rest, staticToken } from '@directus/sdk'
+import { createDirectus, readItem, readItems, rest, staticToken } from '@directus/sdk'
 import { DIRECTUS_BASE_URL } from '../utils/directus'
 
 const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
@@ -106,6 +106,14 @@ export type OrderDeliveryRecord = {
   delivered_at?: string | null
   created_at?: string
   updated_at?: string
+}
+
+export type VariantCostRecord = {
+  id: string
+  product_id?: string | null
+  sku?: string | null
+  price?: number | null
+  cost_price?: number | null
 }
 
 export type OrderBillingRecord = {
@@ -395,6 +403,79 @@ export const getOrderItemsByOrderId = async (
   }
   const payload = await requestDirectus<DirectusListResponse<OrderItemRecord>>(
     `/items/order_items`,
+    { params },
+  )
+  return payload.data
+}
+
+export const getOrdersForHistory = async (input?: {
+  limit?: number
+}): Promise<OrderRecord[]> => {
+  const result = await directusClient.request(
+    readItems('orders', {
+      sort: ['-created_at'],
+      limit: input?.limit ?? 200,
+      fields: [
+        'id',
+        'order_number',
+        'status',
+        'payment_status',
+        'currency',
+        'subtotal',
+        'total',
+        'total_price',
+        'shipping_price',
+        'item_count',
+        'created_at',
+      ],
+    }),
+  )
+  return result as OrderRecord[]
+}
+
+export const getOrderItemsByOrderIds = async (
+  orderIds: string[],
+): Promise<OrderItemRecord[]> => {
+  const uniqueIds = Array.from(new Set(orderIds.filter(Boolean)))
+  if (uniqueIds.length === 0) return []
+  const params: Record<string, string> = {
+    'filter[order_id][_in]': uniqueIds.join(','),
+    fields: 'id,order_id,product_id,variant_id,quantity,unit_price,line_total,currency',
+  }
+  const payload = await requestDirectus<DirectusListResponse<OrderItemRecord>>(
+    `/items/order_items`,
+    { params },
+  )
+  return payload.data
+}
+
+export const getOrderDeliveriesByOrderIds = async (
+  orderIds: string[],
+): Promise<OrderDeliveryRecord[]> => {
+  const uniqueIds = Array.from(new Set(orderIds.filter(Boolean)))
+  if (uniqueIds.length === 0) return []
+  const params: Record<string, string> = {
+    'filter[order_id][_in]': uniqueIds.join(','),
+    fields:
+      'id,order_id,status,delivery_method,carrier,tracking_number,shipped_at,delivered_at',
+  }
+  const payload = await requestDirectus<
+    DirectusListResponse<OrderDeliveryRecord>
+  >(`/items/order_delivery`, { params })
+  return payload.data
+}
+
+export const getVariantsByIds = async (
+  variantIds: string[],
+): Promise<VariantCostRecord[]> => {
+  const uniqueIds = Array.from(new Set(variantIds.filter(Boolean)))
+  if (uniqueIds.length === 0) return []
+  const params: Record<string, string> = {
+    'filter[id][_in]': uniqueIds.join(','),
+    fields: 'id,product_id,sku,price,cost_price',
+  }
+  const payload = await requestDirectus<DirectusListResponse<VariantCostRecord>>(
+    `/items/product_variants`,
     { params },
   )
   return payload.data

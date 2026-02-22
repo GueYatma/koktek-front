@@ -7,6 +7,8 @@ import CatalogPage from './pages/CatalogPage'
 import ProductPage from './pages/ProductPage'
 import CheckoutPage from './pages/CheckoutPage'
 import VendorValidationPage from './pages/VendorValidationPage'
+import SalesHistoryPage from './pages/SalesHistoryPage'
+import AccountingPage from './pages/AccountingPage'
 
 const App = () => {
   return (
@@ -36,6 +38,14 @@ const App = () => {
           <Route
             path="/validation-vendeur"
             element={<VendorValidationPage />}
+          />
+          <Route
+            path="/admin/historique"
+            element={<SalesHistoryPage />}
+          />
+          <Route
+            path="/admin/comptabilite"
+            element={<AccountingPage />}
           />
         </Route>
       </Routes>

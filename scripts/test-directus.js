@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 
 const DIRECTUS_URL =
   process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_BASE_URL || 'https://directus.koktek.com'

@@ -66,6 +66,17 @@
       opacity: 1;
     }
   }
+  @keyframes toast-cube-out {
+    0% {
+      transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(18px, 18px, 0) rotateX(6deg) rotateY(-4deg)
+        scale(0.94);
+      opacity: 0;
+    }
+  }
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

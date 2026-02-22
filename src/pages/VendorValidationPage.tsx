@@ -273,7 +273,7 @@ const VendorValidationPage = () => {
           const summaries = await fetchProductSummaries(itemIds); // Cherche la nomenclature
           if (isActive) setProductMap(summaries); // Met à jour state
         } // Fin if
-      } catch (fetchError) {
+      } catch {
         // Gestion globale crash
         if (isActive) setError("Impossible de charger la commande."); // UI Erreur
       } finally {

@@ -73,6 +73,7 @@ const ProductPage = () => {
     () => (slug ? getProductBySlug(slug) : undefined),
     [getProductBySlug, slug],
   )
+  const productId = product?.id
 
   const [variants, setVariants] = useState<VariantWithImage[]>([])
   const [selectedVariant, setSelectedVariant] =
@@ -83,7 +84,7 @@ const ProductPage = () => {
     let isActive = true
 
     const loadVariants = async () => {
-      if (!product) {
+      if (!productId) {
         if (isActive) {
           setVariants([])
           setSelectedVariant(null)
@@ -91,7 +92,7 @@ const ProductPage = () => {
         return
       }
 
-      const loadedVariants = await getVariantsByProductId(product.id)
+      const loadedVariants = await getVariantsByProductId(productId)
       if (!isActive) return
       setVariants(loadedVariants)
       setSelectedVariant(loadedVariants[0] ?? null)
@@ -102,7 +103,7 @@ const ProductPage = () => {
     return () => {
       isActive = false
     }
-  }, [getVariantsByProductId, product?.id])
+  }, [getVariantsByProductId, productId])
 
   const images = useMemo(() => {
     if (!product) return []
@@ -117,23 +118,6 @@ const ProductPage = () => {
       .filter((image) => image.length > 0)
   }, [product])
 
-  useEffect(() => {
-    if (images.length > 0) {
-      setSelectedImage(images[0]!)
-    } else {
-      setSelectedImage('')
-    }
-  }, [images])
-
-  useEffect(() => {
-    const variantImageRaw = selectedVariant?.image_url ?? ''
-    if (variantImageRaw.trim().length === 0) return
-    const resolvedVariantImage = resolveImageUrl(variantImageRaw, '')
-    if (resolvedVariantImage) {
-      setSelectedImage(resolvedVariantImage)
-    }
-  }, [selectedVariant])
-
   const fallbackImage =
     images[0] || resolveImageUrl(product?.image_url ?? '')
   const variantImageRaw = selectedVariant?.image_url ?? ''
@@ -141,7 +125,10 @@ const ProductPage = () => {
     variantImageRaw.trim().length > 0
       ? resolveImageUrl(variantImageRaw, '')
       : ''
-  const displayImage = selectedImage || variantImage || fallbackImage
+  const safeSelectedImage = images.includes(selectedImage)
+    ? selectedImage
+    : ''
+  const displayImage = safeSelectedImage || variantImage || fallbackImage
 
   const variantPrice = Number(selectedVariant?.price)
   const displayPrice =

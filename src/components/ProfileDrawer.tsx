@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react'
 import { LogOut, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'

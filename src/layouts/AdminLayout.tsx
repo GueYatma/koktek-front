@@ -1,9 +1,6 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 
 const AdminLayout = () => {
-  const location = useLocation()
-  const isActiveScanner = location.pathname.startsWith('/validation-vendeur')
-
   const baseLinkClass =
     'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition'
   const activeClass = 'bg-gray-900 text-white shadow-[0_8px_24px_-12px_rgba(0,0,0,0.4)]'
@@ -25,24 +22,28 @@ const AdminLayout = () => {
           <nav className="mt-10 space-y-3">
             <NavLink
               to="/validation-vendeur"
-              className={`${baseLinkClass} ${
-                isActiveScanner ? activeClass : idleClass
-              }`}
+              className={({ isActive }) =>
+                `${baseLinkClass} ${isActive ? activeClass : idleClass}`
+              }
             >
-              Scanner / Validation Rapide
+              Validation Rapide
             </NavLink>
-            <button
-              type="button"
-              className={`${baseLinkClass} ${idleClass}`}
+            <NavLink
+              to="/admin/historique"
+              className={({ isActive }) =>
+                `${baseLinkClass} ${isActive ? activeClass : idleClass}`
+              }
             >
               Historique des Ventes
-            </button>
-            <button
-              type="button"
-              className={`${baseLinkClass} ${idleClass}`}
+            </NavLink>
+            <NavLink
+              to="/admin/comptabilite"
+              className={({ isActive }) =>
+                `${baseLinkClass} ${isActive ? activeClass : idleClass}`
+              }
             >
               Comptabilité & Marges
-            </button>
+            </NavLink>
           </nav>
         </aside>
 

@@ -30,21 +30,20 @@ const Layout = () => {
       : buildMessage
     : 'Nouveau build déployé'
   const shouldShowBuildToast = Boolean(buildLabel)
-  const [isBuildToastVisible, setIsBuildToastVisible] = useState(false)
-
-  useEffect(() => {
-    if (!shouldShowBuildToast) return
-    if (typeof window === 'undefined') return
+  const [isBuildToastVisible, setIsBuildToastVisible] = useState(() => {
+    if (!shouldShowBuildToast) return false
+    if (typeof window === 'undefined') return false
     const storageKey = 'koktek:last_build_seen'
     const lastSeen = window.localStorage.getItem(storageKey)
-    if (lastSeen === buildLabel) return
+    return lastSeen !== buildLabel
+  })
+
+  useEffect(() => {
+    if (!shouldShowBuildToast || !isBuildToastVisible) return
+    if (typeof window === 'undefined') return
+    const storageKey = 'koktek:last_build_seen'
     window.localStorage.setItem(storageKey, buildLabel)
-    setIsBuildToastVisible(true)
-    const timer = window.setTimeout(() => {
-      setIsBuildToastVisible(false)
-    }, 12000)
-    return () => window.clearTimeout(timer)
-  }, [shouldShowBuildToast, buildLabel, buildDateLabel, buildMessage])
+  }, [shouldShowBuildToast, isBuildToastVisible, buildLabel])
 
   const { itemCount } = useCart()
   const { isContactOpen, openContact, closeContact } = useUI()
@@ -208,7 +207,14 @@ const Layout = () => {
       <main>
         {isBuildToastVisible && (
           <div className="pointer-events-none fixed bottom-6 right-6 z-50 h-56 w-56">
-            <div className="toast-cube pointer-events-auto relative h-full w-full animate-[toast-cube-in_0.55s_ease-out] rounded-[28px] border border-gray-200 bg-white/95 shadow-[0_22px_50px_-18px_rgba(0,0,0,0.45)] backdrop-blur">
+            <div
+              className="toast-cube pointer-events-auto relative h-full w-full animate-[toast-cube-in_0.55s_ease-out,toast-cube-out_0.45s_ease-in_11.5s_forwards] rounded-[28px] border border-gray-200 bg-white/95 shadow-[0_22px_50px_-18px_rgba(0,0,0,0.45)] backdrop-blur"
+              onAnimationEnd={(event) => {
+                if (event.animationName === 'toast-cube-out') {
+                  setIsBuildToastVisible(false)
+                }
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setIsBuildToastVisible(false)}
