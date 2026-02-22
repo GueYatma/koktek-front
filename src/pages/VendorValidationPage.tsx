@@ -288,12 +288,12 @@ const VendorValidationPage = () => {
 
     const playScanBeep = () => {
       try {
-        const AudioContext =
+        const AudioCtx =
           window.AudioContext ||
-          (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+          (window as typeof window & { webkitAudioContext?: typeof window.AudioContext })
             .webkitAudioContext
-        if (!AudioContext) return
-        const ctx = new AudioContext()
+        if (!AudioCtx) return
+        const ctx = new AudioCtx()
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
         osc.type = 'sine'
@@ -343,7 +343,7 @@ const VendorValidationPage = () => {
             .stop()
             .catch(() => null)
             .finally(() => {
-              scanner.clear().catch(() => null)
+              scanner.clear()
             })
           scannerRef.current = null
           setIsScannerOpen(false)
@@ -373,7 +373,7 @@ const VendorValidationPage = () => {
           .stop()
           .catch(() => null)
           .finally(() => {
-            scannerRef.current?.clear().catch(() => null)
+            scannerRef.current?.clear()
             scannerRef.current = null
           })
       }
