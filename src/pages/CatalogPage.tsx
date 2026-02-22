@@ -1,33 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import { useProducts } from "../hooks/useProducts";
+import { getAllCategories, getCatalogProducts } from "../lib/directusApi";
 import type { Category, Product } from "../types";
-
-// 🚨 TEMPORAIRE : Configuration "En Dur" pour débloquer l'affichage
-const FIXED_CATEGORIES: Category[] = [
-  {
-    id: "1",
-    name: "Coques & Protections",
-    slug: "coques-protections",
-    image_url: "",
-  },
-  { id: "2", name: "Charge & Énergie", slug: "charge-energie", image_url: "" },
-  { id: "3", name: "Audio & Son", slug: "audio-son", image_url: "" },
-  {
-    id: "4",
-    name: "Supports & Fixations",
-    slug: "supports-fixations",
-    image_url: "",
-  },
-  {
-    id: "5",
-    name: "Décoration & Goodies",
-    slug: "decoration-goodies",
-    image_url: "",
-  },
-  { id: "6", name: "Autres", slug: "autres", image_url: "" },
-];
 
 const GENERIC_BRAND = "Générique";
 const BRAND_FILTERS = [
@@ -53,45 +28,10 @@ const normalizeKey = (value: string) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-const CATEGORY_ID_BY_KEY = new Map<string, string>([
-  [normalizeKey("Coques & Protections"), "3e40840a-5111-44ef-b264-a75b836b9138"],
-  [normalizeKey("coques-protections"), "3e40840a-5111-44ef-b264-a75b836b9138"],
-  [normalizeKey("Charge & Énergie"), "81c1a551-4ce4-40f7-a096-e85fc9f74a71"],
-  [normalizeKey("charge-energie"), "81c1a551-4ce4-40f7-a096-e85fc9f74a71"],
-  [normalizeKey("Audio & Son"), "64900192-a354-41c1-8f35-a1d13299352e"],
-  [normalizeKey("audio-son"), "64900192-a354-41c1-8f35-a1d13299352e"],
-  [normalizeKey("Supports & Fixations"), "46484275-e161-4bef-8a71-f67d51cb639f"],
-  [normalizeKey("supports-fixations"), "46484275-e161-4bef-8a71-f67d51cb639f"],
-  [normalizeKey("Décoration & Goodies"), "2070f06d-c3e0-4253-947d-374f8f46368a"],
-  [normalizeKey("decoration-goodies"), "2070f06d-c3e0-4253-947d-374f8f46368a"],
-  [normalizeKey("Autres"), "7167a98a-60dd-4f78-9a56-e206813d4a3c"],
-  [normalizeKey("autres"), "7167a98a-60dd-4f78-9a56-e206813d4a3c"],
-]);
-
-const CATEGORY_NAME_BY_ID = new Map<string, string>([
-  ["3e40840a-5111-44ef-b264-a75b836b9138", "Coques & Protections"],
-  ["81c1a551-4ce4-40f7-a096-e85fc9f74a71", "Charge & Énergie"],
-  ["64900192-a354-41c1-8f35-a1d13299352e", "Audio & Son"],
-  ["46484275-e161-4bef-8a71-f67d51cb639f", "Supports & Fixations"],
-  ["2070f06d-c3e0-4253-947d-374f8f46368a", "Décoration & Goodies"],
-  ["7167a98a-60dd-4f78-9a56-e206813d4a3c", "Autres"],
-]);
-
-const getProductCategoryId = (product: Product): string => {
-  const productRecord = product as Record<string, unknown>;
-  const rawCategory =
-    productRecord.categories_id ?? product.category_id ?? productRecord.category_id;
-  if (rawCategory && typeof rawCategory === "object") {
-    if ("id" in (rawCategory as { id?: unknown })) {
-      return String((rawCategory as { id?: unknown }).id ?? "");
-    }
-  }
-  if (rawCategory) return String(rawCategory);
-  return "";
-};
-
 const CatalogPage = () => {
-  const { products, loading } = useProducts();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // État du filtre
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -117,30 +57,39 @@ const CatalogPage = () => {
     return "";
   };
 
-  const resolveCategorySelection = useCallback((value: string | null) => {
-    if (!value) return "all";
-    const normalized = normalizeKey(value);
-    return CATEGORY_ID_BY_KEY.get(normalized) ?? "all";
+  const resolveCategorySelection = useCallback(
+    (value: string | null) => {
+      if (!value) return "all";
+      const normalized = normalizeKey(value);
+      const match = categories.find((category) => {
+        const key = normalizeKey(category.slug || category.name);
+        return key === normalized || category.id === value;
+      });
+      return match?.id ?? "all";
+    },
+    [categories],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadCategories = async () => {
+      try {
+        const payload = await getAllCategories();
+        if (!isMounted) return;
+        setCategories(payload);
+      } catch (error) {
+        console.error("Erreur lors du chargement des catégories", error);
+        if (!isMounted) return;
+        setCategories([]);
+      }
+    };
+
+    void loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
-
-  // --- FILTRAGE ---
-  const filteredProducts = useMemo(() => {
-    let nextProducts = products;
-
-    // Filtre par Catégorie
-    if (selectedCategory !== "all") {
-      nextProducts = nextProducts.filter(
-        (product) => getProductCategoryId(product) === selectedCategory,
-      );
-    }
-
-    // Filtre par Marque
-    if (selectedBrand !== "all") {
-      nextProducts = nextProducts.filter((p) => p.brand === selectedBrand);
-    }
-
-    return nextProducts;
-  }, [products, selectedCategory, selectedBrand]);
 
   // Sync URL -> State
   useEffect(() => {
@@ -161,6 +110,46 @@ const CatalogPage = () => {
       setSelectedCategory("all");
     }
   }, [searchParams, resolveCategorySelection]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const payload = await getCatalogProducts({
+          categoryId:
+            selectedCategory === "all" ? undefined : selectedCategory,
+          brand: selectedBrand === "all" ? undefined : selectedBrand,
+          limit: 50,
+          categories,
+        });
+        if (!isMounted) return;
+        setProducts(payload.products);
+        if (payload.categories.length > 0 && categories.length === 0) {
+          setCategories(payload.categories);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement du catalogue", error);
+        if (!isMounted) return;
+        setProducts([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    void loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCategory, selectedBrand, categories]);
+
+  const categoryNameById = useMemo(
+    () =>
+      new Map(categories.map((category) => [String(category.id), category.name])),
+    [categories],
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6 sm:pt-8">
@@ -195,16 +184,13 @@ const CatalogPage = () => {
             >
               Toutes
             </button>
-            {FIXED_CATEGORIES.map((category) => {
-              const categoryKey = normalizeKey(category.slug || category.name);
-              const categoryId = CATEGORY_ID_BY_KEY.get(categoryKey);
-              const isActive =
-                categoryId !== undefined && selectedCategory === categoryId;
+            {categories.map((category) => {
+              const isActive = selectedCategory === category.id;
               return (
                 <button
                   key={category.id}
                   onClick={() => {
-                    setSelectedCategory(categoryId ?? "all");
+                    setSelectedCategory(category.id);
                     setSelectedBrand("all");
                   }}
                   className={`pb-2 text-sm font-semibold transition ${
@@ -264,9 +250,9 @@ const CatalogPage = () => {
           <p className="text-center text-sm text-gray-500">Chargement...</p>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
-            {filteredProducts.map((product) => {
+            {products.map((product) => {
               const categoryLabel =
-                CATEGORY_NAME_BY_ID.get(getProductCategoryId(product)) ||
+                categoryNameById.get(String(product.category_id ?? "")) ||
                 getCategoryString(product.categories) ||
                 undefined;
               return (
@@ -279,7 +265,7 @@ const CatalogPage = () => {
             })}
           </div>
         )}
-        {!loading && filteredProducts.length === 0 && (
+        {!loading && products.length === 0 && (
           <p className="text-center mt-6 text-sm text-gray-500">
             Aucun produit trouvé.
           </p>

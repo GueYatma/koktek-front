@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import Layout from './components/Layout'
+import AdminLayout from './layouts/AdminLayout'
 import HomePage from './pages/HomePage'
 import CatalogPage from './pages/CatalogPage'
 import ProductPage from './pages/ProductPage'
@@ -14,17 +15,13 @@ const App = () => {
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/catalogue" element={<CatalogPage />} />
-            <Route path="/produit/:slug" element={<ProductPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route
-              path="/validation-vendeur"
-              element={<VendorValidationPage />}
-            />
-            <Route
-              path="*"
-              element={
-                <div className="mx-auto max-w-4xl px-4 py-16 text-center">
+          <Route path="/catalogue" element={<CatalogPage />} />
+          <Route path="/produit/:slug" element={<ProductPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route
+            path="*"
+            element={
+              <div className="mx-auto max-w-4xl px-4 py-16 text-center">
                   <p className="text-sm uppercase tracking-[0.3em] text-gray-500">
                     404
                   </p>
@@ -32,12 +29,18 @@ const App = () => {
                     Page introuvable
                   </h1>
                 </div>
-              }
-            />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </CartProvider>
+            }
+          />
+        </Route>
+        <Route element={<AdminLayout />}>
+          <Route
+            path="/validation-vendeur"
+            element={<VendorValidationPage />}
+          />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  </CartProvider>
   )
 }
 

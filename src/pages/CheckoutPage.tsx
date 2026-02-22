@@ -7,6 +7,8 @@ import { resolveImageUrl } from '../utils/image'
 import { saveOrderForEmail } from '../utils/customerOrders'
 import OrderTicketModal from '../components/OrderTicketModal'
 import {
+  addCartItem,
+  createCart,
   createCustomer,
   createOrder,
   createOrderBilling,
@@ -16,8 +18,9 @@ import {
   markOrderPaid,
 } from '../lib/commerceApi'
 
-const N8N_WEBHOOK_URL =
-  'https://n8n.srv747988.hstgr.cloud/webhook/koktek-paiement-especes'
+const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL as
+  | string
+  | undefined
 
 type CheckoutStep = 'form' | 'payment' | 'success'
 type PaymentView = 'choice' | 'card'
@@ -51,7 +54,7 @@ type BillingFormState = {
 }
 
 const CheckoutPage = () => {
-  const { items, total, itemCount, clearCart, cartId } = useCart()
+  const { items, total, itemCount, clearCart, cartId, setCartId } = useCart()
   const { user, login, updateProfile } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPayingCash, setIsPayingCash] = useState(false)
@@ -167,8 +170,26 @@ const CheckoutPage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          // Webhook n8n: envoi de l'ID de commande pour déclencher le process externe.
-          body: JSON.stringify({ order_id: orderId }),
+          // Webhook n8n: envoi des informations complètes de commande
+          body: JSON.stringify({
+            order_id: orderId,
+            order_number: orderNumber ?? orderId,
+            total_amount: total,
+            backoffice_url: `${window.location.origin}/validation-vendeur?order=${orderNumber ?? orderId}`,
+            customer: {
+              name: ticketCustomerName,
+              email: customerSnapshot?.email || delivery.email.trim(),
+              phone: customerSnapshot?.phone || delivery.phone.trim(),
+            },
+            items: items.map((item) => ({
+              product_title: item.product.title,
+              variant_name: item.variant.option1_name,
+              variant_value: item.variant.option1_value,
+              quantity: item.quantity,
+              unit_price: item.variant.price,
+              image: resolveImageUrl(item.product.image_url)
+            }))
+          }),
         }).catch((webhookError) => {
           console.error('Erreur webhook n8n', webhookError)
         })
@@ -206,12 +227,6 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true)
     setError(null)
-
-    if (!cartId) {
-      setError('Panier introuvable ou expiré')
-      setIsSubmitting(false)
-      return
-    }
 
     try {
       // Étape 1: récupération/création du customer AVANT la commande.
@@ -252,9 +267,76 @@ const CheckoutPage = () => {
         throw customerError
       }
 
-      // Étape 2: création de la commande (status pending_payment) avec customer_id.
+      // Étape 2: création du cart Directus uniquement au checkout.
+      let resolvedCartId = cartId
+      if (!resolvedCartId) {
+        try {
+          const cart = await createCart({
+            status: 'open',
+            currency: 'EUR',
+            customer_id: customerId,
+          })
+          resolvedCartId = cart.id
+          setCartId(cart.id)
+
+          await Promise.all(
+            items.map((item) =>
+              addCartItem({
+                cart_id: cart.id,
+                product_id: item.product.id,
+                variant_id: item.variant?.id ?? null,
+                quantity: item.quantity,
+                unit_price: item.variant.price,
+                currency: 'EUR',
+              }),
+            ),
+          )
+        } catch (cartError) {
+          console.error('Erreur création panier', cartError)
+          throw cartError
+        }
+      }
+
+      // Étape 3: préparation des données de relation (création séquentielle).
+      const orderItems = items.map((item) => ({
+        product_id: item.product.id,
+        variant_id: item.variant?.id ?? null,
+        quantity: item.quantity,
+        unit_price: item.variant.price,
+        line_total: item.variant.price * item.quantity,
+        currency: 'EUR',
+      }))
+      const orderDelivery = {
+        status: 'pending',
+        recipient_name: deliveryFullName,
+        email: delivery.email.trim(),
+        phone: delivery.phone.trim() || null,
+        address_line1: delivery.address_line1.trim(),
+        address_line2: delivery.address_line2.trim() || null,
+        postal_code: delivery.postal_code.trim(),
+        city: delivery.city.trim(),
+        region: delivery.region.trim() || null,
+        country: delivery.country.trim(),
+      }
+      const orderBilling = billingDifferent
+        ? {
+            billing_name: billingFullName,
+            company_name: billing.company_name.trim() || null,
+            tax_id: billing.tax_id.trim() || null,
+            email: billing.email.trim(),
+            phone: billing.phone.trim() || null,
+            address_line1: billing.address_line1.trim(),
+            address_line2: billing.address_line2.trim() || null,
+            postal_code: billing.postal_code.trim(),
+            city: billing.city.trim(),
+            region: billing.region.trim() || null,
+            country: billing.country.trim(),
+          }
+        : undefined
+
+      // Étape 4: création de la commande (sans relations imbriquées).
       const order = await createOrder({
-        cart_id: cartId,
+        cart_id: resolvedCartId,
         customer_id: customerId,
         status: 'pending_payment',
         currency: 'EUR',
@@ -266,53 +348,29 @@ const CheckoutPage = () => {
         item_count: itemCount,
       })
 
-      // Étape 3: création des lignes de commande à partir du panier.
+      // Étape 5: création des lignes de commande.
       await createOrderItems(
-        items.map((item) => ({
+        orderItems.map((item) => ({
+          ...item,
           order_id: order.id,
-          product_id: item.product.id,
-          variant_id: item.variant.id,
-          quantity: item.quantity,
-          unit_price: item.variant.price,
-          line_total: item.variant.price * item.quantity,
-          currency: 'EUR',
         })),
       )
 
-      // Étape 4: création de la livraison.
+      // Étape 6: création de la livraison.
       await createOrderDelivery({
         order_id: order.id,
-        status: 'pending',
-        recipient_name: deliveryFullName,
-        email: delivery.email.trim(),
-        phone: delivery.phone.trim() || null,
-        address_line1: delivery.address_line1.trim(),
-        address_line2: delivery.address_line2.trim() || null,
-        postal_code: delivery.postal_code.trim(),
-        city: delivery.city.trim(),
-        region: delivery.region.trim() || null,
-        country: delivery.country.trim(),
+        ...orderDelivery,
       })
 
-      // Étape 5: création de la facturation uniquement si différente.
-      if (billingDifferent) {
+      // Étape 7: création de la facturation uniquement si différente.
+      if (orderBilling) {
         await createOrderBilling({
           order_id: order.id,
-          billing_name: billingFullName,
-          company_name: billing.company_name.trim() || null,
-          tax_id: billing.tax_id.trim() || null,
-          email: billing.email.trim(),
-          phone: billing.phone.trim() || null,
-          address_line1: billing.address_line1.trim(),
-          address_line2: billing.address_line2.trim() || null,
-          postal_code: billing.postal_code.trim(),
-          city: billing.city.trim(),
-          region: billing.region.trim() || null,
-          country: billing.country.trim(),
+          ...orderBilling,
         })
       }
 
-      // Étape 7: passage à l'étape de paiement.
+      // Étape 8: passage à l'étape de paiement.
       setOrderId(order.id)
       setOrderNumber(order.order_number ?? null)
       setPaymentView('choice')

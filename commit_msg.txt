@@ -1,0 +1,16 @@
+feat(checkout,api): Résolution intégrale de la chaîne de paiement (Erreur 500) et intégration Webhook N8N
+
+🎯 Victoires majeures du jour :
+1. Correction PostgreSQL/Directus (Erreur 500) :
+   - Suppression des alias fantômes `order_items` et `order_delivery` dans l'instance Directus qui faisaient crasher la réponse REST avec un HTTP 204/500 après les `POST`.
+   - Refactorisation de `createOrder` pour insérer la commande principale.
+   
+2. Réparation de l'intégration N8N (Paiement Espèces) :
+   - Le Webhook envoie désormais la totalité des informations au lieu du simple `order_id` (Détail de la commande, Nom client, Listes des articles avec images).
+   - Ajout d'une URL dynamique `backoffice_url` (`/validation-vendeur`) paramétrée avec l'environnement React (localhost/production) pour être interceptée par Telegram.
+
+3. Refactoring Back-Office & Performance :
+   - `VendorValidationPage` : Nouvelle méthode séquentielle pour récupérer les `order_items`.
+   - `CatalogPage` : Le fetch initial du catalogue utilise une limite et un filtrage propre (plus de UUIDs en dur).
+   - `CartContext` : Nettoyage pour empêcher la création de "paniers fantômes" agressifs en BDD.
+   - Préparation des fondations de `AdminLayout.jsx` pour la future comptabilité.

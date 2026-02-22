@@ -91,8 +91,12 @@ const fetchDirectusItems = async <T>(
   params: Record<string, string> = {},
 ): Promise<T[]> => {
   const endpoint = new URL(`/items/${collection}`, DIRECTUS_BASE_URL);
-  endpoint.searchParams.set("limit", "-1");
-  endpoint.searchParams.set("fields", "*");
+  if (!("limit" in params)) {
+    endpoint.searchParams.set("limit", "-1");
+  }
+  if (!("fields" in params)) {
+    endpoint.searchParams.set("fields", "*");
+  }
   Object.entries(params).forEach(([key, value]) => {
     endpoint.searchParams.set(key, value);
   });
@@ -239,6 +243,111 @@ const mapProduct = (
   };
 };
 
+const fetchCategoriesRaw = async (): Promise<Record<string, unknown>[]> => {
+  try {
+    const rows = await fetchDirectusItems<Record<string, unknown>>(
+      "categories",
+    );
+    if (rows.length > 0) return rows;
+  } catch (error) {
+    console.error("Directus categories error", error);
+  }
+  try {
+    const rows = await fetchDirectusItems<Record<string, unknown>>(
+      "Categories",
+    );
+    return rows;
+  } catch (error) {
+    console.error("Directus Categories error", error);
+    return [];
+  }
+};
+
+export const getAllCategories = async (): Promise<Category[]> => {
+  const rows = await fetchCategoriesRaw();
+  return rows
+    .map(mapCategory)
+    .filter((category) => category.id && category.name);
+};
+
+export const getCatalogProducts = async (input: {
+  categoryId?: string;
+  brand?: string;
+  limit?: number;
+  categories?: Category[];
+}): Promise<{
+  products: Product[];
+  categories: Category[];
+  variants: Variant[];
+}> => {
+  const limitValue = input.limit ?? 50;
+  const params: Record<string, string> = {
+    limit: String(limitValue),
+    fields: "*",
+  };
+
+  let andIndex = 0;
+  const addOrFilter = (fields: string[], value: string) => {
+    fields.forEach((field, index) => {
+      params[`filter[_and][${andIndex}][_or][${index}][${field}][_eq]`] =
+        value;
+    });
+    andIndex += 1;
+  };
+
+  if (input.categoryId) {
+    addOrFilter(["categories_id", "category_id"], input.categoryId);
+  }
+
+  if (input.brand) {
+    addOrFilter(["brand", "marque"], input.brand);
+  }
+
+  const [productsRaw, categories] = await Promise.all([
+    fetchDirectusItems<Record<string, unknown>>("products", params),
+    input.categories && input.categories.length > 0
+      ? Promise.resolve(input.categories)
+      : getAllCategories(),
+  ]);
+
+  const productIds = productsRaw
+    .map((row) => extractId(row.id ?? row.ID ?? row.Id))
+    .filter(Boolean);
+
+  const variantsRaw =
+    productIds.length > 0
+      ? await fetchDirectusItems<Record<string, unknown>>("product_variants", {
+          "filter[product_id][_in]": productIds.join(","),
+        })
+      : [];
+
+  const categoriesById = new Map(
+    categories.map((category) => [String(category.id), category]),
+  );
+
+  const variants = variantsRaw
+    .map(mapVariant)
+    .filter((variant) => variant.id && variant.product_id);
+
+  const variantsByProductId = new Map<string, VariantWithImage[]>();
+  variants.forEach((variant) => {
+    const productId = String(variant.product_id);
+    const next = variantsByProductId.get(productId) ?? [];
+    next.push(variant);
+    variantsByProductId.set(productId, next);
+  });
+
+  const products = productsRaw
+    .map((row) => mapProduct(row, categoriesById, variantsByProductId))
+    .filter((product) => {
+      const statusValue = (product.status ?? "").trim();
+      if (!statusValue) return true;
+      return statusValue.toLowerCase() === "published";
+    });
+
+  return { products, categories, variants };
+};
+
 export const getAllProducts = async (): Promise<{
   products: Product[];
   categories: Category[];
@@ -248,28 +357,8 @@ export const getAllProducts = async (): Promise<{
 
   console.log("RAW DATA PRODUCT:", data[0]);
 
-  const fetchCategories = async (): Promise<Record<string, unknown>[]> => {
-    try {
-      const rows = await fetchDirectusItems<Record<string, unknown>>(
-        "categories",
-      );
-      if (rows.length > 0) return rows;
-    } catch (error) {
-      console.error("Directus categories error", error);
-    }
-    try {
-      const rows = await fetchDirectusItems<Record<string, unknown>>(
-        "Categories",
-      );
-      return rows;
-    } catch (error) {
-      console.error("Directus Categories error", error);
-      return [];
-    }
-  };
-
   const [categoriesResult, variantsResult] = await Promise.allSettled([
-    fetchCategories(),
+    fetchCategoriesRaw(),
     fetchDirectusItems<Record<string, unknown>>("product_variants"),
   ]);
 

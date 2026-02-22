@@ -1,795 +1,754 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Html5Qrcode } from 'html5-qrcode'
-import { jsPDF } from 'jspdf'
-import { DIRECTUS_BASE_URL } from '../utils/directus'
-import { formatPrice } from '../utils/format'
-import { resolveImageUrl } from '../utils/image'
+import { useEffect, useMemo, useState } from "react"; // Import des hooks de base React
+import { useSearchParams } from "react-router-dom"; // Import pour manipuler l'URL
+import { DIRECTUS_BASE_URL } from "../utils/directus"; // URL backend
+import { formatPrice } from "../utils/format"; // Formateur de prix
+import { resolveImageUrl } from "../utils/image"; // Formateur d'image
 import {
   getOrderFullDetails,
-  markOrderPaid,
+  getOrderItemsByOrderId,
   type CustomerRecord,
   type OrderFullDetails,
   type OrderItemRecord,
-} from '../lib/commerceApi'
+} from "../lib/commerceApi"; // Imports SDK restants (markOrderPaid supprimé)
 
 const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
   | string
-  | undefined
+  | undefined; // Token API
 
-type ProductSummary = {
-  id: string
-  title: string
-  image_url?: string
-}
-
+type ProductSummary = { id: string; title: string; image_url?: string }; // Typage Produit
 type VariantSummary = {
-  id: string
-  sku?: string
-  option1_name?: string
-  option1_value?: string
-}
+  id: string;
+  sku?: string;
+  option1_name?: string;
+  option1_value?: string;
+}; // Typage Variante
+
+const extractOrderItems = (value: unknown): OrderItemRecord[] => {
+  // Extrait sécurisé des lignes
+  if (Array.isArray(value)) return value as OrderItemRecord[]; // Si déjà Array
+  if (value && typeof value === "object") {
+    // Si objet enveloppé
+    const maybeData = (value as { data?: unknown }).data; // Regarde sous .data
+    if (Array.isArray(maybeData)) return maybeData as OrderItemRecord[]; // Extrait l'array
+  } // Fin condition
+  return []; // Renvoie vide par défaut
+}; // Fin extract
 
 const buildHeaders = () => {
+  // Constructeur de headers
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
-  if (DIRECTUS_TOKEN) {
-    headers.Authorization = `Bearer ${DIRECTUS_TOKEN}`
-  }
-  return headers
-}
+    "Content-Type": "application/json",
+  }; // Base JSON
+  if (DIRECTUS_TOKEN) headers.Authorization = `Bearer ${DIRECTUS_TOKEN}`; // Ajoute l'Auth
+  return headers; // Retourne l'objet
+}; // Fin fonction
 
 const normalizeId = (value: unknown): string => {
-  if (typeof value === 'string' || typeof value === 'number') {
-    return String(value)
-  }
-  if (value && typeof value === 'object' && 'id' in value) {
-    const nestedId = (value as { id?: unknown }).id
-    if (typeof nestedId === 'string' || typeof nestedId === 'number') {
-      return String(nestedId)
-    }
-  }
-  return ''
-}
+  // Nettoyeur d'ID relationnels
+  if (typeof value === "string" || typeof value === "number")
+    return String(value); // Direct
+  if (value && typeof value === "object" && "id" in value) {
+    // Relation imbriquée
+    const nestedId = (value as { id?: unknown }).id; // Cherche .id
+    if (typeof nestedId === "string" || typeof nestedId === "number")
+      return String(nestedId); // Retourne .id
+  } // Fin if
+  return ""; // Défaut
+}; // Fin fonction
+
+const parseAmount = (value: unknown): number | null => {
+  // Formateur mathématique
+  if (value === null || value === undefined || value === "") return null; // Rejette vide
+  const numeric =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : NaN; // Cast
+  return Number.isFinite(numeric) ? numeric : null; // Sécurité
+}; // Fin fonction
+
+const extractAssetId = (value: unknown): string => {
+  // Extrait ID Fichier
+  if (typeof value === "string" || typeof value === "number")
+    return String(value); // Direct
+  if (value && typeof value === "object" && "id" in value) {
+    // Relation imbriquée
+    const id = (value as { id?: unknown }).id; // Cherche .id
+    if (typeof id === "string" || typeof id === "number") return String(id); // Retourne
+  } // Fin if
+  return ""; // Défaut
+}; // Fin fonction
 
 const extractProductSummary = (value: unknown): ProductSummary | null => {
-  if (!value || typeof value !== 'object') return null
-  const record = value as Record<string, unknown>
-  const id = normalizeId(record.id)
-  if (!id) return null
+  // Extrait résumé Produit
+  if (!value || typeof value !== "object") return null; // Refuse vide
+  const record = value as Record<string, unknown>; // Cast
+  const id = normalizeId(record.id); // ID propre
+  if (!id) return null; // Stop si pas ID
   const title =
-    String(record.title ?? record.name ?? '').trim() || `Produit ${id}`
-  const image_url = String(
-    record.image_url ?? record.image ?? record.imageUrl ?? '',
-  ).trim()
-  return { id, title, image_url }
-}
+    String(record.title ?? record.name ?? "").trim() || `Produit ${id}`; // Titre
+  const rawImage =
+    record.image_url ??
+    record.image ??
+    record.imageUrl ??
+    record.image_id ??
+    record.imageId ??
+    ""; // Image source
+  const image_url = extractAssetId(rawImage).trim(); // Image ID
+  return { id, title, image_url }; // Retour objet
+}; // Fin fonction
 
 const extractVariantSummary = (value: unknown): VariantSummary | null => {
-  if (!value || typeof value !== 'object') return null
-  const record = value as Record<string, unknown>
-  const id = normalizeId(record.id)
-  if (!id) return null
-  const sku = String(record.sku ?? '').trim()
-  const option1_name = String(record.option1_name ?? record.option_name ?? '').trim()
-  const option1_value = String(record.option1_value ?? record.option_value ?? '').trim()
-  return { id, sku, option1_name, option1_value }
-}
+  // Extrait résumé Variante
+  if (!value || typeof value !== "object") return null; // Refuse vide
+  const record = value as Record<string, unknown>; // Cast
+  const id = normalizeId(record.id); // ID propre
+  if (!id) return null; // Stop
+  const sku = String(record.sku ?? "").trim(); // SKU
+  const option1_name = String(
+    record.option1_name ?? record.option_name ?? "",
+  ).trim(); // Option Nom
+  const option1_value = String(
+    record.option1_value ?? record.option_value ?? "",
+  ).trim(); // Option Val
+  return { id, sku, option1_name, option1_value }; // Retour
+}; // Fin fonction
 
 const fetchProductSummaries = async (ids: string[]) => {
-  const uniqueIds = Array.from(new Set(ids.filter(Boolean)))
-  if (uniqueIds.length === 0) return {} as Record<string, ProductSummary>
+  // Appelle API produits
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean))); // Dédoublonnage
+  if (uniqueIds.length === 0) return {} as Record<string, ProductSummary>; // Sortie rapide
 
-  const params = new URLSearchParams()
-  params.set('filter[id][_in]', uniqueIds.join(','))
-  params.set('fields', 'id,title,name,image_url,image,imageUrl')
+  const params = new URLSearchParams(); // Constructeur query
+  params.set("filter[id][_in]", uniqueIds.join(",")); // Filtre Directus
+  params.set("fields", "id,title,name,image_url,image,imageUrl"); // Champs réduits
 
   const response = await fetch(
     `${DIRECTUS_BASE_URL}/items/products?${params.toString()}`,
-    {
-      headers: buildHeaders(),
-    },
-  )
+    { headers: buildHeaders() },
+  ); // Appel GET
 
-  if (!response.ok) {
-    throw new Error('Impossible de récupérer les produits.')
-  }
+  if (!response.ok) throw new Error("Impossible de récupérer les produits."); // Catch réseau
 
   const payload = (await response.json()) as {
-    data?: Array<Record<string, unknown>>
-  }
+    data?: Array<Record<string, unknown>>;
+  }; // Parse
 
-  const map: Record<string, ProductSummary> = {}
-  ;(payload.data ?? []).forEach((row) => {
-    const summary = extractProductSummary(row)
-    if (summary) {
-      map[summary.id] = summary
-    }
-  })
+  const map: Record<string, ProductSummary> = {}; // Dictionnaire de sortie
+  (payload.data ?? []).forEach((row) => {
+    // Boucle items
+    const summary = extractProductSummary(row); // Analyse item
+    if (summary) map[summary.id] = summary; // Ajoute au dictionnaire
+  }); // Fin boucle
 
-  return map
-}
-
-const loadImageAsDataUrl = async (url: string) => {
-  try {
-    const response = await fetch(url)
-    if (!response.ok) return null
-    const blob = await response.blob()
-
-    return await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(String(reader.result))
-      reader.onerror = () => reject(new Error('Image load failed'))
-      reader.readAsDataURL(blob)
-    })
-  } catch {
-    return null
-  }
-}
+  return map; // Retour final
+}; // Fin fonction
 
 const VendorValidationPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
+  // Composant principal
+  const [searchParams, setSearchParams] = useSearchParams(); // Routeur paramètres
   const orderParam = useMemo(
-    () => searchParams.get('order')?.trim() ?? '',
+    () => searchParams.get("order")?.trim() ?? "",
     [searchParams],
-  )
+  ); // Récupération URL
 
-  const [searchInput, setSearchInput] = useState(orderParam)
-  const [activeQuery, setActiveQuery] = useState(orderParam)
-  const [isScannerOpen, setIsScannerOpen] = useState(false)
-  const [scannerError, setScannerError] = useState<string | null>(null)
-  const [isScanning, setIsScanning] = useState(false)
-  const [scanSuccess, setScanSuccess] = useState(false)
-  const scannerRef = useRef<Html5Qrcode | null>(null)
-  const scanFeedbackTimer = useRef<number | null>(null)
+  const [searchInput, setSearchInput] = useState(orderParam); // Input controlé
+  const [activeQuery, setActiveQuery] = useState(orderParam); // Trigger recherche
 
-  const [order, setOrder] = useState<OrderFullDetails | null>(null)
+  const [order, setOrder] = useState<OrderFullDetails | null>(null); // Donnée commande
   const [productMap, setProductMap] = useState<Record<string, ProductSummary>>(
     {},
-  )
-  const [isLoading, setIsLoading] = useState(true)
-  const [isPaying, setIsPaying] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  ); // Donnée produits
+  const [isLoading, setIsLoading] = useState(true); // Indicateur chargement
+  const [isPaying, setIsPaying] = useState(false); // Indicateur action bouton
+  const [error, setError] = useState<string | null>(null); // Indicateur erreur UI
+  const [success, setSuccess] = useState(false); // Indicateur succès UI
 
   useEffect(() => {
-    setSearchInput(orderParam)
-    setActiveQuery(orderParam)
-  }, [orderParam])
+    // Sync URL vers state
+    setSearchInput(orderParam); // MAJ input
+    setActiveQuery(orderParam); // MAJ query
+  }, [orderParam]); // Dépendance URL
 
   const extractOrderValue = (value: string) => {
-    const trimmed = value.trim()
-    if (!trimmed) return ''
+    // Nettoyeur input recherche
+    const trimmed = value.trim(); // Trim classique
+    if (!trimmed) return ""; // Sortie rapide
     try {
-      const url = new URL(trimmed)
-      const param = url.searchParams.get('order')
-      return param?.trim() || trimmed
+      // Try parsing URL
+      const url = new URL(trimmed); // Instancie URL
+      const param = url.searchParams.get("order"); // Récupère querystring
+      return param?.trim() || trimmed; // Retourne id
     } catch {
-      return trimmed
-    }
-  }
+      // Si pas URL
+      return trimmed; // Retourne texte
+    } // Fin try
+  }; // Fin fonction
 
   const resolveOrderId = async (value: string) => {
-    const normalized = value.trim()
-    if (!normalized) return ''
-    if (!/^KOK-/i.test(normalized)) return normalized
+    // Trouve l'UUID de la commande
+    const normalized = value.trim(); // Trim
+    if (!normalized) return ""; // Sortie
+    if (!/^KOK-/i.test(normalized)) return normalized; // Bypass si déjà UUID
 
-    const params = new URLSearchParams()
-    params.set('filter[order_number][_eq]', normalized)
-    params.set('fields', 'id')
-    params.set('limit', '1')
+    const params = new URLSearchParams(); // Cherche par code KOK
+    params.set("filter[order_number][_eq]", normalized); // Query Directus
+    params.set("fields", "id"); // Optimise réponse
+    params.set("limit", "1"); // 1 max
 
     const response = await fetch(
       `${DIRECTUS_BASE_URL}/items/orders?${params.toString()}`,
-      {
-        headers: buildHeaders(),
-      },
-    )
+      { headers: buildHeaders() },
+    ); // Fetch GET
 
-    if (!response.ok) {
-      throw new Error('Impossible de récupérer la commande.')
-    }
+    if (!response.ok) throw new Error("Impossible de récupérer la commande."); // Erreur HTTP
 
     const payload = (await response.json()) as {
-      data?: Array<{ id?: string }>
-    }
-    return payload.data?.[0]?.id ?? ''
-  }
+      data?: Array<{ id?: string }>;
+    }; // Parse JSON
+    return payload.data?.[0]?.id ?? ""; // Retourne UUID
+  }; // Fin fonction
 
   const handleSearch = (value: string) => {
-    const next = extractOrderValue(value)
+    // Déclencheur UI recherche
+    const next = extractOrderValue(value); // Nettoie texte
     if (!next) {
-      setError('Saisissez un identifiant ou numéro de commande.')
-      setOrder(null)
-      setProductMap({})
-      setSuccess(false)
-      return
-    }
-    setError(null)
-    setSuccess(false)
-    setSearchInput(next)
-    setActiveQuery(next)
-    setSearchParams({ order: next })
-  }
+      // Si vide
+      setError("Saisissez un identifiant ou numéro de commande."); // Erreur
+      setOrder(null); // Reset obj
+      setProductMap({}); // Reset obj
+      setSuccess(false); // Reset bool
+      return; // Sortie
+    } // Fin if
+    setError(null); // Purge erreur
+    setSuccess(false); // Purge succès
+    setSearchInput(next); // Met à jour input
+    setActiveQuery(next); // Lance appel
+    setSearchParams({ order: next }); // Met à jour route
+  }; // Fin fonction
 
   useEffect(() => {
-    let isActive = true
+    // Moteur de chargement commande
+    let isActive = true; // Anti race-condition
 
     const fetchOrder = async () => {
+      // Worker async
       if (!activeQuery) {
-        setIsLoading(false)
-        setOrder(null)
-        setProductMap({})
-        return
-      }
+        // Si requête vide
+        setIsLoading(false); // Stop UI loading
+        setOrder(null); // Nettoie state
+        setProductMap({}); // Nettoie state
+        return; // Sortie
+      } // Fin if
 
-      setIsLoading(true)
-      setError(null)
-      setSuccess(false)
+      setIsLoading(true); // Démarre UI loading
+      setError(null); // Nettoie UI erreur
+      setSuccess(false); // Nettoie UI succès
 
       try {
-        const resolvedId = await resolveOrderId(activeQuery)
-        if (!resolvedId) {
-          throw new Error('Commande introuvable.')
-        }
+        // Début chaine HTTP
+        const resolvedId = await resolveOrderId(activeQuery); // Traduit KOK en UUID
+        if (!resolvedId) throw new Error("Commande introuvable."); // Cas introuvable
 
-        const details = await getOrderFullDetails(resolvedId)
-        if (!isActive) return
+        const details = await getOrderFullDetails(resolvedId); // Appel de ton API read
+        if (!isActive) return; // Sécurité composant démonté
 
-        setOrder(details)
+        const items = await getOrderItemsByOrderId(resolvedId); // Requête dédiée order_items
+        if (!isActive) return; // Sécurité composant démonté
 
-        const itemIds = (details.order_items ?? [])
+        const merged = {
+          ...details,
+          order_items: items,
+        } as OrderFullDetails; // Fusion explicite
+
+        setOrder(merged); // Stockage état React
+
+        const itemIds = items
           .map((item) => normalizeId(item.product_id as unknown))
-          .filter(Boolean)
+          .filter(Boolean); // Isole IDs
 
         if (itemIds.length > 0) {
-          const summaries = await fetchProductSummaries(itemIds)
-          if (isActive) {
-            setProductMap(summaries)
-          }
-        }
+          // S'il y a des produits
+          const summaries = await fetchProductSummaries(itemIds); // Cherche la nomenclature
+          if (isActive) setProductMap(summaries); // Met à jour state
+        } // Fin if
       } catch (fetchError) {
-        console.error('Erreur chargement commande', fetchError)
-        if (isActive) {
-          setError("Impossible de charger la commande.")
-        }
+        // Gestion globale crash
+        if (isActive) setError("Impossible de charger la commande."); // UI Erreur
       } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
-      }
-    }
+        // Fin cycle
+        if (isActive) setIsLoading(false); // UI Stop Loading
+      } // Fin try
+    }; // Fin worker
 
-    void fetchOrder()
-
-    return () => {
-      isActive = false
-    }
-  }, [activeQuery])
-
-  const closeScanner = () => {
-    setIsScannerOpen(false)
-    setScannerError(null)
-    setIsScanning(false)
-    setScanSuccess(false)
-    if (scanFeedbackTimer.current) {
-      window.clearTimeout(scanFeedbackTimer.current)
-      scanFeedbackTimer.current = null
-    }
-  }
-
-  useEffect(() => {
-    if (!isScannerOpen) return
-    let isActive = true
-    setScannerError(null)
-    setIsScanning(false)
-    setScanSuccess(false)
-
-    const playScanBeep = () => {
-      try {
-        const AudioCtx =
-          window.AudioContext ||
-          (window as typeof window & { webkitAudioContext?: typeof window.AudioContext })
-            .webkitAudioContext
-        if (!AudioCtx) return
-        const ctx = new AudioCtx()
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'sine'
-        osc.frequency.value = 880
-        gain.gain.value = 0.08
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start()
-        osc.stop(ctx.currentTime + 0.12)
-        osc.onended = () => {
-          ctx.close().catch(() => null)
-        }
-      } catch {
-        // Ignore les erreurs audio.
-      }
-    }
-
-    const scanner = new Html5Qrcode('qr-reader')
-    scannerRef.current = scanner
-
-    scanner
-      .start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        async (decodedText) => {
-          if (!isActive) return
-          const nextValue = extractOrderValue(decodedText)
-          setSearchInput(nextValue)
-          setActiveQuery(nextValue)
-          setSearchParams({ order: nextValue })
-          setSuccess(false)
-          setError(null)
-          setIsScanning(false)
-          setScanSuccess(true)
-          if (scanFeedbackTimer.current) {
-            window.clearTimeout(scanFeedbackTimer.current)
-          }
-          scanFeedbackTimer.current = window.setTimeout(() => {
-            setScanSuccess(false)
-          }, 600)
-          playScanBeep()
-          if (navigator.vibrate) {
-            navigator.vibrate(120)
-          }
-
-          await scanner
-            .stop()
-            .catch(() => null)
-            .finally(() => {
-              scanner.clear()
-            })
-          scannerRef.current = null
-          setIsScannerOpen(false)
-        },
-        () => null,
-      )
-      .then(() => {
-        if (isActive) {
-          setIsScanning(true)
-        }
-      })
-      .catch((scanError) => {
-        console.error('Erreur scanner QR', scanError)
-        if (isActive) {
-          setScannerError(
-            "Accès caméra refusé ou indisponible. Vérifiez les permissions.",
-          )
-          setIsScanning(false)
-        }
-      })
+    void fetchOrder(); // Exécution
 
     return () => {
-      isActive = false
-      setIsScanning(false)
-      if (scannerRef.current) {
-        scannerRef.current
-          .stop()
-          .catch(() => null)
-          .finally(() => {
-            scannerRef.current?.clear()
-            scannerRef.current = null
-          })
-      }
-      if (scanFeedbackTimer.current) {
-        window.clearTimeout(scanFeedbackTimer.current)
-        scanFeedbackTimer.current = null
-      }
-    }
-  }, [isScannerOpen, setSearchParams])
+      isActive = false;
+    }; // Cleanup
+  }, [activeQuery]); // Déclencheur
 
   const customer = useMemo(() => {
-    if (!order) return null
-    if (order.customer_id && typeof order.customer_id === 'object') {
-      return order.customer_id as CustomerRecord
-    }
-    return null
-  }, [order])
+    // Sélecteur client memoizé
+    if (!order) return null; // Défaut
+    if (order.customer_id && typeof order.customer_id === "object")
+      return order.customer_id as CustomerRecord; // Trouvé
+    return null; // Défaut
+  }, [order]); // Dép
 
-  const delivery = order?.order_delivery ?? null
+  const delivery = order?.order_delivery ?? null; // Sélecteur adresse memoizé
 
-  const lineItems = useMemo<OrderItemRecord[]>(
-    () => order?.order_items ?? [],
-    [order],
-  )
+  const lineItems = useMemo<OrderItemRecord[]>(() => {
+    // Sélecteur lignes memoizé
+    if (!order) return []; // Défaut
+    return extractOrderItems((order as { order_items?: unknown }).order_items); // Trouvé
+  }, [order]); // Dép
 
   const totals = useMemo(() => {
-    if (!order) {
-      return { subtotal: 0, shipping: 0, total: 0 }
-    }
+    // Calculatrice prix
+    if (!order) return { subtotal: 0, shipping: 0, total: 0 }; // Défaut
     const subtotal =
-      typeof order.total_products_price === 'number'
-        ? order.total_products_price
-        : typeof order.subtotal === 'number'
-          ? order.subtotal
-          : lineItems.reduce((sum, item) => {
-              const unit = item.unit_price ?? 0
-              const line = item.line_total ?? unit * item.quantity
-              return sum + line
-            }, 0)
-    const shipping =
-      typeof order.shipping_price === 'number' ? order.shipping_price : 0
+      parseAmount(order.total_products_price) ??
+      parseAmount(order.subtotal) ??
+      lineItems.reduce((sum, item) => {
+        // Agg HT
+        const unit = parseAmount(item.unit_price) ?? 0; // unitaire
+        const line =
+          parseAmount(item.line_total) ?? unit * (item.quantity ?? 0); // total ligne
+        return sum + line; // somme
+      }, 0); // reduce init
+    const shipping = parseAmount(order.shipping_price) ?? 0; // Agg FDP
     const total =
-      typeof order.total_price === 'number'
-        ? order.total_price
-        : typeof order.total === 'number'
-          ? order.total
-          : subtotal + shipping
-    return { subtotal, shipping, total }
-  }, [order, lineItems])
+      parseAmount(order.total_price) ??
+      parseAmount(order.total) ??
+      subtotal + shipping; // Agg Total
+    return { subtotal, shipping, total }; // Renvoi obj
+  }, [order, lineItems]); // Dép
+
+  const vatRate = 0.2; // Taux TVA France
+  const totalTtc = Number.isFinite(totals.total) ? totals.total : 0; // TTC
+  const vatAmount = totalTtc - totalTtc / (1 + vatRate); // Rétrocalcul TVA
+
+  const firstName = customer?.first_name?.trim() ?? ""; // Info client prenom
+  const lastName = customer?.last_name?.trim() ?? ""; // Info client nom
+  const fullName = [firstName, lastName].filter(Boolean).join(" "); // Info complet
+  const customerName =
+    fullName || customer?.name || delivery?.recipient_name || "Client"; // Nom affiché UI
+  const customerEmail =
+    customer?.email || delivery?.email || "Email non renseigné"; // Email affiché UI
+  const customerPhone =
+    customer?.phone || delivery?.phone || "Téléphone non renseigné"; // Tel affiché UI
 
   const resolveProductInfo = (item: OrderItemRecord) => {
+    // Mappeur de ligne
     const productFromRelation = extractProductSummary(
       item.product_id as unknown,
-    )
+    ); // Directus link
     const variantFromRelation = extractVariantSummary(
       item.variant_id as unknown,
-    )
-    const productId = normalizeId(item.product_id as unknown)
-    const fallback = productId ? productMap[productId] : undefined
+    ); // Directus link
+    const productId = normalizeId(item.product_id as unknown); // Extract ID
+    const fallback = productId ? productMap[productId] : undefined; // Cherche dans Map externe
 
     return {
-      id: productId,
+      // Retourne vue propre
+      id: productId, // UID
       title:
         productFromRelation?.title ??
         fallback?.title ??
-        `Produit ${productId || ''}`,
+        `Produit ${productId || ""}`, // Nom
       imageUrl: resolveImageUrl(
-        productFromRelation?.image_url ?? fallback?.image_url ?? '',
-      ),
-      variant: variantFromRelation,
-    }
-  }
+        productFromRelation?.image_url ?? fallback?.image_url ?? "",
+      ), // Photo
+      variant: variantFromRelation, // Opt
+    }; // Fin map
+  }; // Fin func
 
-  const handleSharePdf = async (doc: jsPDF, fileName: string) => {
-    const pdfBlob = doc.output('blob')
-    const file = new File([pdfBlob], fileName, { type: 'application/pdf' })
-
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: 'Reçu de commande',
-        text: 'Reçu de commande Koktek',
-      })
-      return
-    }
-
-    const url = URL.createObjectURL(pdfBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = fileName
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const generateReceiptPdf = async () => {
-    if (!order) return
-
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-    const pageHeight = doc.internal.pageSize.getHeight()
-    const margin = 40
-    let y = margin
-
-    // En-tête du reçu
-    doc.setFontSize(18)
-    doc.text(`Reçu commande ${order.id}`, margin, y)
-    y += 28
-
-    doc.setFontSize(12)
-    doc.text(`Total: ${formatPrice(totals.total)}`, margin, y)
-    y += 18
-
-    doc.text('Payé en espèces', margin, y)
-    y += 28
-
-    // Boucle sur les articles pour inclure l’image + détails
-    for (const item of lineItems) {
-      const productInfo = resolveProductInfo(item)
-      const imageUrl = productInfo.imageUrl
-
-      // Traitement des images: on convertit l’URL en DataURL pour l’injecter dans le PDF.
-      if (imageUrl) {
-        const dataUrl = await loadImageAsDataUrl(imageUrl)
-        if (dataUrl) {
-          doc.addImage(dataUrl, 'JPEG', margin, y, 60, 60)
-        }
-      }
-
-      doc.setFontSize(11)
-      doc.text(productInfo.title, margin + 72, y + 16)
-      doc.text(
-        `Qté: ${item.quantity} • Prix: ${formatPrice(
-          item.unit_price ?? 0,
-        )}`,
-        margin + 72,
-        y + 34,
-      )
-
-      y += 80
-
-      if (y > pageHeight - margin) {
-        doc.addPage()
-        y = margin
-      }
-    }
-
-    const fileName = `recu-commande-${order.id}.pdf`
-    await handleSharePdf(doc, fileName)
-  }
-
+  // LA CORRECTION DU BUG EST ICI
   const handleCashReceived = async () => {
-    if (!order || isPaying) return
-
-    setIsPaying(true)
-    setError(null)
+    // Bouton Cash Handler
+    if (!order || isPaying) return; // Bloque si double clic
+    setIsPaying(true); // Freeze le bouton
+    setError(null); // Nettoie le panneau erreur
 
     try {
-      await markOrderPaid(order.id, {
-        status: 'paid',
-        payment_status: 'paid',
-        payment_reference: 'cash',
-      })
+      // Execution PATCH
+      const response = await fetch(
+        `${DIRECTUS_BASE_URL}/items/orders/${order.id}`,
+        {
+          // On attaque explicitement la route UPDATE de CETTE commande
+          method: "PATCH", // C'est une MISE À JOUR (pas un POST de création)
+          headers: buildHeaders(), // Content-Type et Token
+          body: JSON.stringify({
+            // Les champs à écraser
+            status: "paid", // MAJ statut de commande
+            payment_status: "paid", // MAJ statut de l'argent
+            payment_reference: "cash", // Trace d'audit
+          }), // Fin Payload
+        },
+      ); // Fin Appel
 
-      await generateReceiptPdf()
+      if (!response.ok) throw new Error("Erreur de validation coté serveur."); // Intercepte 400, 403 ou 500
 
-      setSuccess(true)
+      setOrder((prev) =>
+        prev ? { ...prev, status: "paid", payment_status: "paid" } : prev,
+      ); // Succès : On met à jour l'UI React (source de vérité locale)
+      setSuccess(true); // Déclenche l'alerte verte
     } catch (payError) {
-      console.error('Erreur validation espèces', payError)
-      setError("Impossible de valider la commande pour l'instant.")
+      // Si échec réseau ou Directus
+      console.error("Erreur validation", payError); // Trace dev
+      setError(
+        "Impossible de valider la commande. Vérifiez vos droits d'édition sur Directus.",
+      ); // Message FR clair
     } finally {
-      setIsPaying(false)
-    }
-  }
+      // Fin de process
+      setIsPaying(false); // Rallume le bouton
+    } // Fin bloc
+  }; // Fin de fonction
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
-      <div className="rounded-2xl border border-gray-200 bg-white p-6">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Validation vendeur
-        </h1>
-        <div className="mt-4 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-            Rechercher une commande
-          </p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  handleSearch(searchInput)
-                }
-              }}
-              placeholder="ID ou numéro de commande (ex: KOK-...)"
-              className="w-full flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => handleSearch(searchInput)}
-              className="rounded-xl border border-gray-200 bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black"
-            >
-              Rechercher
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsScannerOpen(true)}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-gray-300"
-              aria-label="Scanner un QR code"
-            >
-              📷
-            </button>
-          </div>
-        </div>
-
-        {isLoading ? (
-          <p className="mt-6 text-sm text-gray-500">
+    // JSX Rendering
+    <div className="space-y-6">
+      {" "}
+      {/* Wrapping Root */}
+      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        {" "}
+        {/* Header Section */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {" "}
+          {/* Alignement */}
+          <div>
+            {" "}
+            {/* Bloc texte intro */}
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+              Validation rapide
+            </p>{" "}
+            {/* Surtitre */}
+            <h1 className="mt-2 text-2xl font-semibold text-gray-900">
+              Validation vendeur
+            </h1>{" "}
+            {/* Titre H1 */}
+            <p className="mt-1 text-sm text-gray-500">
+              Entrez un numéro de commande pour afficher les détails.
+            </p>{" "}
+            {/* S/Titre */}
+          </div>{" "}
+          {/* Fin bloc texte */}
+          <div className="flex flex-wrap items-center gap-2">
+            {" "}
+            {/* Badges généraux */}
+            <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+              Statut: {order?.status ?? "—"}
+            </span>{" "}
+            {/* Badge1 */}
+            <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+              Paiement: {order?.payment_status ?? "—"}
+            </span>{" "}
+            {/* Badge2 */}
+          </div>{" "}
+          {/* Fin bloc badge */}
+        </div>{" "}
+        {/* Fin alignement */}
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+          {" "}
+          {/* Zone recherche */}
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearch(searchInput);
+              }
+            }}
+            placeholder="ID ou KOK-..."
+            className="w-full flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none"
+          />{" "}
+          {/* Input */}
+          <button
+            type="button"
+            onClick={() => handleSearch(searchInput)}
+            className="rounded-2xl border bg-gray-900 px-4 py-3 text-sm font-semibold text-white"
+          >
+            Rechercher
+          </button>{" "}
+          {/* Bouton OK */}
+        </div>{" "}
+        {/* Fin zone */}
+        {isLoading ? ( // Affichage Loading
+          <p className="mt-4 text-sm text-gray-500">
             Chargement de la commande...
-          </p>
-        ) : error ? (
-          <p className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          </p> // Texte Loading
+        ) : error ? ( // Affichage Erreur
+          <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
-          </p>
-        ) : !order ? (
-          <p className="mt-6 text-sm text-gray-500">
-            Aucune commande trouvée. Scannez un QR code ou saisissez un numéro.
-          </p>
+          </p> // Texte Erreur
+        ) : !order ? ( // Affichage Vide
+          <p className="mt-4 text-sm text-gray-500">
+            Aucune commande trouvée. Scannez ou saisissez.
+          </p> // Texte Vide
         ) : (
-          <>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                Statut: {order.status ?? '—'}
-              </span>
-              <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                Paiement: {order.payment_status ?? '—'}
-              </span>
-            </div>
-            <p className="mt-4 text-sm text-gray-500">
-              Commande : <span className="font-medium">{order.id}</span>
-            </p>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">Client</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">
-                  {customer?.name ?? delivery?.recipient_name ?? 'Client'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {customer?.email ?? delivery?.email ?? 'Email non renseigné'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {customer?.phone ?? delivery?.phone ?? 'Téléphone non renseigné'}
-                </p>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">
-                  Statut de la commande
-                </p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">
-                  {order.status ?? '—'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Paiement: {order.payment_status ?? '—'}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {lineItems.map((item) => {
-                const productInfo = resolveProductInfo(item)
-                const variantLabel =
-                  productInfo.variant?.option1_name || 'Variante'
-                const variantValue =
-                  productInfo.variant?.option1_value || '—'
-                const unitPrice = item.unit_price ?? 0
-                const lineTotal = item.line_total ?? unitPrice * item.quantity
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-xl border border-gray-200 bg-white p-4"
-                  >
-                    <div className="flex gap-4">
-                      <img
-                        src={productInfo.imageUrl}
-                        alt={productInfo.title}
-                        className="h-16 w-16 rounded-lg object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {productInfo.title}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {variantLabel}: {variantValue}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          SKU:{' '}
-                          <span className="font-semibold text-gray-900">
-                            {productInfo.variant?.sku || '—'}
-                          </span>
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                          <span>Quantité: {item.quantity}</span>
-                          <span>
-                            Prix unitaire:{' '}
-                            {formatPrice(unitPrice)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">Total ligne</p>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {formatPrice(lineTotal)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <p className="text-xs uppercase text-gray-400">Total</p>
-              <div className="mt-3 space-y-2 text-sm text-gray-600">
+          // Affichage Succès Fetch
+          <p className="mt-4 text-sm text-gray-500">
+            Commande chargée :{" "}
+            <span className="font-semibold text-gray-900">
+              {order.order_number ?? order.id}
+            </span>
+          </p> // Info Num
+        )}{" "}
+        {/* Fin Switcher */}
+      </section>{" "}
+      {/* Fin Header Section */}
+      {order && !isLoading && !error ? ( // Rendu Data Conditionnel
+        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          {" "}
+          {/* Grille Layout */}
+          <div className="space-y-6">
+            {" "}
+            {/* Colonne Données */}
+            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              {" "}
+              {/* Box Identité */}
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                Commande
+              </p>{" "}
+              {/* Label */}
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                {" "}
+                {/* Align */}
+                <div>
+                  {" "}
+                  {/* Ids */}
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {order.order_number ?? order.id}
+                  </p>{" "}
+                  {/* KOK num */}
+                  <p className="text-sm text-gray-500">ID: {order.id}</p>{" "}
+                  {/* UUID */}
+                </div>{" "}
+                {/* Fin Ids */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {" "}
+                  {/* Badges internes */}
+                  <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+                    Statut: {order.status ?? "—"}
+                  </span>{" "}
+                  {/* S1 */}
+                  <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+                    Paiement: {order.payment_status ?? "—"}
+                  </span>{" "}
+                  {/* P1 */}
+                </div>{" "}
+                {/* Fin Badges */}
+              </div>{" "}
+              {/* Fin Align */}
+            </section>{" "}
+            {/* Fin Box */}
+            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              {" "}
+              {/* Box Client */}
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                Détails client
+              </p>{" "}
+              {/* Label */}
+              <p className="mt-3 text-lg font-semibold text-gray-900">
+                {customerName}
+              </p>{" "}
+              {/* Nom */}
+              <div className="mt-3 grid gap-2 text-sm text-gray-600 sm:grid-cols-2">
+                {" "}
+                {/* Grille data */}
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Email</p>
+                  <p className="font-medium text-gray-900">{customerEmail}</p>
+                </div>{" "}
+                {/* Em */}
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Téléphone</p>
+                  <p className="font-medium text-gray-900">{customerPhone}</p>
+                </div>{" "}
+                {/* Tel */}
+              </div>{" "}
+              {/* Fin Grille */}
+            </section>{" "}
+            {/* Fin Box */}
+            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              {" "}
+              {/* Box Items */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {" "}
+                {/* Titre et count */}
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                  Articles
+                </p>{" "}
+                {/* Lbl */}
+                <span className="text-xs text-gray-500">
+                  {lineItems.length} article{lineItems.length > 1 ? "s" : ""}
+                </span>{" "}
+                {/* Cnt */}
+              </div>{" "}
+              {/* Fin header items */}
+              <div className="mt-4 space-y-4">
+                {" "}
+                {/* Liste DOM */}
+                {lineItems.map((item) => {
+                  // Boucle React
+                  const productInfo = resolveProductInfo(item); // Extrait var
+                  const unitPrice = parseAmount(item.unit_price) ?? 0; // Extrait prix
+                  return (
+                    // JSX Ligne
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
+                    >
+                      {" "}
+                      {/* Card Item */}
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        {" "}
+                        {/* Align Item */}
+                        <div className="h-16 w-16 overflow-hidden rounded-2xl bg-white shadow-sm">
+                          {" "}
+                          {/* Pic Container */}
+                          {productInfo.imageUrl ? (
+                            <img
+                              src={productInfo.imageUrl}
+                              alt={productInfo.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                              Img
+                            </div>
+                          )}{" "}
+                          {/* Pic */}
+                        </div>{" "}
+                        {/* Fin Pic */}
+                        <div className="min-w-0 flex-1">
+                          {" "}
+                          {/* Txt Container */}
+                          <p className="text-sm font-semibold text-gray-900">
+                            {productInfo.title}
+                          </p>{" "}
+                          {/* Nom */}
+                          <p className="mt-1 text-xs text-gray-500">
+                            {productInfo.variant?.option1_name || "Var"}:{" "}
+                            {productInfo.variant?.option1_value || "—"}
+                          </p>{" "}
+                          {/* Opt */}
+                          <p className="text-xs text-gray-500">
+                            SKU:{" "}
+                            <span className="font-semibold text-gray-900">
+                              {productInfo.variant?.sku || "—"}
+                            </span>
+                          </p>{" "}
+                          {/* SKU */}
+                          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                            <span>Qté: {item.quantity}</span>
+                            <span>PU: {formatPrice(unitPrice)}</span>
+                          </div>{" "}
+                          {/* Fin Txt Container */}
+                        </div>{" "}
+                        {/* Fin desc */}
+                        <div className="text-left sm:text-right">
+                          {" "}
+                          {/* Pricing */}
+                          <p className="text-xs text-gray-500">Total</p>{" "}
+                          {/* Lbl */}
+                          <p className="text-sm font-semibold text-gray-900">
+                            {formatPrice(
+                              parseAmount(item.line_total) ??
+                                unitPrice * (item.quantity ?? 0),
+                            )}
+                          </p>{" "}
+                          {/* Prix */}
+                        </div>{" "}
+                        {/* Fin Pricing */}
+                      </div>{" "}
+                      {/* Fin Align */}
+                    </div> // Fin Ligne
+                  ); // Fin Rendu
+                })}{" "}
+                {/* Fin Iteration */}
+              </div>{" "}
+              {/* Fin Liste */}
+            </section>{" "}
+            {/* Fin section articles */}
+          </div>{" "}
+          {/* Fin colonne gauche */}
+          <div className="space-y-6">
+            {" "}
+            {/* Colonne de droite (Paiement) */}
+            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              {" "}
+              {/* Box Calcul */}
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                Résumé financier
+              </p>{" "}
+              {/* Titre */}
+              <div className="mt-4 space-y-3 text-sm text-gray-600">
+                {" "}
+                {/* Liste TVA */}
                 <div className="flex items-center justify-between">
-                  <span>Sous-total articles</span>
+                  <span>Sous-total HT</span>
                   <span className="font-semibold text-gray-900">
                     {formatPrice(totals.subtotal)}
                   </span>
-                </div>
+                </div>{" "}
+                {/* HT */}
                 <div className="flex items-center justify-between">
-                  <span>Frais de livraison</span>
+                  <span>TVA incl.</span>
                   <span className="font-semibold text-gray-900">
-                    {formatPrice(totals.shipping)}
+                    {formatPrice(vatAmount)}
                   </span>
-                </div>
-                <div className="flex items-center justify-between text-base font-semibold text-gray-900">
-                  <span>Total à encaisser</span>
-                  <span>{formatPrice(totals.total)}</span>
-                </div>
-              </div>
-            </div>
+                </div>{" "}
+                {/* TVA */}
+              </div>{" "}
+              {/* Fin liste TVA */}
+              <div className="mt-5 rounded-2xl bg-gray-900 px-4 py-5 text-white">
+                {" "}
+                {/* Highlight TTC */}
+                <p className="text-xs uppercase tracking-[0.3em] text-white/70">
+                  Total TTC
+                </p>{" "}
+                {/* Lbl */}
+                <p className="mt-2 text-3xl font-semibold">
+                  {formatPrice(totalTtc)}
+                </p>{" "}
+                {/* Txt */}
+              </div>{" "}
+              {/* Fin TTC */}
+            </section>{" "}
+            {/* Fin section calcul */}
+            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              {" "}
+              {/* Box Action Bouton */}
+              {success ? ( // Validation UX si cliqué
+                <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  Paiement validé avec succès en DB.
+                </p> // Message vert
+              ) : (
+                // Bouton par defaut
+                <button
+                  type="button"
+                  onClick={handleCashReceived}
+                  disabled={isPaying}
+                  className="w-full rounded-2xl bg-indigo-600 px-4 py-4 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+                >
+                  {isPaying ? "Validation..." : "J'ai reçu l'argent en espèces"}
+                </button> // Action PATCH
+              )}{" "}
+              {/* Fin Switch Bouton */}
+            </section>{" "}
+            {/* Fin Action */}
+          </div>{" "}
+          {/* Fin Colonne Droite */}
+        </div> // Fin Grille Complète
+      ) : null}{" "}
+      {/* Fin de l'affichage sécurisé si order chargée */}
+    </div> // Root closing
+  ); // JSX End
+}; // Component End
 
-            {success ? (
-              <p className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                Paiement confirmé et reçu généré.
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={handleCashReceived}
-                disabled={isPaying}
-                className="mt-6 w-full rounded-xl bg-indigo-600 px-4 py-4 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isPaying
-                  ? 'Validation en cours...'
-                  : "J'ai reçu l'argent en espèces"}
-              </button>
-            )}
-          </>
-        )}
-      </div>
-
-      {isScannerOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={closeScanner}
-          />
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-4 shadow-xl">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Scanner le QR code
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Autorisez la caméra pour scanner le bon de commande.
-            </p>
-            <div
-              className={`mt-4 overflow-hidden rounded-xl border transition ${
-                scanSuccess
-                  ? 'border-emerald-400 shadow-[0_0_0_4px_rgba(16,185,129,0.15)]'
-                  : 'border-gray-200'
-              }`}
-            >
-              <div id="qr-reader" className="bg-black/5" />
-            </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-              <span>{isScanning ? 'Scan en cours...' : 'Initialisation...'}</span>
-              <span className="inline-flex items-center gap-2">
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    isScanning ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'
-                  }`}
-                />
-                {isScanning ? 'Caméra active' : 'Caméra prête'}
-              </span>
-            </div>
-            {scannerError ? (
-              <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                {scannerError}
-              </p>
-            ) : null}
-            <button
-              type="button"
-              onClick={closeScanner}
-              className="mt-4 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-gray-300"
-            >
-              Fermer
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-export default VendorValidationPage
+export default VendorValidationPage; // Export module

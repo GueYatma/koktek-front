@@ -1,8 +1,20 @@
+import { createDirectus, readItem, rest, staticToken } from '@directus/sdk'
 import { DIRECTUS_BASE_URL } from '../utils/directus'
 
 const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
   | string
   | undefined
+
+const directusClient = DIRECTUS_TOKEN
+  ? createDirectus(DIRECTUS_BASE_URL)
+      .with(staticToken(DIRECTUS_TOKEN))
+      .with(rest())
+  : createDirectus(DIRECTUS_BASE_URL).with(rest())
+
+const orderDetailFields = [
+  '*',
+  'customer_id.*',
+] as const
 
 type DirectusItemResponse<T> = {
   data: T
@@ -164,15 +176,39 @@ const parseError = (payload: DirectusError) => {
   return message ? `Directus error: ${message}` : 'Directus error'
 }
 
+const toNumberValue = (value: unknown, fallback = 0): number => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback
+  }
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+  return fallback
+}
+
+const omitNil = (payload: Record<string, unknown>) => {
+  Object.keys(payload).forEach((key) => {
+    if (payload[key] === undefined || payload[key] === null) {
+      delete payload[key]
+    }
+  })
+  return payload
+}
+
 const requestDirectus = async <T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> => {
   const url = buildUrl(path, options.params)
+  const payload = options.body
+  if ((options.method ?? 'GET') === 'POST') {
+    console.log('PAYLOAD ENVOYÉ:', payload)
+  }
   const response = await fetch(url, {
     method: options.method ?? 'GET',
     headers: buildHeaders(),
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: payload ? JSON.stringify(payload) : undefined,
   })
 
   if (!response.ok) {
@@ -314,31 +350,51 @@ export const createOrder = async (input: {
   shipping_price?: number | null
   item_count?: number | null
 }): Promise<OrderRecord> => {
-  return createOne<OrderRecord>('orders', {
-    order_number: input.order_number ?? `KOK-${Date.now()}`,
-    cart_id: input.cart_id ?? null,
-    customer_id: input.customer_id ?? null,
+  const resolvedOrderNumber =
+    input.order_number === null
+      ? undefined
+      : input.order_number ?? `KOK-${Date.now()}`
+  const payload = omitNil({
+    order_number: resolvedOrderNumber,
+    cart_id: input.cart_id ?? undefined,
+    customer_id: input.customer_id ?? undefined,
     status: input.status ?? 'pending_payment',
-    payment_status: input.payment_status ?? null,
+    payment_status: input.payment_status ?? 'pending_payment',
     currency: input.currency ?? 'EUR',
-    subtotal: input.subtotal ?? null,
-    total: input.total ?? null,
-    total_price: input.total_price ?? input.total ?? 0,
-    total_products_price: input.total_products_price ?? input.subtotal ?? input.total ?? 0,
-    shipping_price: input.shipping_price ?? 0,
-    item_count: input.item_count ?? null,
+    subtotal: toNumberValue(input.subtotal ?? input.total, 0),
+    total: toNumberValue(input.total, 0),
+    total_price: toNumberValue(input.total_price ?? input.total, 0),
+    total_products_price: toNumberValue(
+      input.total_products_price ?? input.subtotal ?? input.total,
+      0,
+    ),
+    shipping_price: toNumberValue(input.shipping_price ?? 0, 0),
+    item_count: toNumberValue(input.item_count ?? 0, 0),
   })
+  
+  return createOne<OrderRecord>('orders', payload)
 }
 
 export const getOrderFullDetails = async (
   orderId: string,
 ): Promise<OrderFullDetails> => {
+  const result = await directusClient.request(
+    readItem('orders', orderId, {
+      fields: orderDetailFields,
+    }),
+  )
+  return result as OrderFullDetails
+}
+
+export const getOrderItemsByOrderId = async (
+  orderId: string,
+): Promise<OrderItemRecord[]> => {
   const params: Record<string, string> = {
-    fields:
-      '*,order_items.*,order_items.product_id.*,order_items.variant_id.*,order_delivery.*,customer_id.*',
+    'filter[order_id][_eq]': orderId,
+    fields: '*,product_id.*,variant_id.*',
   }
-  const payload = await requestDirectus<DirectusItemResponse<OrderFullDetails>>(
-    `/items/orders/${orderId}`,
+  const payload = await requestDirectus<DirectusListResponse<OrderItemRecord>>(
+    `/items/order_items`,
     { params },
   )
   return payload.data

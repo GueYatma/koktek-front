@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@directus/sdk": "^21.1.0",
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.13",
-    "html5-qrcode": "^2.3.8",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.564.0",
     "qrcode.react": "^4.2.0",
