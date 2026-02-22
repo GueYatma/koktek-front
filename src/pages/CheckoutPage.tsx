@@ -62,6 +62,7 @@ const CheckoutPage = () => {
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
   const [paymentView, setPaymentView] = useState<PaymentView>('choice')
+  const [isCashConfirmOpen, setIsCashConfirmOpen] = useState(false)
   const checkoutStepRef = useRef<CheckoutStep>(checkoutStep)
   const [customerSnapshot, setCustomerSnapshot] = useState<{
     email: string
@@ -110,6 +111,7 @@ const CheckoutPage = () => {
   const ticketVariantName = ticketMainItem?.variant.option1_name?.trim()
   const ticketVariantValue =
     ticketMainItem?.variant.option1_value?.trim() || '—'
+  const ticketSku = ticketMainItem?.variant.sku?.trim() || ''
   const ticketCustomerName = [
     customerSnapshot?.first_name || delivery.first_name,
     customerSnapshot?.last_name || delivery.last_name,
@@ -148,28 +150,6 @@ const CheckoutPage = () => {
     setError(null)
 
     try {
-      const fallbackCustomer = {
-        email: delivery.email.trim(),
-        first_name: delivery.first_name.trim(),
-        last_name: delivery.last_name.trim(),
-        zip_code: delivery.postal_code.trim(),
-        country_code: resolveCountryCode(delivery.country),
-      }
-      const customer = customerSnapshot ?? fallbackCustomer
-      const itemsPayload = items.map((item) => ({
-        name: item.product.title,
-        quantity: item.quantity,
-        price: item.variant.price,
-        image_url: resolveImageUrl(item.product.image_url),
-      }))
-      const payload = {
-        order_id: orderId,
-        order_number: orderNumber ?? orderId,
-        total_amount: total,
-        customer,
-        items: itemsPayload,
-      }
-
       // Étape 1: passer la commande en attente de paiement espèces.
       await markOrderPaid(orderId, {
         status: 'pending_cash',
@@ -177,24 +157,41 @@ const CheckoutPage = () => {
         payment_reference: null,
       })
 
-      // Étape 2: notifier le workflow externe via webhook.
+      // Étape 2: afficher le message de succès immédiatement.
+      setCheckoutStep('success')
+
+      // Étape 3: notifier le workflow externe via webhook en arrière-plan.
       if (N8N_WEBHOOK_URL) {
-        const response = await fetch(N8N_WEBHOOK_URL, {
+        void fetch(N8N_WEBHOOK_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           // Webhook n8n: envoi de l'ID de commande pour déclencher le process externe.
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ order_id: orderId }),
+        }).catch((webhookError) => {
+          console.error('Erreur webhook n8n', webhookError)
         })
-
-        if (!response.ok) {
-          throw new Error('Webhook n8n error')
-        }
       }
 
-      // Étape 3: afficher le message de succès.
-      setCheckoutStep('success')
+      const email = customerSnapshot?.email || delivery.email.trim()
+      if (email) {
+        const mainItem = items[0]
+        saveOrderForEmail(email, {
+          id: orderId,
+          orderNumber: orderNumber ?? orderId,
+          total,
+          productName: mainItem ? mainItem.product.title : 'Commande Koktek',
+          variantName: mainItem?.variant.option1_name ?? null,
+          variantValue: mainItem?.variant.option1_value ?? null,
+          imageUrl: mainItem ? resolveImageUrl(mainItem.product.image_url) : null,
+          sku: mainItem?.variant.sku ?? null,
+          status: 'pending_cash',
+          payment_status: 'pending_cash',
+          customerName: ticketCustomerName || null,
+          createdAt: new Date().toISOString(),
+        })
+      }
     } catch (payError) {
       console.error('Erreur paiement espèces', payError)
       setError("Impossible de valider le paiement en espèces. Réessaie.")
@@ -263,6 +260,9 @@ const CheckoutPage = () => {
         currency: 'EUR',
         subtotal: total,
         total,
+        total_price: total,
+        total_products_price: total,
+        shipping_price: 0,
         item_count: itemCount,
       })
 
@@ -333,6 +333,9 @@ const CheckoutPage = () => {
           variantName: mainItem?.variant.option1_name ?? null,
           variantValue: mainItem?.variant.option1_value ?? null,
           imageUrl: mainItem ? resolveImageUrl(mainItem.product.image_url) : null,
+          sku: mainItem?.variant.sku ?? null,
+          status: order.status ?? 'pending_payment',
+          payment_status: order.payment_status ?? 'pending_payment',
           customerName: deliveryFullName || null,
           createdAt: new Date().toISOString(),
         })
@@ -816,7 +819,7 @@ const CheckoutPage = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={handlePayCash}
+                        onClick={() => setIsCashConfirmOpen(true)}
                         onMouseEnter={() => setHoveredBtn('cash')}
                         onMouseLeave={() => setHoveredBtn(null)}
                         disabled={isPayingCash}
@@ -949,6 +952,7 @@ const CheckoutPage = () => {
         productName={ticketProductName}
         variantName={ticketVariantName}
         variantValue={ticketVariantValue}
+        sku={ticketSku}
         imageUrl={ticketImageUrl}
         customerName={ticketCustomerName}
         total={total}
@@ -960,6 +964,46 @@ const CheckoutPage = () => {
           setPaymentView('card')
         }}
       />
+
+      {isCashConfirmOpen ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsCashConfirmOpen(false)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Confirmer le paiement en espèces ?
+            </h2>
+            <p className="mt-3 text-sm text-gray-600">
+              Votre commande ne sera préparée et envoyée que lorsque vous remettrez les espèces à notre vendeur dans notre boutique ou l&apos;un de nos stands à Marseille et alentours. Si vous confirmez, un bon de commande sera généré pour le retrait.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setIsCashConfirmOpen(false)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-gray-300 sm:w-auto"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCashConfirmOpen(false)
+                  void handlePayCash()
+                }}
+                className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black sm:w-auto"
+              >
+                Oui, je confirme
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

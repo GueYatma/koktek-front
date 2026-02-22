@@ -12,11 +12,15 @@ type OrderTicketModalProps = {
   productName: string
   variantName?: string | null
   variantValue?: string | null
+  sku?: string | null
   imageUrl?: string | null
   customerName?: string | null
   total: number
   noticeText?: string
   hintText?: string
+  headerLabel?: string
+  title?: string
+  noticeTone?: 'danger' | 'success'
   onClose?: () => void
   showPayByCard?: boolean
   onPayByCard?: () => void
@@ -29,11 +33,15 @@ const OrderTicketModal = ({
   productName,
   variantName,
   variantValue,
+  sku,
   imageUrl,
   customerName,
   total,
   noticeText,
   hintText,
+  headerLabel = 'BON DE COMMANDE',
+  title = 'Commande Réservée !',
+  noticeTone = 'danger',
   onClose,
   showPayByCard = false,
   onPayByCard,
@@ -43,9 +51,12 @@ const OrderTicketModal = ({
   const resolvedImageUrl = imageUrl ? resolveImageUrl(imageUrl) : ''
   const variantLabel = variantName?.trim() || 'Modèle / Variante'
   const variantValueLabel = variantValue?.trim() || '—'
+  const skuLabel = sku?.trim()
   const notice =
     noticeText ??
     'Votre commande sera préparée uniquement après réception de votre paiement en espèces dans notre boutique à Marseille.'
+  const noticeClass =
+    noticeTone === 'success' ? 'text-emerald-600' : 'text-red-600'
 
   const buildTicketPng = async () => {
     if (!ticketRef.current) return null
@@ -145,12 +156,14 @@ const OrderTicketModal = ({
           ) : null}
           <div className="text-center">
             <p className="text-sm font-semibold tracking-[0.42em] text-gray-500">
-              BON DE COMMANDE
+              {headerLabel}
             </p>
             <h2 className="mt-2 text-xl font-semibold text-gray-900">
-              Commande Réservée !
+              {title}
             </h2>
-            <p className="mt-3 text-sm font-semibold leading-relaxed text-red-600">
+            <p
+              className={`mt-3 text-sm font-semibold leading-relaxed ${noticeClass}`}
+            >
               {notice}
             </p>
             {hintText ? (
@@ -201,6 +214,11 @@ const OrderTicketModal = ({
                   {variantValueLabel}
                 </span>
               </p>
+              {skuLabel ? (
+                <p className="mt-1 text-xs text-gray-500">
+                  SKU : <span className="font-semibold text-gray-900">{skuLabel}</span>
+                </p>
+              ) : null}
               <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-xs text-gray-400">Total</p>

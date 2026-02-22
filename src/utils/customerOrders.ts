@@ -6,6 +6,9 @@ export type StoredOrder = {
   variantName?: string | null
   variantValue?: string | null
   imageUrl?: string | null
+  sku?: string | null
+  status?: string | null
+  payment_status?: string | null
   customerName?: string | null
   createdAt: string
 }

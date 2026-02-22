@@ -47,6 +47,9 @@ export type OrderRecord = {
   currency?: string
   subtotal?: number | null
   total?: number | null
+  total_price?: number | null
+  total_products_price?: number | null
+  shipping_price?: number | null
   item_count?: number | null
   created_at?: string
   updated_at?: string
@@ -61,8 +64,8 @@ export type OrderFullDetails = Omit<OrderRecord, 'customer_id'> & {
 export type OrderItemRecord = {
   id: string
   order_id: string
-  product_id: string
-  variant_id: string | null
+  product_id: string | Record<string, unknown>
+  variant_id: string | Record<string, unknown> | null
   quantity: number
   unit_price?: number | null
   line_total?: number | null
@@ -306,6 +309,9 @@ export const createOrder = async (input: {
   currency?: string
   subtotal?: number | null
   total?: number | null
+  total_price?: number | null
+  total_products_price?: number | null
+  shipping_price?: number | null
   item_count?: number | null
 }): Promise<OrderRecord> => {
   return createOne<OrderRecord>('orders', {
@@ -317,6 +323,9 @@ export const createOrder = async (input: {
     currency: input.currency ?? 'EUR',
     subtotal: input.subtotal ?? null,
     total: input.total ?? null,
+    total_price: input.total_price ?? input.total ?? 0,
+    total_products_price: input.total_products_price ?? input.subtotal ?? input.total ?? 0,
+    shipping_price: input.shipping_price ?? 0,
     item_count: input.item_count ?? null,
   })
 }
@@ -325,7 +334,8 @@ export const getOrderFullDetails = async (
   orderId: string,
 ): Promise<OrderFullDetails> => {
   const params: Record<string, string> = {
-    fields: '*,order_items.*,order_delivery.*,customer_id.*',
+    fields:
+      '*,order_items.*,order_items.product_id.*,order_items.variant_id.*,order_delivery.*,customer_id.*',
   }
   const payload = await requestDirectus<DirectusItemResponse<OrderFullDetails>>(
     `/items/orders/${orderId}`,
