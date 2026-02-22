@@ -11,10 +11,10 @@ const directusClient = DIRECTUS_TOKEN
       .with(rest())
   : createDirectus(DIRECTUS_BASE_URL).with(rest())
 
-const orderDetailFields = [
+const orderDetailFields: string[] = [
   '*',
   'customer_id.*',
-] as const
+]
 
 type DirectusItemResponse<T> = {
   data: T

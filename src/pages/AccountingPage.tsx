@@ -168,7 +168,7 @@ const AccountingPage = () => {
         parseAmount(item.line_total) || (unitPrice > 0 ? unitPrice * quantity : 0)
       const variantId = normalizeId(item.variant_id as unknown)
       const costUnit =
-        (variantId && variantById.get(variantId)?.cost_price) ??
+        (variantId ? variantById.get(variantId)?.cost_price : undefined) ??
         DEFAULT_COST_PRICE
       const costTotal = costUnit * quantity
       const vat = lineTotal * VAT_RATE
