@@ -123,14 +123,22 @@ const fetchProductSummaries = async (ids: string[]) => {
 
   const params = new URLSearchParams(); // Constructeur query
   params.set("filter[id][_in]", uniqueIds.join(",")); // Filtre Directus
-  params.set("fields", "id,title,name,image_url,image,imageUrl"); // Champs réduits
+  params.set("fields", "id,title,image"); // Champs réduits
 
   const response = await fetch(
     `${DIRECTUS_BASE_URL}/items/products?${params.toString()}`,
     { headers: buildHeaders() },
   ); // Appel GET
 
-  if (!response.ok) throw new Error("Impossible de récupérer les produits."); // Catch réseau
+  if (!response.ok) {
+    let errorText = "";
+    try {
+      errorText = await response.text();
+    } catch {
+      // ignore
+    }
+    throw new Error(`Products API HTML/JSON Error (${response.status}): ${errorText.substring(0, 100)}`);
+  }
 
   const payload = (await response.json()) as {
     data?: Array<Record<string, unknown>>;
@@ -259,9 +267,24 @@ const VendorValidationPage = () => {
           const items = await getOrderItemsByOrderId(resolvedId); // Requête order_items
           if (!isActive) break; // Sécurité composant démonté
 
+          // FETCH EXPLICITE POUR RAMENER L'ADRESSE ET LE NOM (car Directus les sépare)
+          const deliveryParams = new URLSearchParams();
+          deliveryParams.set("filter[order_id][_eq]", resolvedId);
+          deliveryParams.set("limit", "1");
+          const deliveryRes = await fetch(
+            `${DIRECTUS_BASE_URL}/items/order_delivery?${deliveryParams.toString()}`,
+            { headers: buildHeaders() }
+          );
+          let fetchedDelivery = null;
+          if (deliveryRes.ok) {
+            const dPayload = await deliveryRes.json();
+            fetchedDelivery = dPayload?.data?.[0] || null;
+          }
+
           const merged = {
             ...details,
             order_items: items,
+            order_delivery: fetchedDelivery, // Injection de la livraison trouvée
           } as OrderFullDetails; // Fusion explicite
 
           setOrder(merged); // Stockage état React
@@ -380,6 +403,7 @@ const VendorValidationPage = () => {
   const vatAmount = totalTtc - totalTtc / (1 + vatRate); // Rétrocalcul TVA
 
   const resolvedCustomer = customerProfile ?? customer; // Priorité au fetch
+
   const firstName = String(
     resolvedCustomer?.first_name ??
       (resolvedCustomer as { firstName?: string })?.firstName ??
@@ -405,6 +429,7 @@ const VendorValidationPage = () => {
     (resolvedCustomer as { full_name?: string })?.full_name,
     (resolvedCustomer as { fullName?: string })?.fullName,
     delivery?.recipient_name,
+    delivery?.name, // added fallback
   ];
 
   let finalCustomerName = "Nom non renseigné";

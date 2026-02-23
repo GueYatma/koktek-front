@@ -627,6 +627,20 @@ export const getCustomerByEmail = async (
   return payload.data?.[0] ?? null
 }
 
+export const getCustomerById = async (
+  id: string,
+): Promise<CustomerRecord | null> => {
+  if (!id) return null
+  const params: Record<string, string> = {
+    fields: 'id,first_name,last_name,email,phone,address_line1,city,zip_code,country_code',
+  }
+  const payload = await requestDirectus<DirectusItemResponse<CustomerRecord>>(
+    `/items/customers/${id}`,
+    { params },
+  )
+  return payload.data ?? null
+}
+
 export const closeCart = async (
   cartId: string,
   status = 'converted',
