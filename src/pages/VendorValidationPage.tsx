@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react"; // Import des hooks de base React
+import { useEffect, useMemo, useRef, useState } from "react"; // Import des hooks de base React
 import { useSearchParams } from "react-router-dom"; // Import pour manipuler l'URL
 import { DIRECTUS_BASE_URL } from "../utils/directus"; // URL backend
 import { formatPrice } from "../utils/format"; // Formateur de prix
 import { resolveImageUrl } from "../utils/image"; // Formateur d'image
 import {
+  getCustomerById,
   getOrderFullDetails,
   getOrderItemsByOrderId,
   type CustomerRecord,
@@ -147,44 +148,42 @@ const fetchProductSummaries = async (ids: string[]) => {
 
 const VendorValidationPage = () => {
   // Composant principal
-  const [searchParams, setSearchParams] = useSearchParams(); // Routeur paramètres
+  const [searchParams, setSearchParams] = useSearchParams();
   const orderParam = useMemo(
     () => searchParams.get("order")?.trim() ?? "",
     [searchParams],
-  ); // Récupération URL
-
-  const [searchInput, setSearchInput] = useState(orderParam); // Input controlé
-  const [activeQuery, setActiveQuery] = useState(orderParam); // Trigger recherche
-
-  const [order, setOrder] = useState<OrderFullDetails | null>(null); // Donnée commande
-  const [productMap, setProductMap] = useState<Record<string, ProductSummary>>(
-    {},
-  ); // Donnée produits
-  const [isLoading, setIsLoading] = useState(true); // Indicateur chargement
-  const [isPaying, setIsPaying] = useState(false); // Indicateur action bouton
-  const [error, setError] = useState<string | null>(null); // Indicateur erreur UI
-  const [success, setSuccess] = useState(false); // Indicateur succès UI
-
-  useEffect(() => {
-    // Sync URL vers state
-    setSearchInput(orderParam); // MAJ input
-    setActiveQuery(orderParam); // MAJ query
-  }, [orderParam]); // Dépendance URL
+  );
 
   const extractOrderValue = (value: string) => {
-    // Nettoyeur input recherche
-    const trimmed = value.trim(); // Trim classique
-    if (!trimmed) return ""; // Sortie rapide
+    const trimmed = value.trim();
+    if (!trimmed) return "";
     try {
-      // Try parsing URL
-      const url = new URL(trimmed); // Instancie URL
-      const param = url.searchParams.get("order"); // Récupère querystring
-      return param?.trim() || trimmed; // Retourne id
+      const url = new URL(trimmed);
+      const param = url.searchParams.get("order");
+      return param?.trim() || trimmed;
     } catch {
-      // Si pas URL
-      return trimmed; // Retourne texte
-    } // Fin try
-  }; // Fin fonction
+      return trimmed;
+    }
+  };
+
+  const initialQuery = useMemo(() => extractOrderValue(orderParam), [orderParam]);
+
+  const [searchInput, setSearchInput] = useState(initialQuery);
+  const [activeQuery, setActiveQuery] = useState(initialQuery);
+  
+  const [order, setOrder] = useState<OrderFullDetails | null>(null);
+  const [productMap, setProductMap] = useState<Record<string, ProductSummary>>({});
+  const [isLoading, setIsLoading] = useState(Boolean(initialQuery));
+  const [isPaying, setIsPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const clean = extractOrderValue(orderParam);
+    setSearchInput(clean);
+    setActiveQuery(clean);
+  }, [orderParam]);
+
 
   const resolveOrderId = async (value: string) => {
     // Trouve l'UUID de la commande
@@ -211,22 +210,20 @@ const VendorValidationPage = () => {
   }; // Fin fonction
 
   const handleSearch = (value: string) => {
-    // Déclencheur UI recherche
-    const next = extractOrderValue(value); // Nettoie texte
+    const next = extractOrderValue(value);
     if (!next) {
-      // Si vide
-      setError("Saisissez un identifiant ou numéro de commande."); // Erreur
-      setOrder(null); // Reset obj
-      setProductMap({}); // Reset obj
-      setSuccess(false); // Reset bool
-      return; // Sortie
-    } // Fin if
-    setError(null); // Purge erreur
-    setSuccess(false); // Purge succès
-    setSearchInput(next); // Met à jour input
-    setActiveQuery(next); // Lance appel
-    setSearchParams({ order: next }); // Met à jour route
-  }; // Fin fonction
+      setError("Saisissez un identifiant ou numéro de commande.");
+      setOrder(null);
+      setProductMap({});
+      setSuccess(false);
+      return;
+    }
+    setError(null);
+    setSuccess(false);
+    setSearchInput(next);
+    setActiveQuery(next);
+    setSearchParams({ order: next });
+  };
 
   useEffect(() => {
     // Moteur de chargement commande
@@ -246,56 +243,108 @@ const VendorValidationPage = () => {
       setError(null); // Nettoie UI erreur
       setSuccess(false); // Nettoie UI succès
 
-      try {
-        // Début chaine HTTP
-        const resolvedId = await resolveOrderId(activeQuery); // Traduit KOK en UUID
-        if (!resolvedId) throw new Error("Commande introuvable."); // Cas introuvable
+      let attempt = 0;
+      const maxAttempts = 3;
+      let lastErrMessage = "";
 
-        const details = await getOrderFullDetails(resolvedId); // Appel de ton API read
-        if (!isActive) return; // Sécurité composant démonté
+      while (attempt < maxAttempts && isActive) {
+        try {
+          // Début chaine HTTP
+          const resolvedId = await resolveOrderId(activeQuery); // Traduit KOK en UUID
+          if (!resolvedId) throw new Error("Commande introuvable."); // Cas introuvable
 
-        const items = await getOrderItemsByOrderId(resolvedId); // Requête dédiée order_items
-        if (!isActive) return; // Sécurité composant démonté
+          const details = await getOrderFullDetails(resolvedId); // Appel API
+          if (!isActive) break; // Sécurité composant démonté
 
-        const merged = {
-          ...details,
-          order_items: items,
-        } as OrderFullDetails; // Fusion explicite
+          const items = await getOrderItemsByOrderId(resolvedId); // Requête order_items
+          if (!isActive) break; // Sécurité composant démonté
 
-        setOrder(merged); // Stockage état React
+          const merged = {
+            ...details,
+            order_items: items,
+          } as OrderFullDetails; // Fusion explicite
 
-        const itemIds = items
-          .map((item) => normalizeId(item.product_id as unknown))
-          .filter(Boolean); // Isole IDs
+          setOrder(merged); // Stockage état React
 
-        if (itemIds.length > 0) {
-          // S'il y a des produits
-          const summaries = await fetchProductSummaries(itemIds); // Cherche la nomenclature
-          if (isActive) setProductMap(summaries); // Met à jour state
-        } // Fin if
-      } catch {
-        // Gestion globale crash
-        if (isActive) setError("Impossible de charger la commande."); // UI Erreur
-      } finally {
-        // Fin cycle
-        if (isActive) setIsLoading(false); // UI Stop Loading
-      } // Fin try
+          const itemIds = items
+            .map((item) => normalizeId(item.product_id as unknown))
+            .filter(Boolean); // Isole IDs
+
+          if (itemIds.length > 0) {
+            // S'il y a des produits
+            const summaries = await fetchProductSummaries(itemIds); // Nomenclature
+            if (isActive) setProductMap(summaries); // Met à jour state
+          } // Fin if
+
+          setError(null);
+          break; // Succès complet, on sort de la boucle
+        } catch (err) {
+          attempt++;
+          lastErrMessage = err instanceof Error ? err.message : String(err);
+          if (attempt >= maxAttempts) {
+            if (isActive) setError(`Erreur : ${lastErrMessage}`);
+          } else {
+            // Attente avant le prochain essai (contourne le lag de cache N8N)
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
+      } // Fin boucle
+
+      if (isActive) setIsLoading(false); // UI Stop Loading
     }; // Fin worker
 
     void fetchOrder(); // Exécution
 
     return () => {
       isActive = false;
-    }; // Cleanup
-  }, [activeQuery]); // Déclencheur
+    };
+  }, [activeQuery]);
 
   const customer = useMemo(() => {
     // Sélecteur client memoizé
     if (!order) return null; // Défaut
-    if (order.customer_id && typeof order.customer_id === "object")
-      return order.customer_id as CustomerRecord; // Trouvé
+    const candidate =
+      (order as { customer?: unknown }).customer ?? order.customer_id;
+    if (candidate && typeof candidate === "object")
+      return candidate as CustomerRecord; // Trouvé
     return null; // Défaut
   }, [order]); // Dép
+
+  const [customerProfile, setCustomerProfile] = useState<CustomerRecord | null>(
+    null,
+  ); // Cache profil client
+
+  useEffect(() => {
+    // Charge client si seulement un ID est dispo
+    let isActive = true;
+    const candidate =
+      (order as { customer?: unknown })?.customer ?? order?.customer_id;
+    if (candidate && typeof candidate === "object") {
+      setCustomerProfile(candidate as CustomerRecord);
+      return () => {
+        isActive = false;
+      };
+    }
+    if (typeof candidate !== "string" || !candidate.trim()) {
+      setCustomerProfile(null);
+      return () => {
+        isActive = false;
+      };
+    }
+    void (async () => {
+      try {
+        const fetched = await getCustomerById(candidate.trim());
+        if (isActive) {
+          setCustomerProfile(fetched);
+        }
+      } catch {
+        if (isActive) setCustomerProfile(null);
+      }
+    })();
+    return () => {
+      isActive = false;
+    };
+  }, [order]);
 
   const delivery = order?.order_delivery ?? null; // Sélecteur adresse memoizé
 
@@ -330,13 +379,47 @@ const VendorValidationPage = () => {
   const totalTtc = Number.isFinite(totals.total) ? totals.total : 0; // TTC
   const vatAmount = totalTtc - totalTtc / (1 + vatRate); // Rétrocalcul TVA
 
-  const firstName = customer?.first_name?.trim() ?? ""; // Info client prenom
-  const lastName = customer?.last_name?.trim() ?? ""; // Info client nom
-  const fullName = [firstName, lastName].filter(Boolean).join(" "); // Info complet
-  const customerName =
-    fullName || customer?.name || delivery?.recipient_name || "Client"; // Nom affiché UI
+  const resolvedCustomer = customerProfile ?? customer; // Priorité au fetch
+  const firstName = String(
+    resolvedCustomer?.first_name ??
+      (resolvedCustomer as { firstName?: string })?.firstName ??
+      "",
+  ).trim(); // Info client prenom
+  const lastName = String(
+    resolvedCustomer?.last_name ??
+      (resolvedCustomer as { lastName?: string })?.lastName ??
+      "",
+  ).trim(); // Info client nom
+  
+  const rawFullName = [firstName, lastName].filter(Boolean).join(" "); // Info complet
+
+  const isAnonymousClient = (name: string) => {
+    if (!name) return true;
+    const lower = name.toLowerCase().trim();
+    return lower === "client" || lower === "client " || lower === "customer";
+  };
+
+  const nameCandidates = [
+    rawFullName,
+    resolvedCustomer?.name,
+    (resolvedCustomer as { full_name?: string })?.full_name,
+    (resolvedCustomer as { fullName?: string })?.fullName,
+    delivery?.recipient_name,
+  ];
+
+  let finalCustomerName = "Nom non renseigné";
+  for (const candidate of nameCandidates) {
+    if (candidate && typeof candidate === "string" && !isAnonymousClient(candidate)) {
+      finalCustomerName = candidate.trim();
+      break;
+    }
+  }
+  
+  const customerName = finalCustomerName;
+    
   const customerEmail =
     customer?.email || delivery?.email || "Email non renseigné"; // Email affiché UI
+    
   const customerPhone =
     customer?.phone || delivery?.phone || "Téléphone non renseigné"; // Tel affiché UI
 
