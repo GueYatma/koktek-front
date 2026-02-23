@@ -1,0 +1,594 @@
+{
+  "name": "[koktek-CJ] Enrichissement des Produits - Prix - Livraison - Avis",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        -96
+      ],
+      "id": "1527591e-2e8c-4e8b-b0ed-d391f4f322fd",
+      "name": "Toutes les heures"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM koktek.products \nWHERE status = 'published' \nAND shipping_options IS NULL \nLIMIT 10;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -288,
+        -96
+      ],
+      "id": "1edc7ed1-ef3a-47aa-9bd9-8b14be42a75a",
+      "name": "[PG] Chercher 10 produits à enrichir",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -64,
+        -96
+      ],
+      "id": "25a14aba-5f99-4f9b-9e9d-0452aa42bc26",
+      "name": "[LOOP] Produit par Produit"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://developers.cjdropshipping.com/api2.0/v1/logistic/freightCalculate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "CJ-Access-Token",
+              "value": "API@CJ5158994@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjY5OCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnlvMHMyT0M5MFhSTTJKU0hvcU8wZnlDVE5yVERld2JNN0NpSE92SlIxTnpsd1NBUDJoc0IrRGtOTm5nYVhaTWY0T29wNU5LV0kwTVZQWDZrQVkrYmNnUDRxazRTQ01TcUdMdHlMVlU2MHE3MnFRcXdWTWk1a005Z0ErcGN1R0VhODVUd2JoZzVPUDRPUlg1YlRTS1BuaVhIYjh1alFiVGRnbk8yTVYvUWhPSGtKRHZlZlRBZVNjNDdvMFUvYVBxVVRYSTlsK0tuY0hFYzcxZzg4bi80Ynd5RTMxVEwxU3JoaVJacEFvNHVkVi9PUyt6ZW1wNkpWS0RobHBzWEcxMkplNytBZVVtN0NUcCtoMzNHMnNlVU1wcz0iLCJpYXQiOjE3NzEwOTE4OTF9.MVX1SPGVbScWWJRw3Vu4Vx1Y8zNr8npAG3_FyzrEqCg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"startCountryCode\": \"{{ $json.country_origin || 'CN' }}\",\n  \"endCountryCode\": \"FR\",\n  \"products\": [\n    {\n      \"quantity\": 1,\n      \"vid\": \"{{ $node[\"[PG] Récupérer 1 VID\"].json.cj_vid }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        368,
+        -80
+      ],
+      "id": "50f67d6a-42a4-41fb-9fa0-53ba0d2d6298",
+      "name": "[CJ] Calculer Frais de Port"
+    },
+    {
+      "parameters": {
+        "jsCode": "const shippingMethods = $json.data || [];\nconst validMethods = shippingMethods.filter(s => s.logisticPrice <= 9);\nconst safeMethods = validMethods.length > 0 ? validMethods : shippingMethods;\n\n// 1. Tri et Top 3 (Identique à avant)\nconst sortedByPrice = [...safeMethods].sort((a, b) => a.logisticPrice - b.logisticPrice);\nconst sortedByTime = [...safeMethods].sort((a, b) => {\n  const timeA = parseInt((a.logisticAging || \"99\").split('-').pop());\n  const timeB = parseInt((b.logisticAging || \"99\").split('-').pop());\n  return timeA - timeB;\n});\n\nconst top3 = [\n  sortedByPrice[0],\n  sortedByTime[0],\n  sortedByPrice[Math.floor(sortedByPrice.length / 2)]\n].filter(Boolean);\n\nconst uniqueTop3 = Array.from(new Set(top3.map(a => a.logisticName)))\n  .map(name => top3.find(a => a.logisticName === name));\n\n\n// ==========================================\n// 2. LE MOTEUR COMPTABLE (Calcul à l'envers)\n// ==========================================\nconst basePrice = parseFloat($node[\"[LOOP] Produit par Produit\"].json.base_price) || 0;\n\n// A. Les coûts fixes (TVA Import 20%)\nconst tvaImport = basePrice * 0.20;\n\n// B. On choisit le transport moyen (celui du milieu dans notre Top 3)\nconst medianShipping = uniqueTop3[Math.floor(uniqueTop3.length / 2)].logisticPrice;\n\n// C. Ton objectif de Marge Nette (Dans ta poche)\n// Tu as demandé 120% du prix d'achat.\nlet targetNetMargin = basePrice * 1.20;\n// Mon filet de sécurité vital : Jamais moins de 4€ de bénéfice net.\nif (targetNetMargin < 4.00) {\n   targetNetMargin = 4.00; \n}\n\n// D. L'Équation URSSAF\n// L'URSSAF (12.3%) s'applique sur le TOTAL payé par le client (Produit + Transport).\n// Formule mathématique : Total_Client * (1 - 0.123) = Coûts_Totaux + Marge_Nette\nconst urssafRate = 0.123;\nconst costsAndMargin = basePrice + tvaImport + medianShipping + targetNetMargin;\nconst totalCustomerPays = costsAndMargin / (1 - urssafRate);\n\n// L'URSSAF réelle en euros\nconst urssafFee = totalCustomerPays * urssafRate;\n\n// E. Le Prix Produit (Ce qu'on affiche sur le site React)\n// On retire le transport du total, car le client l'ajoutera plus tard dans son panier\nconst retailPriceSite = totalCustomerPays - medianShipping;\n\nreturn {\n  retail_price: retailPriceSite.toFixed(2),\n  margin: targetNetMargin.toFixed(2),\n  urssaf_fee: urssafFee.toFixed(2),\n  vat_amount: tvaImport.toFixed(2),\n  shipping_options: { \n    list: uniqueTop3.map(s => ({\n      name: s.logisticName,\n      price: s.logisticPrice,\n      days: s.logisticAging + 'j'\n    }))\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -80
+      ],
+      "id": "d0f14380-9aa0-40fc-893c-a1d4e7308d71",
+      "name": "[CODE] - Calculateur de Marge & Top 3 Transporteurs"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# DONNEES DU PRODUIT A EVALUER ET A JUSTIFIER\n- Titre : {{ $node[\"[LOOP] Produit par Produit\"].json.title }}\n- Prix de vente : {{ $node[\"[CODE] - Calculateur de Marge & Top 3 Transporteurs\"].json.retail_price }} EUR\n- Description technique : {{ $node[\"[LOOP] Produit par Produit\"].json.description }}\n- Image principale (A analyser) : {{ $node[\"[LOOP] Produit par Produit\"].json.image }}\n\n# OPTIONS DE LIVRAISON (Vers la France)\n{{ JSON.stringify($node[\"[CODE] - Calculateur de Marge & Top 3 Transporteurs\"].json.shipping_options) }}\n\n# CONSIGNE\nRegarde l'image via le lien fourni, analyse le prix, les delais de livraison et la description.\nGenere le score, les etoiles, et redige ton verdict en \"Je\" pour justifier tes points forts et tes points faibles selon les regles etablies.\nRAPPEL FINAL : Renvoie UNIQUEMENT un objet JSON valide, sans aucune balise markdown ni texte autour.",
+        "options": {
+          "systemMessage": "# ROLE\nTu es le Testeur Expert du Laboratoire KOKTEK. Tu t'adresses directement au client (\"vous\") en utilisant le \"Je\" pour donner ton avis personnel.\nTon role n'est PAS de decrire le produit (le client a deja lu la fiche technique). Ton role exclusif est de JUSTIFIER la note que tu as attribuee en analysant tous les criteres lies au PRODUIT LUI-MEME.\n\n# CRITERES D'ANALYSE\nTu dois croiser toutes ces donnees pour calculer ta note :\n1. Le visuel (Image) : Est-ce que le design fait premium, original, ou tres basique ?\n2. Le prix de vente : Le tarif est-il justifie par rapport a l'aspect et aux caracteristiques de l'accessoire ?\n3. Les specificites techniques (Description).\n\n# REGLES DE NOTATION\n1. expert_score : Donne une note de 3.0 a 5.0 (par pas de 0.5). Sois juste et realiste sur la qualite intrinseque du produit.\n2. expert_stars : Convertis obligatoirement cette note en etoiles visuelles.\n   (3.0 = \"⭐⭐⭐\", 3.5 = \"⭐⭐⭐✫\", 4.0 = \"⭐⭐⭐⭐\", 4.5 = \"⭐⭐⭐⭐✫\", 5.0 = \"⭐⭐⭐⭐⭐\")\n\n# REDACTION DU VERDICT (expert_review)\nRedige un avis honnete, direct et vendeur (3 a 4 phrases maximum).\n1. ANNONCE LA NOTE : Commence par declarer ta note et justifie-la globalement. (Ex: \"J'ai attribue 3.5 etoiles a ce modele car...\")\n2. JUSTIFIE LE POSITIF : Explique ce qui t'a plu et pour qui ce produit est fait (Ex: \"Visuellement, le materiau est tres original pour ce prix...\").\n3. JUSTIFIE LE NEGATIF : Explique pourquoi tu n'as pas mis 5/5. Sois honnete sur un point faible LIE AU PRODUIT UNIQUEMENT (Ex: \"Cependant, j'ai retire un point car ce design tres epais ajoutera un peu de volume a votre telephone.\"). \n4. INTERDICTIONS ABSOLUES : Ne repete JAMAIS le titre du produit. Ne fais pas un simple resume. Ne mentionne SOUS AUCUN PRETEXTE les delais, les frais ou les options de livraison.\n\n1. expert_score : Donne une note de 3.0 à 5.0. Sois généreux ! La moyenne de notre catalogue premium se situe autour de 4.0 et 4.5. Ne donne des notes de 3.0 ou 3.5 que si le produit a un défaut majeur évident.\n\n# FORMAT DE SORTIE (JSON STRICT UNIQUEMENT)\n{\n  \"expert_score\": number,\n  \"expert_stars\": \"string\",\n  \"expert_review\": \"string\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        784,
+        -80
+      ],
+      "id": "0ebdb9aa-bdc4-4eac-b45f-8367364b1d09",
+      "name": "[AI] - Expert Notation & Review"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-3.5-sonnet",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        784,
+        160
+      ],
+      "id": "4cf1111a-3e1b-42b2-99a2-5a3543daf916",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "cVPDbiG2sQv7okss",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT cj_vid \nFROM koktek.product_variants \nWHERE product_id = '{{ $json.id }}' \nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        160,
+        -80
+      ],
+      "id": "45a42042-10ea-4990-b718-2412526ad887",
+      "name": "[PG] Récupérer 1 VID",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "value": "koktek",
+          "mode": "list",
+          "cachedResultName": "koktek"
+        },
+        "table": {
+          "__rl": true,
+          "value": "products",
+          "mode": "list",
+          "cachedResultName": "products"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "expert_score": "={{ $json.expert_score }}",
+            "retail_price": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.retail_price }}",
+            "id": "={{ $node[\"[LOOP] Produit par Produit\"].json.id }}",
+            "shipping_options": "={{ $node[\"[CODE] - Calculateur de Marge & Top 3 Transporteurs\"].json.shipping_options }}",
+            "expert_review": "={{ $json.expert_review }}",
+            "margin": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.margin }}",
+            "urssaf_fee": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.urssaf_fee }}",
+            "vat_amount": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.vat_amount }}",
+            "country_origin": "DE"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "slug",
+              "displayName": "slug",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "base_price",
+              "displayName": "base_price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cj_pid",
+              "displayName": "cj_pid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "array",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "image",
+              "displayName": "image",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "reference",
+              "displayName": "reference",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cj_category_id",
+              "displayName": "cj_category_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "brand",
+              "displayName": "brand",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ai_feedback",
+              "displayName": "ai_feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "categories_id",
+              "displayName": "categories_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "images",
+              "displayName": "images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "shipping_options",
+              "displayName": "shipping_options",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expert_score",
+              "displayName": "expert_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expert_review",
+              "displayName": "expert_review",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "retail_price",
+              "displayName": "retail_price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country_origin",
+              "displayName": "country_origin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "margin",
+              "displayName": "margin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urssaf_fee",
+              "displayName": "urssaf_fee",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "vat_amount",
+              "displayName": "vat_amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1392,
+        -80
+      ],
+      "id": "4342c536-9d16-44c5-be9b-7bc430b9a397",
+      "name": "mise ajour",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. On récupère le texte brut sorti par l'IA (selon le nœud, ça s'appelle output, text ou message)\nlet rawText = $json.output || $json.text || $json.message?.content || $json.message || JSON.stringify($json);\n\n// 2. On utilise une expression régulière (Regex) pour capturer UNIQUEMENT ce qui est entre { et }\nlet extractJson = rawText.match(/\\{[\\s\\S]*\\}/);\n\nif (extractJson) {\n  try {\n    // 3. On transforme le texte capturé en véritable objet de données\n    let cleanData = JSON.parse(extractJson[0]);\n    return cleanData;\n  } catch (error) {\n    throw new Error(\"Le JSON extrait est mal formaté : \" + extractJson[0]);\n  }\n} else {\n  throw new Error(\"L'IA n'a généré aucun format JSON valide. Réponse brute : \" + rawText);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        -80
+      ],
+      "id": "811a7cb2-7933-4dc3-9ff9-3a4859105756",
+      "name": "[CODE] - Nettoyer Reponse IA"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Toutes les heures": {
+      "main": [
+        [
+          {
+            "node": "[PG] Chercher 10 produits à enrichir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[LOOP] Produit par Produit": {
+      "main": [
+        [],
+        [
+          {
+            "node": "[PG] Récupérer 1 VID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[PG] Chercher 10 produits à enrichir": {
+      "main": [
+        [
+          {
+            "node": "[LOOP] Produit par Produit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CJ] Calculer Frais de Port": {
+      "main": [
+        [
+          {
+            "node": "[CODE] - Calculateur de Marge & Top 3 Transporteurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CODE] - Calculateur de Marge & Top 3 Transporteurs": {
+      "main": [
+        [
+          {
+            "node": "[AI] - Expert Notation & Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[AI] - Expert Notation & Review": {
+      "main": [
+        [
+          {
+            "node": "[CODE] - Nettoyer Reponse IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "[AI] - Expert Notation & Review",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[PG] Récupérer 1 VID": {
+      "main": [
+        [
+          {
+            "node": "[CJ] Calculer Frais de Port",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CODE] - Nettoyer Reponse IA": {
+      "main": [
+        [
+          {
+            "node": "mise ajour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mise ajour": {
+      "main": [
+        [
+          {
+            "node": "[LOOP] Produit par Produit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a6ac3a24-329a-405e-80ce-7b8eb970ecca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "mwZU98ckI9NzUseM",
+  "tags": []
+}

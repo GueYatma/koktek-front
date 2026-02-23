@@ -1,0 +1,83 @@
+{
+  "name": "[koktek_CJ] - 03 - Envoie de commande (paiement espèces) vers CJ",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "versement-espece",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        -336
+      ],
+      "id": "7ca39f6d-44a9-4bb5-8c71-e97c42bf1bb8",
+      "name": "10 - J'ai reçu l'argent en espèces",
+      "webhookId": "45fadc0a-240c-487b-9bf9-46a31436ba6b"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://developers.cjdropshipping.com/api2.0/v1/shopping/order/createOrder",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "CJ-Access-Token",
+              "value": "API@CJ5158994@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjY5OCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnlvMHMyT0M5MFhSTTJKU0hvcU8wZnlDVE5yVERld2JNN0NpSE92SlIxTnpsd1NBUDJoc0IrRGtOTm5nYVhaTWY0T29wNU5LV0kwTVZQWDZrQVkrYmNnUDRxazRTQ01TcUdMdHlMVlU2MHE3MnFRcXdWTWk1a005Z0ErcGN1R0VhODVUd2JoZzVPUDRPUlg1YlRTS1BuaVhIYjh1alFiVGRnbk8yTVYvUWhPSGtKRHZlZlRBZVNjNDdvMFUvYVBxVVRYSTlsK0tuY0hFYzcxZzg4bi80Ynd5RTMxVEwxU3JoaVJacEFvNHVkVi9PUyt6ZW1wNkpWS0RobHBzWEcxMkplNytBZVVtN0NUcCtoMzNHMnNlVU1wcz0iLCJpYXQiOjE3NzEwOTE4OTF9.MVX1SPGVbScWWJRw3Vu4Vx1Y8zNr8npAG3_FyzrEqCg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    \"orderNumber\": $json.body.order.order_number,\n    \"shippingZip\": $json.body.delivery.postal_code || \"00000\",\n    \"shippingCountryCode\": $json.body.customer.country_code || \"FR\",\n    \"shippingCountry\": $json.body.delivery.country || \"France\",\n    \"shippingProvince\": $json.body.delivery.region || $json.body.delivery.city,\n    \"shippingCity\": $json.body.delivery.city,\n    \"shippingAddress\": $json.body.delivery.address_line1,\n    \"shippingCustomerName\": $json.body.delivery.recipient_name,\n    \"shippingPhone\": $json.body.delivery.phone,\n    \"remark\": \"Commande KOKTEK (Payé en espèces)\",\n    \"fromCountryCode\": \"CN\",\n    \"products\": $json.body.items.map(item => ({\n      \"vid\": item.cj_id,\n      \"quantity\": item.quantity\n    }))\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        272,
+        -336
+      ],
+      "id": "49738b6c-e1d1-45a6-9c56-75a5e4fbf3e4",
+      "name": "20 - Créer une commande CJ"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "10 - J'ai reçu l'argent en espèces": {
+      "main": [
+        [
+          {
+            "node": "20 - Créer une commande CJ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Europe/Paris",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2a310fc5-a5c9-4144-ad3f-b02cea50ce21",
+  "meta": {
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "VbLWvbvxsMU1JX7S",
+  "tags": []
+}
