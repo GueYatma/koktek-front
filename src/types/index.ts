@@ -5,6 +5,16 @@ export type Category = {
   image_url: string;
 };
 
+export type ShippingOption = {
+  name?: string;
+  price?: number;
+  days?: number;
+};
+
+export type ShippingOptions = {
+  list: ShippingOption[];
+};
+
 export type Product = {
   id: string;
   title: string;
@@ -13,6 +23,9 @@ export type Product = {
   base_price: number;
   retail_price: number;
   status?: string;
+  expert_stars?: number | string;
+  expert_review?: string;
+  shipping_options?: ShippingOptions;
 
   // Champ "officiel" attendu par ton front
   category_id: string;

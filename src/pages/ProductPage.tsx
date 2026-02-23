@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../hooks/useProducts'
-import type { Variant } from '../types'
+import type { ShippingOption, Variant } from '../types'
+import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 
 type VariantWithImage = Variant & {
@@ -64,6 +66,63 @@ const cleanVariantName = (variantName: string, productTitle?: string) => {
   return cleaned || raw
 }
 
+const normalizeKey = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+
+const tokenize = (value: string) =>
+  normalizeKey(value)
+    .split(' ')
+    .filter((token) => token.length > 0)
+
+const extractFileTokens = (url: string) => {
+  try {
+    const parsed = new URL(url)
+    const filename = decodeURIComponent(parsed.pathname.split('/').pop() ?? '')
+    if (!filename) return tokenize(parsed.pathname)
+    return tokenize(filename)
+  } catch {
+    return tokenize(url)
+  }
+}
+
+const findVariantImageMatch = (
+  variant: VariantWithImage | null,
+  images: string[],
+) => {
+  if (!variant || images.length === 0) return ''
+  const candidate = [
+    variant.option1_value,
+    variant.option1_name,
+    variant.sku,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const variantTokens = tokenize(candidate)
+  if (variantTokens.length === 0) return ''
+
+  let bestScore = 0
+  let bestImage = ''
+  images.forEach((image) => {
+    const imageTokens = extractFileTokens(image)
+    if (imageTokens.length === 0) return
+    let score = 0
+    variantTokens.forEach((token) => {
+      if (imageTokens.includes(token)) score += 1
+    })
+    if (score > bestScore) {
+      bestScore = score
+      bestImage = image
+    }
+  })
+
+  return bestScore > 0 ? bestImage : ''
+}
+
 const ProductPage = () => {
   const { slug } = useParams()
   const { addItem } = useCart()
@@ -79,6 +138,7 @@ const ProductPage = () => {
   const [selectedVariant, setSelectedVariant] =
     useState<VariantWithImage | null>(null)
   const [selectedImage, setSelectedImage] = useState('')
+  const [selectedShippingIndex, setSelectedShippingIndex] = useState(0)
 
   useEffect(() => {
     let isActive = true
@@ -125,16 +185,61 @@ const ProductPage = () => {
     variantImageRaw.trim().length > 0
       ? resolveImageUrl(variantImageRaw, '')
       : ''
+  const variantImageMatch = useMemo(
+    () => findVariantImageMatch(selectedVariant, images),
+    [selectedVariant, images],
+  )
+
+  useEffect(() => {
+    if (!selectedVariant) {
+      setSelectedImage('')
+      return
+    }
+    if (variantImageMatch) {
+      setSelectedImage(variantImageMatch)
+      return
+    }
+    if (variantImageRaw.trim().length > 0) {
+      setSelectedImage('')
+    }
+  }, [selectedVariant, variantImageMatch, variantImageRaw])
   const safeSelectedImage = images.includes(selectedImage)
     ? selectedImage
     : ''
   const displayImage = safeSelectedImage || variantImage || fallbackImage
 
-  const variantPrice = Number(selectedVariant?.price)
-  const displayPrice =
-    Number.isFinite(variantPrice) && variantPrice > 0
-      ? variantPrice
-      : product?.base_price ?? 0
+  const displayPrice = product?.retail_price ?? 0
+  const expertStarsRaw = product?.expert_stars
+  const expertReview = product?.expert_review?.trim() ?? ''
+  const expertStarsLabel = useMemo(() => {
+    if (typeof expertStarsRaw === 'string' && expertStarsRaw.trim()) {
+      return expertStarsRaw.trim()
+    }
+    const parsed =
+      typeof expertStarsRaw === 'number'
+        ? expertStarsRaw
+        : Number(expertStarsRaw)
+    if (!Number.isFinite(parsed)) return '★★★★★'
+    const rounded = Math.max(0, Math.min(5, Math.round(parsed)))
+    return `${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}`
+  }, [expertStarsRaw])
+  const shippingOptions = useMemo<ShippingOption[]>(
+    () => product?.shipping_options?.list ?? [],
+    [product?.shipping_options?.list],
+  )
+  const shippingLabels = [
+    'Option 1 - Eco',
+    'Option 2 - Standard',
+    'Option 3 - Express',
+  ]
+  const sanitizedDescription = useMemo(
+    () => DOMPurify.sanitize(product?.description ?? ''),
+    [product?.description],
+  )
+
+  useEffect(() => {
+    setSelectedShippingIndex(0)
+  }, [product?.id])
 
   if (loading) {
     return (
@@ -210,12 +315,13 @@ const ProductPage = () => {
               {product.title}
             </h1>
             <p className="text-3xl font-semibold text-gray-900">
-              {displayPrice} €
+              {formatPrice(displayPrice)}
             </p>
             <div
-              className="prose prose-base max-w-none text-gray-600"
+              className="prose prose-base max-w-none text-gray-600 text-justify"
+              style={{ textAlign: 'justify' }}
               dangerouslySetInnerHTML={{
-                __html: product.description || '',
+                __html: sanitizedDescription,
               }}
             />
           </div>
@@ -311,6 +417,96 @@ const ProductPage = () => {
               Livraison offerte dès 80€ d'achat.
             </p>
           </div>
+
+          {(expertReview || expertStarsRaw) && (
+            <section className="rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-white to-gray-50 p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                    Avis de l&apos;Expert KOKTEK
+                  </p>
+                  <div className="mt-2 flex items-center gap-3">
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {expertStarsLabel}
+                    </p>
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
+                      Note IA
+                    </span>
+                  </div>
+                </div>
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                  IA certifiée
+                </span>
+              </div>
+              <div className="mt-4 h-px w-full bg-gradient-to-r from-amber-100/80 via-transparent to-amber-100/80" />
+              <p className="mt-4 text-sm text-gray-600">
+                {expertReview || 'Analyse en cours de finalisation.'}
+              </p>
+            </section>
+          )}
+
+          {shippingOptions.length > 0 && (
+            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                  Options de livraison
+                </p>
+                <span className="text-xs text-gray-400">
+                  Sélectionnez votre option
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3">
+                {shippingOptions.slice(0, 3).map((option, index) => {
+                  const isSelected = selectedShippingIndex === index
+                  const priceValue = Number(option.price ?? 0)
+                  const daysValue = Number(option.days ?? 0)
+                  return (
+                    <button
+                      key={`${index}-${option.name ?? 'shipping'}`}
+                      type="button"
+                      onClick={() => setSelectedShippingIndex(index)}
+                      className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                        isSelected
+                          ? 'border-gray-900 bg-gray-900 text-white shadow-lg'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`mt-1 flex h-4 w-4 items-center justify-center rounded-full border ${
+                            isSelected
+                              ? 'border-white bg-white'
+                              : 'border-gray-300 bg-white'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <span className="h-2 w-2 rounded-full bg-gray-900" />
+                          ) : null}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold">
+                            {shippingLabels[index] ?? `Option ${index + 1}`}
+                          </p>
+                          <p
+                            className={`mt-1 text-xs ${
+                              isSelected ? 'text-gray-200' : 'text-gray-500'
+                            }`}
+                          >
+                            {daysValue > 0
+                              ? `Livraison en ${daysValue} jours`
+                              : 'Délai communiqué après validation'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold">
+                        {formatPrice(priceValue)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 sm:p-6">
             <p className="text-sm font-semibold text-gray-900">Inclus</p>

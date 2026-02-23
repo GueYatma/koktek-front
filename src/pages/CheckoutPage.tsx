@@ -14,8 +14,11 @@ import {
   createOrderBilling,
   createOrderDelivery,
   createOrderItems,
+  getCartItems,
   getCustomerByEmail,
   markOrderPaid,
+  removeCartItem,
+  updateCartItem,
 } from '../lib/commerceApi'
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL as
@@ -270,8 +273,8 @@ const CheckoutPage = () => {
 
       // Étape 2: création du cart Directus uniquement au checkout.
       let resolvedCartId = cartId
-      if (!resolvedCartId) {
-        try {
+      try {
+        if (!resolvedCartId) {
           const cart = await createCart({
             status: 'open',
             currency: 'EUR',
@@ -279,23 +282,64 @@ const CheckoutPage = () => {
           })
           resolvedCartId = cart.id
           setCartId(cart.id)
-
-          await Promise.all(
-            items.map((item) =>
-              addCartItem({
-                cart_id: cart.id,
-                product_id: item.product.id,
-                variant_id: item.variant?.id ?? null,
-                quantity: item.quantity,
-                unit_price: item.variant.price,
-                currency: 'EUR',
-              }),
-            ),
-          )
-        } catch (cartError) {
-          console.error('Erreur création panier', cartError)
-          throw cartError
         }
+
+        if (!resolvedCartId) {
+          throw new Error('Cart ID manquant')
+        }
+
+        const remoteItems = await getCartItems(resolvedCartId)
+        const remoteByKey = new Map(
+          remoteItems.map((item) => [
+            `${item.product_id}::${item.variant_id ?? 'none'}`,
+            item,
+          ]),
+        )
+        const desiredKeys = new Set<string>()
+
+        for (const item of items) {
+          const key = `${item.product.id}::${item.variant?.id ?? 'none'}`
+          desiredKeys.add(key)
+          const existing = remoteByKey.get(key)
+
+          if (existing) {
+            const nextQuantity = item.quantity
+            const nextUnitPrice = item.variant.price
+            const currentUnitPrice = existing.unit_price ?? null
+
+            if (
+              existing.quantity !== nextQuantity ||
+              currentUnitPrice !== nextUnitPrice
+            ) {
+              await updateCartItem(existing.id, {
+                quantity: nextQuantity,
+                unit_price: nextUnitPrice,
+              })
+            }
+          } else {
+            await addCartItem({
+              cart_id: resolvedCartId,
+              product_id: item.product.id,
+              variant_id: item.variant?.id ?? null,
+              quantity: item.quantity,
+              unit_price: item.variant.price,
+              currency: 'EUR',
+            })
+          }
+        }
+
+        const staleItems = remoteItems.filter(
+          (item) =>
+            !desiredKeys.has(`${item.product_id}::${item.variant_id ?? 'none'}`),
+        )
+        if (staleItems.length > 0) {
+          await Promise.all(
+            staleItems.map((item) => removeCartItem(item.id)),
+          )
+        }
+      } catch (cartError) {
+        console.error('Erreur synchronisation panier', cartError)
+        throw cartError
       }
 
       // Étape 3: préparation des données de relation (création séquentielle).

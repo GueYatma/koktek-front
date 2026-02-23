@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"; // Import des hooks de base React
+import { useEffect, useMemo, useState } from "react"; // Import des hooks de base React
 import { useSearchParams } from "react-router-dom"; // Import pour manipuler l'URL
 import { DIRECTUS_BASE_URL } from "../utils/directus"; // URL backend
 import { formatPrice } from "../utils/format"; // Formateur de prix
@@ -15,6 +15,8 @@ import {
 const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
   | string
   | undefined; // Token API
+const N8N_WEBHOOK_URL =
+  "https://n8n.srv747988.hstgr.cloud/webhook/versement-espece";
 
 type ProductSummary = { id: string; title: string; image_url?: string }; // Typage Produit
 type VariantSummary = {
@@ -429,7 +431,6 @@ const VendorValidationPage = () => {
     (resolvedCustomer as { full_name?: string })?.full_name,
     (resolvedCustomer as { fullName?: string })?.fullName,
     delivery?.recipient_name,
-    delivery?.name, // added fallback
   ];
 
   let finalCustomerName = "Nom non renseigné";
@@ -498,6 +499,85 @@ const VendorValidationPage = () => {
       ); // Fin Appel
 
       if (!response.ok) throw new Error("Erreur de validation coté serveur."); // Intercepte 400, 403 ou 500
+
+      // Envoi webhook N8N avec toutes les infos disponibles
+      try {
+        const orderSnapshot = {
+          ...order,
+          status: "paid",
+          payment_status: "paid",
+          payment_reference: "cash",
+        };
+
+        const itemsPayload = lineItems.map((item) => {
+          const productId = normalizeId(item.product_id as unknown);
+          const variantId = normalizeId(item.variant_id as unknown);
+          const productRecord =
+            item.product_id && typeof item.product_id === "object"
+              ? (item.product_id as Record<string, unknown>)
+              : null;
+          const variantRecord =
+            item.variant_id && typeof item.variant_id === "object"
+              ? (item.variant_id as Record<string, unknown>)
+              : null;
+          const productInfo = resolveProductInfo(item);
+
+          const sku =
+            (variantRecord?.sku as string | undefined) ??
+            productInfo.variant?.sku ??
+            null;
+
+          const cjId =
+            (variantRecord?.cj_vid as string | undefined) ??
+            (variantRecord?.cjVid as string | undefined) ??
+            (variantRecord?.idCJ as string | undefined) ??
+            null;
+
+          return {
+            ...item,
+            product_id: productId || item.product_id,
+            variant_id: variantId || item.variant_id,
+            sku,
+            cj_id: cjId,
+            product: productRecord ?? productMap[productId] ?? null,
+            variant: variantRecord ?? productInfo.variant ?? null,
+          };
+        });
+
+        const webhookPayload = {
+          event: "cash_received",
+          order: orderSnapshot,
+          customer: resolvedCustomer ?? null,
+          delivery: delivery ?? null,
+          totals: {
+            ...totals,
+            vat: vatAmount,
+            total_ttc: totalTtc,
+          },
+          items: itemsPayload,
+        };
+
+        console.log("Webhook N8N payload (cash_received):", webhookPayload);
+
+        const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(webhookPayload),
+        });
+
+        if (!webhookResponse.ok) {
+          const body = await webhookResponse.text().catch(() => "");
+          console.error(
+            "Erreur webhook n8n",
+            webhookResponse.status,
+            body.slice(0, 200),
+          );
+        }
+      } catch (webhookError) {
+        console.error("Erreur webhook n8n", webhookError);
+      }
 
       setOrder((prev) =>
         prev ? { ...prev, status: "paid", payment_status: "paid" } : prev,

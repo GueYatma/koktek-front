@@ -1,4 +1,10 @@
-import type { Category, Product, Variant } from "../types";
+import type {
+  Category,
+  Product,
+  ShippingOption,
+  ShippingOptions,
+  Variant,
+} from "../types";
 import { DIRECTUS_BASE_URL } from "../utils/directus";
 import { resolveImageUrl } from "../utils/image";
 const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
@@ -84,6 +90,55 @@ const extractImageValues = (value: unknown): string[] => {
     }
   }
   return [];
+};
+
+const toShippingOption = (value: unknown): ShippingOption | null => {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const name =
+    typeof record.name === "string"
+      ? record.name
+      : typeof record.label === "string"
+        ? record.label
+        : undefined;
+  const price =
+    record.price !== undefined ? toNumberValue(record.price) : undefined;
+  const days = record.days !== undefined ? toNumberValue(record.days) : undefined;
+
+  if (!name && price === undefined && days === undefined) return null;
+  return { name, price, days };
+};
+
+const normalizeShippingOptions = (value: unknown): ShippingOptions | undefined => {
+  if (!value) return undefined;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return normalizeShippingOptions(parsed);
+    } catch {
+      return undefined;
+    }
+  }
+  if (Array.isArray(value)) {
+    const list = value
+      .map((entry) => toShippingOption(entry))
+      .filter((entry): entry is ShippingOption => Boolean(entry));
+    return list.length > 0 ? { list } : undefined;
+  }
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const listValue =
+      record.list ?? record.options ?? record.items ?? record.shipping_options;
+    if (Array.isArray(listValue)) {
+      const list = listValue
+        .map((entry) => toShippingOption(entry))
+        .filter((entry): entry is ShippingOption => Boolean(entry));
+      return list.length > 0 ? { list } : undefined;
+    }
+    const single = toShippingOption(record);
+    return single ? { list: [single] } : undefined;
+  }
+  return undefined;
 };
 
 const fetchDirectusItems = async <T>(
@@ -212,6 +267,23 @@ const mapProduct = (
   const imageUrl = images[0] ?? fallbackImage;
 
   const productVariants = variantsByProductId.get(id) ?? [];
+  const expertStarsRaw =
+    row.expert_stars ??
+    row.expertStars ??
+    row.ai_stars ??
+    row.aiStars ??
+    row.expert_rating ??
+    row.expertRating;
+  const expertReviewRaw =
+    row.expert_review ??
+    row.expertReview ??
+    row.ai_review ??
+    row.aiReview ??
+    row.expert_verdict ??
+    row.expertVerdict;
+  const shippingOptionsRaw =
+    row.shipping_options ?? row.shippingOptions ?? row.shipping;
+  const shippingOptions = normalizeShippingOptions(shippingOptionsRaw);
 
   return {
     id,
@@ -240,6 +312,14 @@ const mapProduct = (
     image_url: imageUrl,
     images,
     brand: brand.length > 0 ? brand : "Générique",
+    expert_stars:
+      typeof expertStarsRaw === "number" ||
+      typeof expertStarsRaw === "string"
+        ? expertStarsRaw
+        : undefined,
+    expert_review:
+      typeof expertReviewRaw === "string" ? expertReviewRaw : undefined,
+    shipping_options: shippingOptions,
   };
 };
 
