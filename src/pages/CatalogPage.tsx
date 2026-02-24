@@ -1,7 +1,9 @@
+```
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import ProductCard from "../components/ProductCard";
-import { getAllCategories, getCatalogProducts } from "../lib/directusApi";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { ProductCard } from "../components/ProductCard";
+import { useCart } from "../context/CartContext";
+import { getAllProducts } from "../lib/directusApi";
 import type { Category, Product } from "../types";
 
 const GENERIC_BRAND = "Générique";
@@ -29,14 +31,13 @@ const normalizeKey = (value: string) =>
     .trim();
 
 const CatalogPage = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   // État du filtre
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [searchParams] = useSearchParams();
+  const location = useLocation(); // Added useLocation
 
   const getCategoryString = (categoryData: unknown) => {
     if (!categoryData) return "";
@@ -61,30 +62,60 @@ const CatalogPage = () => {
     (value: string | null) => {
       if (!value) return "all";
       const normalized = normalizeKey(value);
-      const match = categories.find((category) => {
+      const match = allCategories.find((category) => { // Changed categories to allCategories
         const key = normalizeKey(category.slug || category.name);
         return key === normalized || category.id === value;
       });
       return match?.id ?? "all";
     },
-    [categories],
+    [allCategories], // Changed categories to allCategories
   );
+
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     let isMounted = true;
-    const loadCategories = async () => {
+
+    const loadData = async () => {
+      setLoading(true);
       try {
-        const payload = await getAllCategories();
+        const payload = await getAllProducts();
         if (!isMounted) return;
-        setCategories(payload);
+        setAllProducts(payload.products);
+        
+        // Define explicit sort order
+        const sortOrder = [
+          "Coques & Protections",
+          "Charge & Énergie",
+          "Audio",
+          "Saison",
+          "Support & Fixation",
+          "Décoration & Goodies",
+          "Autre"
+        ];
+        
+        const sortedCategories = [...payload.categories].sort((a, b) => {
+          const indexA = sortOrder.indexOf(a.name);
+          const indexB = sortOrder.indexOf(b.name);
+          // If both are in the array, sort by array index
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          // If only one is in the array, it comes first
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          // If neither is in the array, sort alphabetically
+          return a.name.localeCompare(b.name);
+        });
+        
+        setAllCategories(sortedCategories);
       } catch (error) {
-        console.error("Erreur lors du chargement des catégories", error);
-        if (!isMounted) return;
-        setCategories([]);
+        console.error("Erreur lors du chargement du catalogue", error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
-    void loadCategories();
+    void loadData();
 
     return () => {
       isMounted = false;
@@ -109,47 +140,52 @@ const CatalogPage = () => {
     } else if (!brandParam) {
       setSelectedCategory("all");
     }
-  }, [searchParams, resolveCategorySelection]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadProducts = async () => {
-      setLoading(true);
-      try {
-        const payload = await getCatalogProducts({
-          categoryId:
-            selectedCategory === "all" ? undefined : selectedCategory,
-          brand: selectedBrand === "all" ? undefined : selectedBrand,
-          limit: 500,
-          categories,
-        });
-        if (!isMounted) return;
-        setProducts(payload.products);
-        if (payload.categories.length > 0 && categories.length === 0) {
-          setCategories(payload.categories);
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement du catalogue", error);
-        if (!isMounted) return;
-        setProducts([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    void loadProducts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCategory, selectedBrand, categories]);
+  }, [searchParams, resolveCategorySelection, allCategories]); // Added allCategories to dependencies
 
   const categoryNameById = useMemo(
     () =>
-      new Map(categories.map((category) => [String(category.id), category.name])),
-    [categories],
+      new Map(allCategories.map((category) => [String(category.id), category.name])),
+    [allCategories],
   );
+
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter((product) => {
+      // 1. Check Category
+      let matchesCategory = true;
+      if (selectedCategory !== "all") {
+        const catLabel = categoryNameById.get(selectedCategory);
+        // On récupère la catégorie du produit. NocoDB renvoie parfois du JSON ou du string dans category_id / categories
+        const productCategoryName = 
+          categoryNameById.get(String(product.category_id ?? "")) || 
+          getCategoryString(product.categories) || 
+          product.category_id || 
+          "";
+        
+        // On teste via le label exact, car la DB stocke les noms en texte brut
+        if (catLabel) {
+           matchesCategory = productCategoryName === catLabel;
+        } else {
+           matchesCategory = false; // Category requested doesn't exist
+        }
+      }
+
+      // 2. Check Brand
+      let matchesBrand = true;
+      if (selectedBrand !== "all") {
+        const fallbackBrand = product.brand || GENERIC_BRAND;
+        const normalizedProductBrand =
+          fallbackBrand.toLowerCase() === "generic" ||
+          fallbackBrand.toLowerCase() === "aucune"
+            ? GENERIC_BRAND
+            : fallbackBrand;
+        matchesBrand = normalizedProductBrand === selectedBrand;
+      }
+
+      return matchesCategory && matchesBrand;
+    });
+  }, [allProducts, selectedCategory, selectedBrand, categoryNameById]);
+
+
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6 sm:pt-8">
@@ -184,7 +220,7 @@ const CatalogPage = () => {
             >
               Toutes
             </button>
-            {categories.map((category) => {
+            {allCategories.map((category) => { // Changed categories to allCategories
               const isActive = selectedCategory === category.id;
               return (
                 <button
@@ -248,12 +284,17 @@ const CatalogPage = () => {
       <div className="mt-6">
         {loading ? (
           <p className="text-center text-sm text-gray-500">Chargement...</p>
+        ) : filteredProducts.length === 0 ? (
+          <div className="mt-12 text-center text-gray-500">
+            <p>Aucun produit ne correspond à ces critères.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
-            {products.map((product) => {
+            {filteredProducts.map((product) => {
               const categoryLabel =
                 categoryNameById.get(String(product.category_id ?? "")) ||
                 getCategoryString(product.categories) ||
+                product.category_id ||
                 undefined;
               return (
                 <ProductCard
