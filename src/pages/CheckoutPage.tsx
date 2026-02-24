@@ -445,6 +445,16 @@ const CheckoutPage = () => {
           }
         : undefined
 
+      const shippingAddress = [
+        delivery.address_line1.trim(),
+        delivery.address_line2?.trim() || '',
+        delivery.postal_code.trim(),
+        delivery.city.trim(),
+        delivery.country.trim()
+      ].filter(Boolean).join(', ')
+
+      const logisticName = items.find(i => i.shippingOption?.label)?.shippingOption?.label ?? 'Standard'
+
       // Étape 4: création de la commande (sans relations imbriquées).
       const order = await createOrder({
         cart_id: resolvedCartId,
@@ -456,6 +466,8 @@ const CheckoutPage = () => {
         total_price: total,
         total_products_price: total - shippingTotal,
         shipping_price: shippingTotal,
+        shipping_address: shippingAddress,
+        logistic_name: logisticName,
         item_count: itemCount,
       })
 

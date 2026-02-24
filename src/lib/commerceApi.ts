@@ -62,6 +62,8 @@ export type OrderRecord = {
   total_price?: number | null
   total_products_price?: number | null
   shipping_price?: number | null
+  shipping_address?: string | null
+  logistic_name?: string | null
   item_count?: number | null
   created_at?: string
   updated_at?: string
@@ -356,6 +358,8 @@ export const createOrder = async (input: {
   total_price?: number | null
   total_products_price?: number | null
   shipping_price?: number | null
+  shipping_address?: string | null
+  logistic_name?: string | null
   item_count?: number | null
 }): Promise<OrderRecord> => {
   const resolvedOrderNumber =
@@ -377,6 +381,8 @@ export const createOrder = async (input: {
       0,
     ),
     shipping_price: toNumberValue(input.shipping_price ?? 0, 0),
+    shipping_address: input.shipping_address ?? undefined,
+    logistic_name: input.logistic_name ?? undefined,
     item_count: toNumberValue(input.item_count ?? 0, 0),
   })
   
