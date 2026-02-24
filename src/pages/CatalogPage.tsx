@@ -1,4 +1,3 @@
-```
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { ProductCard } from "../components/ProductCard";
