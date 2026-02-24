@@ -117,7 +117,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                         </button>
                       </div>
                       <span className="font-display text-sm font-bold text-gray-900">
-                        {formatPrice(item.variant.price * item.quantity)}
+                        {formatPrice(item.product.retail_price * item.quantity)}
                       </span>
                     </div>
                   </div>

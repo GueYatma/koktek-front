@@ -121,7 +121,7 @@ const CatalogPage = () => {
           categoryId:
             selectedCategory === "all" ? undefined : selectedCategory,
           brand: selectedBrand === "all" ? undefined : selectedBrand,
-          limit: 50,
+          limit: 500,
           categories,
         });
         if (!isMounted) return;

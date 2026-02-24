@@ -71,19 +71,25 @@ export default function StripeCheckoutForm({
 
     setIsLoading(true);
 
-    const { error } = await stripe.confirmPayment({
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         // Return URL where the customer should be redirected after the PaymentIntent is confirmed.
         return_url: `${window.location.origin}/checkout?step=success&order=${orderNumber}`,
         receipt_email: customerEmail,
       },
+      redirect: 'if_required',
     });
 
-    if (error.type === 'card_error' || error.type === 'validation_error') {
-      setMessage(error.message ?? 'Une erreur est survenue avec votre carte.');
-    } else {
-      setMessage('Une erreur inattendue est survenue.');
+    if (error) {
+      if (error.type === 'card_error' || error.type === 'validation_error') {
+        setMessage(error.message ?? 'Une erreur est survenue avec votre carte.');
+      } else {
+        setMessage('Une erreur inattendue est survenue.');
+      }
+    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+      setMessage('Paiement réussi!');
+      onSuccess();
     }
 
     setIsLoading(false);
