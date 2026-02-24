@@ -377,20 +377,24 @@ export const getCatalogProducts = async (input: {
     andIndex += 1;
   };
 
+  const categories =
+    input.categories && input.categories.length > 0
+      ? input.categories
+      : await getAllCategories();
+
   if (input.categoryId) {
-    addOrFilter(["categories_id", "category_id"], input.categoryId);
+    // Le front-end envoie l'UUID, mais en base la colonne categories_id contient le nom (ex: "Coques & Protections").
+    // On doit donc retrouver le nom de la catégorie pour filtrer correctement.
+    const matchingCategory = categories.find((c) => String(c.id) === String(input.categoryId));
+    const filterValue = matchingCategory ? matchingCategory.name : input.categoryId;
+    addOrFilter(["categories_id", "category_id"], filterValue);
   }
 
   if (input.brand) {
     addOrFilter(["brand", "marque"], input.brand);
   }
 
-  const [productsRaw, categories] = await Promise.all([
-    fetchDirectusItems<Record<string, unknown>>("products", params),
-    input.categories && input.categories.length > 0
-      ? Promise.resolve(input.categories)
-      : getAllCategories(),
-  ]);
+  const productsRaw = await fetchDirectusItems<Record<string, unknown>>("products", params);
 
   const productIds = productsRaw
     .map((row) => extractId(row.id ?? row.ID ?? row.Id))
