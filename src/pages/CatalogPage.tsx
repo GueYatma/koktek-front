@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { ProductCard } from "../components/ProductCard";
+import ProductCard from "../components/ProductCard";
 import { useCart } from "../context/CartContext";
 import { getAllProducts } from "../lib/directusApi";
 import type { Category, Product } from "../types";
