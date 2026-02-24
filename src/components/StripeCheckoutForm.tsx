@@ -8,7 +8,6 @@ import { formatPrice } from '../utils/format';
 
 interface StripeCheckoutFormProps {
   amount: number;
-  orderId: string;
   orderNumber: string;
   customerEmail: string;
   onSuccess: () => void;
@@ -19,7 +18,6 @@ interface StripeCheckoutFormProps {
 
 export default function StripeCheckoutForm({
   amount,
-  orderId,
   orderNumber,
   customerEmail,
   onSuccess,

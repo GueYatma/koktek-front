@@ -990,7 +990,6 @@ const CheckoutPage = () => {
                     <Elements options={{ clientSecret, appearance: { theme: 'stripe' } }} stripe={stripePromise}>
                       <StripeCheckoutForm
                         amount={total}
-                        orderId={orderId!}
                         orderNumber={orderNumber ?? orderId!}
                         customerEmail={customerSnapshot?.email || ''}
                         webhookUrl=""
