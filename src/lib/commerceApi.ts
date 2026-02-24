@@ -62,7 +62,7 @@ export type OrderRecord = {
   total_price?: number | null
   total_products_price?: number | null
   shipping_price?: number | null
-  shipping_address?: string | null
+  shipping_address?: Record<string, unknown> | string | null
   logistic_name?: string | null
   item_count?: number | null
   created_at?: string
@@ -358,7 +358,7 @@ export const createOrder = async (input: {
   total_price?: number | null
   total_products_price?: number | null
   shipping_price?: number | null
-  shipping_address?: string | null
+  shipping_address?: Record<string, unknown> | string | null
   logistic_name?: string | null
   item_count?: number | null
 }): Promise<OrderRecord> => {

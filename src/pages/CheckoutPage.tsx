@@ -445,13 +445,13 @@ const CheckoutPage = () => {
           }
         : undefined
 
-      const shippingAddress = [
-        delivery.address_line1.trim(),
-        delivery.address_line2?.trim() || '',
-        delivery.postal_code.trim(),
-        delivery.city.trim(),
-        delivery.country.trim()
-      ].filter(Boolean).join(', ')
+      const shippingAddress = {
+        address_line1: delivery.address_line1.trim(),
+        address_line2: delivery.address_line2.trim() || null,
+        postal_code: delivery.postal_code.trim(),
+        city: delivery.city.trim(),
+        country: delivery.country.trim(),
+      }
 
       const logisticName = items.find(i => i.shippingOption?.name)?.shippingOption?.name ?? 'Standard'
 
