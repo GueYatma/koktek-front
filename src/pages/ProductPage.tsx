@@ -211,18 +211,51 @@ const ProductPage = () => {
   const displayPrice = product?.retail_price ?? 0
   const expertStarsRaw = product?.expert_stars
   const expertReview = product?.expert_review?.trim() ?? ''
-  const expertStarsLabel = useMemo(() => {
-    if (typeof expertStarsRaw === 'string' && expertStarsRaw.trim()) {
-      return expertStarsRaw.trim()
-    }
-    const parsed =
+  const expertStarsScore = useMemo(() => {
+    let parsed =
       typeof expertStarsRaw === 'number'
         ? expertStarsRaw
         : Number(expertStarsRaw)
-    if (!Number.isFinite(parsed)) return '★★★★★'
-    const rounded = Math.max(0, Math.min(5, Math.round(parsed)))
-    return `${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}`
+    if (!Number.isFinite(parsed) && typeof expertStarsRaw === 'string') {
+      const match = expertStarsRaw.match(/([0-9]+([.,][0-9]+)?)/)
+      if (match) {
+        parsed = parseFloat(match[1].replace(',', '.'))
+      }
+    }
+    return Number.isFinite(parsed) ? Math.max(0, Math.min(5, parsed)) : 5
   }, [expertStarsRaw])
+
+  const renderExpertStars = (score: number) => {
+    const stars = []
+    for (let i = 1; i <= 5; i++) {
+      if (score >= i) {
+        stars.push(
+          <svg key={i} className="h-5 w-5 fill-current text-yellow-400" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        )
+      } else if (score >= i - 0.5) {
+        stars.push(
+          <svg key={i} className="h-5 w-5" viewBox="0 0 20 20">
+            <defs>
+              <linearGradient id={`half-star-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="50%" stopColor="#facc15" />
+                <stop offset="50%" stopColor="#e5e7eb" />
+              </linearGradient>
+            </defs>
+            <path fill={`url(#half-star-${i})`} d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        )
+      } else {
+        stars.push(
+          <svg key={i} className="h-5 w-5 fill-current text-gray-200" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        )
+      }
+    }
+    return <div className="flex items-center gap-1">{stars}</div>
+  }
   const shippingOptions = useMemo<ShippingOption[]>(
     () => product?.shipping_options?.list ?? [],
     [product?.shipping_options?.list],
@@ -426,9 +459,10 @@ const ProductPage = () => {
                     Avis de l&apos;Expert KOKTEK
                   </p>
                   <div className="mt-2 flex items-center gap-3">
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {expertStarsLabel}
-                    </p>
+                    <div className="flex items-center">
+                      {renderExpertStars(expertStarsScore)}
+                      <span className="ml-2 text-xl font-bold text-gray-900">{expertStarsScore.toFixed(1)}</span>
+                    </div>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
                       Note IA
                     </span>

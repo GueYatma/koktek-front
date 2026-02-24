@@ -268,6 +268,8 @@ const mapProduct = (
 
   const productVariants = variantsByProductId.get(id) ?? [];
   const expertStarsRaw =
+    row.expert_score ??
+    row.expertScore ??
     row.expert_stars ??
     row.expertStars ??
     row.ai_stars ??
