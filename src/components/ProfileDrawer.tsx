@@ -1,7 +1,7 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react'
 import { LogOut, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useUI } from '../context/UIContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 import { getOrdersForEmail, type StoredOrder } from '../utils/customerOrders'
@@ -24,7 +24,8 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
   const [country, setCountry] = useState('France')
   const [orders, setOrders] = useState<StoredOrder[]>([])
   const [activeOrder, setActiveOrder] = useState<StoredOrder | null>(null)
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile')
+  
+  const { activeProfileTab, openProfile } = useUI()
 
   useEffect(() => {
     if (!user) return
@@ -158,9 +159,9 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => setActiveTab('profile')}
+                onClick={() => openProfile('profile')}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  activeTab === 'profile'
+                  activeProfileTab === 'profile'
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'border-gray-200 text-gray-700 hover:border-gray-300'
                 }`}
@@ -169,9 +170,9 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('orders')}
+                onClick={() => openProfile('orders')}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  activeTab === 'orders'
+                  activeProfileTab === 'orders'
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'border-gray-200 text-gray-700 hover:border-gray-300'
                 }`}
@@ -180,7 +181,7 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
               </button>
             </div>
 
-            {activeTab === 'profile' ? (
+            {activeProfileTab === 'profile' ? (
               <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
                 <div className="space-y-6">
                   <div className="space-y-4">

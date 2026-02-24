@@ -134,20 +134,23 @@ const Layout = () => {
             {user ? (
               <button
                 type="button"
-                onClick={openProfile}
+                onClick={() => openProfile()}
                 className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
               >
-                <User className="h-4 w-4" />
-                <span>Espace client</span>
+                <div className="relative">
+                  <User className="h-4 w-4" />
+                  <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-green-500 ring-2 ring-gray-900" />
+                </div>
+                <span>Mon Espace</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setIsAuthOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-800 transition hover:border-gray-900 hover:text-gray-900"
               >
                 <User className="h-4 w-4" />
-                <span>Espace client</span>
+                <span>Connexion</span>
               </button>
             )}
           </div>

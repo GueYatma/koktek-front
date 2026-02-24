@@ -1188,7 +1188,7 @@ const CheckoutPage = () => {
         onClose={() => navigate('/')}
         onNavigateToProfile={() => {
           navigate('/')
-          setTimeout(() => openProfile(), 50)
+          setTimeout(() => openProfile('orders'), 50)
         }}
       />
 

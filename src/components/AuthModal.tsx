@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Facebook, Instagram, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useUI } from '../context/UIContext'
 
 type AuthModalProps = {
   open: boolean
@@ -8,8 +9,16 @@ type AuthModalProps = {
 }
 
 const AuthModal = ({ open, onClose }: AuthModalProps) => {
-  const { login } = useAuth()
-  const [email, setEmail] = useState('')
+  const { login, user } = useAuth()
+  const { openProfile } = useUI()
+  // Try to pre-fill from known user state if it exists, otherwise empty string
+  const [email, setEmail] = useState(user?.email || '')
+
+  useEffect(() => {
+    if (open && user?.email && !email) {
+      setEmail(user.email)
+    }
+  }, [open, user, email])
 
   const handleClose = () => {
     setEmail('')
@@ -19,12 +28,21 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     await login(email.trim())
-    handleClose()
+    
+    // Automatically open the order drawer on success
+    onClose()
+    setTimeout(() => {
+      openProfile('orders')
+    }, 150)
   }
+
+  const modalTitle = user?.firstName 
+    ? `Espace de ${user.firstName}` 
+    : 'Espace client KOKTEK'
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${
+      className={`fixed inset-0 z-[60] ${
         open ? 'pointer-events-auto' : 'pointer-events-none'
       }`}
       aria-hidden={!open}
@@ -44,10 +62,10 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
-                Espace client KOKTEK
+                {modalTitle}
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Accedez a vos commandes avec votre email
+                Accedez a vos commandes via votre email
               </p>
             </div>
             <button
@@ -63,59 +81,38 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
           <div className="mt-6 flex flex-col gap-3">
             <button
               type="button"
-              className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:border-gray-300"
+              className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
             >
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-bold text-[#4285F4]">
                 G
               </span>
-              Google
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#1877F2] px-4 text-sm font-semibold text-white transition hover:bg-[#166FE0]"
-            >
-              <Facebook className="h-5 w-5" />
-              Facebook
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] px-4 text-sm font-semibold text-white"
-            >
-              <Instagram className="h-5 w-5" />
-              Instagram
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-black bg-black px-4 text-sm font-semibold text-white transition hover:bg-gray-900"
-            >
-              <span className="text-base font-bold">♪</span>
-              TikTok
+              Continuer avec Google
             </button>
           </div>
 
           <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gray-400">
             <span className="h-px flex-1 bg-gray-200" />
-            Email sans mot de passe
+            Email
             <span className="h-px flex-1 bg-gray-200" />
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                Email
+                Adresse e-mail
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="vous@exemple.com"
-                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 required
               />
             </div>
             <button
               type="submit"
-              className="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
             >
               Acceder a mon espace
             </button>
