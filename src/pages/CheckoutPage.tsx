@@ -76,6 +76,7 @@ const CheckoutPage = () => {
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>('form')
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
+  const [paymentView, setPaymentView] = useState<PaymentView>('choice')
   const [isCashConfirmOpen, setIsCashConfirmOpen] = useState(false)
   const [confirmedMethod, setConfirmedMethod] = useState<'cash' | 'card' | null>(null)
   const checkoutStepRef = useRef<CheckoutStep>(checkoutStep)
