@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import { useCart } from "../context/CartContext";
 import { getAllProducts } from "../lib/directusApi";
 import type { Category, Product } from "../types";
 
@@ -36,7 +35,6 @@ const CatalogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [searchParams] = useSearchParams();
-  const location = useLocation(); // Added useLocation
 
   const getCategoryString = (categoryData: unknown) => {
     if (!categoryData) return "";
