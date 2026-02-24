@@ -453,7 +453,7 @@ const CheckoutPage = () => {
         delivery.country.trim()
       ].filter(Boolean).join(', ')
 
-      const logisticName = items.find(i => i.shippingOption?.label)?.shippingOption?.label ?? 'Standard'
+      const logisticName = items.find(i => i.shippingOption?.name)?.shippingOption?.name ?? 'Standard'
 
       // Étape 4: création de la commande (sans relations imbriquées).
       const order = await createOrder({
