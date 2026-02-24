@@ -9,8 +9,7 @@ type CartDrawerProps = {
   onClose: () => void
 }
 
-const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
-  const { items, total, updateQuantity, removeItem, clearCart } = useCart()
+  const { items, total, shippingTotal, updateQuantity, removeItem, clearCart } = useCart()
   const isCheckoutDisabled = items.length === 0
 
   return (
@@ -83,6 +82,11 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                         <p className="text-xs text-gray-500">
                           {item.variant.option1_name} : {item.variant.option1_value}
                         </p>
+                        {item.shippingOption?.name && (
+                          <p className="text-[10px] text-indigo-600 mt-1 uppercase tracking-wider font-semibold">
+                            Livraison : {item.shippingOption.name}
+                          </p>
+                        )}
                       </div>
                       <button
                         type="button"
@@ -129,12 +133,24 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
 
         <div className="border-t border-gray-200 px-6 py-5">
           <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>Sous-total articles</span>
+            <span className="font-display font-semibold text-gray-900">
+              {formatPrice(total - shippingTotal)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
+            <span>Frais de livraison</span>
+            <span className="font-display font-semibold text-gray-900">
+              {shippingTotal > 0 ? formatPrice(shippingTotal) : 'Offerte'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-base font-bold text-gray-900 mt-4">
             <span>Total estimé</span>
-            <span className="font-display text-lg font-bold text-gray-900">
+            <span className="font-display text-lg">
               {formatPrice(total)}
             </span>
           </div>
-          <div className="mt-2 flex justify-end">
+          <div className="mt-4 flex justify-end">
             <button
               type="button"
               onClick={clearCart}

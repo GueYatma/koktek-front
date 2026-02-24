@@ -56,4 +56,5 @@ export type CartItem = {
   product: Product;
   variant: Variant;
   quantity: number;
+  shippingOption?: ShippingOption;
 };

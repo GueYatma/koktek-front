@@ -64,7 +64,7 @@ type BillingFormState = {
 }
 
 const CheckoutPage = () => {
-  const { items, total, itemCount, clearCart, cartId, setCartId } = useCart()
+  const { items, total, shippingTotal, itemCount, clearCart, cartId, setCartId } = useCart()
   const { user, login, updateProfile } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPayingCash, setIsPayingCash] = useState(false)
@@ -241,6 +241,7 @@ const CheckoutPage = () => {
             order_id: orderId,
             order_number: orderNumber ?? orderId,
             total_amount: total,
+            shipping_amount: shippingTotal,
             backoffice_url: `${window.location.origin}/validation-vendeur?order=${orderNumber ?? orderId}`,
             customer: {
               name: ticketCustomerName,
@@ -447,11 +448,11 @@ const CheckoutPage = () => {
         customer_id: customerId,
         status: 'pending_payment',
         currency: 'EUR',
-        subtotal: total,
+        subtotal: total - shippingTotal,
         total,
         total_price: total,
-        total_products_price: total,
-        shipping_price: 0,
+        total_products_price: total - shippingTotal,
+        shipping_price: shippingTotal,
         item_count: itemCount,
       })
 
@@ -1103,13 +1104,15 @@ const CheckoutPage = () => {
               <div className="mt-4 space-y-2 text-sm text-gray-600">
                 <div className="flex items-center justify-between">
                   <span>Sous-total</span>
-                  <span className="font-display font-bold text-gray-900">
-                    {formatPrice(total)}
+                  <span className="font-display font-medium text-gray-900">
+                    {formatPrice(total - shippingTotal)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Livraison</span>
-                  <span>Offerte</span>
+                  <span className="font-display font-medium text-gray-900">
+                    {shippingTotal > 0 ? formatPrice(shippingTotal) : 'Offerte'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between font-semibold text-gray-900">
                   <span>Total</span>

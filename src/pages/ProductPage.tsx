@@ -433,7 +433,7 @@ const ProductPage = () => {
               type="button"
               onClick={() => {
                 if (selectedVariant) {
-                  addItem(product, selectedVariant, 1)
+                  addItem(product, selectedVariant, 1, shippingOptions[selectedShippingIndex])
                 }
               }}
               disabled={!selectedVariant}

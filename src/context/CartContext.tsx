@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { CartItem, Product, Variant } from '../types'
+import type { CartItem, Product, ShippingOption, Variant } from '../types'
 
 const STORAGE_KEY = 'koktek_cart_v1'
 const CART_ID_KEY = 'koktek_cart_id_v1' // Stocke l'identifiant du panier Directus.
@@ -18,7 +18,8 @@ type CartContextValue = {
   cartId: string | null
   itemCount: number
   total: number
-  addItem: (product: Product, variant: Variant, quantity?: number) => void
+  shippingTotal: number
+  addItem: (product: Product, variant: Variant, quantity?: number, shippingOption?: ShippingOption) => void
   removeItem: (variantId: string) => void
   updateQuantity: (variantId: string, quantity: number) => void
   clearCart: () => void
@@ -77,7 +78,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const addItem = useCallback(
-    (product: Product, variant: Variant, quantity = 1) => {
+    (product: Product, variant: Variant, quantity = 1, shippingOption?: ShippingOption) => {
       setItems((prev) => {
         const existingIndex = prev.findIndex(
           (item) => item.variant.id === variant.id,
@@ -89,10 +90,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           next[existingIndex] = {
             ...current,
             quantity: updatedQuantity,
+            shippingOption: shippingOption ?? current.shippingOption,
           }
           return next
         }
-        return [...prev, { product, variant, quantity }]
+        return [...prev, { product, variant, quantity, shippingOption }]
       })
     },
     [],
@@ -127,10 +129,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     window.localStorage.removeItem(CART_ID_KEY)
   }, [])
 
+  const shippingTotal = useMemo(
+    () =>
+      items.reduce((sum, item) => sum + (Number(item.shippingOption?.price) || 0) * item.quantity, 0),
+    [items],
+  )
+
   const total = useMemo(
     () =>
-      items.reduce((sum, item) => sum + item.product.retail_price * item.quantity, 0),
-    [items],
+      items.reduce((sum, item) => sum + item.product.retail_price * item.quantity, 0) + shippingTotal,
+    [items, shippingTotal],
   )
 
   const itemCount = useMemo(
@@ -144,6 +152,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       cartId,
       itemCount,
       total,
+      shippingTotal,
       addItem,
       removeItem,
       updateQuantity,
@@ -155,6 +164,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       cartId,
       itemCount,
       total,
+      shippingTotal,
       addItem,
       removeItem,
       updateQuantity,
