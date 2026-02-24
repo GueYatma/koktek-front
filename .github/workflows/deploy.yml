@@ -21,6 +21,15 @@ jobs:
 
       - name: 3. Construction sur GitHub (Build)
         # On prépare le site ici, sur les serveurs de GitHub
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_TOKEN: ${{ secrets.VITE_API_TOKEN }}
+          VITE_PROJECT_NAME: ${{ secrets.VITE_PROJECT_NAME }}
+          VITE_DIRECTUS_URL: ${{ secrets.VITE_DIRECTUS_URL }}
+          VITE_DIRECTUS_TOKEN: ${{ secrets.VITE_DIRECTUS_TOKEN }}
+          VITE_N8N_WEBHOOK_URL: ${{ secrets.VITE_N8N_WEBHOOK_URL }}
+          VITE_N8N_STRIPE_INTENT_URL: ${{ secrets.VITE_N8N_STRIPE_INTENT_URL }}
+          VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
         run: |
           npm install
           npm run build
