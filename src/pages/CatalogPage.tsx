@@ -305,11 +305,6 @@ const CatalogPage = () => {
             })}
           </div>
         )}
-        {!loading && products.length === 0 && (
-          <p className="text-center mt-6 text-sm text-gray-500">
-            Aucun produit trouvé.
-          </p>
-        )}
       </div>
     </div>
   );
