@@ -6,12 +6,17 @@ type UIContextValue = {
   openContact: () => void
   closeContact: () => void
   toggleContact: () => void
+  isProfileOpen: boolean
+  openProfile: () => void
+  closeProfile: () => void
+  toggleProfile: () => void
 }
 
 const UIContext = createContext<UIContextValue | null>(null)
 
 export const UIProvider = ({ children }: { children: ReactNode }) => {
   const [isContactOpen, setIsContactOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   const value = useMemo(
     () => ({
@@ -19,8 +24,12 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
       openContact: () => setIsContactOpen(true),
       closeContact: () => setIsContactOpen(false),
       toggleContact: () => setIsContactOpen((prev) => !prev),
+      isProfileOpen,
+      openProfile: () => setIsProfileOpen(true),
+      closeProfile: () => setIsProfileOpen(false),
+      toggleProfile: () => setIsProfileOpen((prev) => !prev),
     }),
-    [isContactOpen],
+    [isContactOpen, isProfileOpen],
   )
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>

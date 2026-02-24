@@ -1,8 +1,6 @@
 import { useRef } from 'react'
 import { X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { jsPDF } from 'jspdf'
-import { toPng } from 'html-to-image'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 
@@ -22,6 +20,7 @@ type OrderTicketModalProps = {
   title?: string
   noticeTone?: 'danger' | 'success'
   onClose?: () => void
+  onNavigateToProfile?: () => void
   showPayByCard?: boolean
   onPayByCard?: () => void
   payByCardLabel?: string
@@ -43,6 +42,7 @@ const OrderTicketModal = ({
   title = 'Commande Réservée !',
   noticeTone = 'danger',
   onClose,
+  onNavigateToProfile,
   showPayByCard = false,
   onPayByCard,
   payByCardLabel = 'Finalement, je paie par carte',
@@ -58,72 +58,7 @@ const OrderTicketModal = ({
   const noticeClass =
     noticeTone === 'success' ? 'text-emerald-600' : 'text-red-600'
 
-  const buildTicketPng = async () => {
-    if (!ticketRef.current) return null
-    try {
-      return await toPng(ticketRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: '#fffaf4',
-      })
-    } catch (error) {
-      console.error('Erreur génération ticket PNG', error)
-      return null
-    }
-  }
 
-  const buildTicketPdf = async (pngDataUrl: string) => {
-    const img = new Image()
-    img.src = pngDataUrl
-    await img.decode()
-
-    const doc = new jsPDF({
-      orientation: img.width > img.height ? 'l' : 'p',
-      unit: 'px',
-      format: [img.width, img.height],
-      compress: true,
-      hotfixes: ['px_scaling'],
-    })
-    doc.addImage(pngDataUrl, 'PNG', 0, 0, img.width, img.height)
-    return doc
-  }
-
-  const handleDownloadTicket = async () => {
-    if (!orderNumber) return
-    const pngDataUrl = await buildTicketPng()
-    if (!pngDataUrl) return
-
-    const doc = await buildTicketPdf(pngDataUrl)
-    doc.save(`bon-commande-${orderNumber}.pdf`)
-  }
-
-  const handleShareTicket = async () => {
-    if (!orderNumber) return
-    const pngDataUrl = await buildTicketPng()
-    if (!pngDataUrl) return
-
-    const pngBlob = await (await fetch(pngDataUrl)).blob()
-    const pngFile = new File([pngBlob], `bon-commande-${orderNumber}.png`, {
-      type: pngBlob.type || 'image/png',
-    })
-
-    if (navigator.share && navigator.canShare?.({ files: [pngFile] })) {
-      try {
-        await navigator.share({
-          title: 'Bon de commande Koktek',
-          files: [pngFile],
-        })
-      } catch {
-        // Ignore les annulations utilisateur.
-      }
-      return
-    }
-
-    const link = document.createElement('a')
-    link.href = pngDataUrl
-    link.download = `bon-commande-${orderNumber}.png`
-    link.click()
-  }
 
   if (!open) return null
 
@@ -148,10 +83,10 @@ const OrderTicketModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-100/60 bg-white text-gray-500 transition hover:text-gray-900"
+              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 opacity-30 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 hover:opacity-100"
               aria-label="Fermer"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           ) : null}
           <div className="text-center">
@@ -243,20 +178,13 @@ const OrderTicketModal = ({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4">
           <button
             type="button"
-            onClick={handleDownloadTicket}
-            className="flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:text-gray-900"
+            onClick={onNavigateToProfile}
+            className="flex w-full items-center justify-center rounded-xl bg-gray-900 px-4 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-gray-800"
           >
-            📥 Télécharger le bon
-          </button>
-          <button
-            type="button"
-            onClick={handleShareTicket}
-            className="flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:text-gray-900"
-          >
-            📲 Partager
+            Retrouvez votre facture dans votre espace client
           </button>
         </div>
 

@@ -46,11 +46,10 @@ const Layout = () => {
   }, [shouldShowBuildToast, isBuildToastVisible, buildLabel])
 
   const { itemCount } = useCart()
-  const { isContactOpen, openContact, closeContact } = useUI()
+  const { isContactOpen, openContact, closeContact, isProfileOpen, openProfile, closeProfile } = useUI()
   const { user } = useAuth()
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
@@ -135,7 +134,7 @@ const Layout = () => {
             {user ? (
               <button
                 type="button"
-                onClick={() => setIsProfileOpen(true)}
+                onClick={openProfile}
                 className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
               >
                 <User className="h-4 w-4" />
@@ -293,7 +292,7 @@ const Layout = () => {
       <AuthModal open={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <ProfileDrawer
         open={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
+        onClose={closeProfile}
       />
     </div>
   )

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import StripeCheckoutForm from '../components/StripeCheckoutForm'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useUI } from '../context/UIContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 import { saveOrderForEmail } from '../utils/customerOrders'
@@ -64,6 +65,8 @@ type BillingFormState = {
 }
 
 const CheckoutPage = () => {
+  const navigate = useNavigate()
+  const { openProfile } = useUI()
   const { items, total, shippingTotal, itemCount, clearCart, cartId, setCartId } = useCart()
   const { user, login, updateProfile } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -1169,6 +1172,11 @@ const CheckoutPage = () => {
         onPayByCard={() => {
           setCheckoutStep('payment')
           setPaymentView('card')
+        }}
+        onClose={() => navigate('/')}
+        onNavigateToProfile={() => {
+          navigate('/')
+          setTimeout(() => openProfile(), 50)
         }}
       />
 
