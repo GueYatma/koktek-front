@@ -9,6 +9,7 @@ type CartDrawerProps = {
   onClose: () => void
 }
 
+const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
   const { items, total, shippingTotal, updateQuantity, removeItem, clearCart } = useCart()
   const isCheckoutDisabled = items.length === 0
 
