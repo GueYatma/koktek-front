@@ -129,21 +129,39 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     window.localStorage.removeItem(CART_ID_KEY)
   }, [])
 
-  const shippingTotal = useMemo(
-    () =>
-      items.reduce((sum, item) => sum + (Number(item.shippingOption?.price) || 0) * item.quantity, 0),
-    [items],
-  )
-
-  const total = useMemo(
-    () =>
-      items.reduce((sum, item) => sum + item.product.retail_price * item.quantity, 0) + shippingTotal,
-    [items, shippingTotal],
-  )
-
   const itemCount = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items],
+  )
+
+  const subtotal = useMemo(
+    () => items.reduce((sum, item) => sum + item.product.retail_price * item.quantity, 0),
+    [items]
+  )
+
+  const shippingTotal = useMemo(() => {
+    if (items.length === 0) return 0;
+    if (subtotal >= 50) return 0; // Règle 1 : Franco de port
+
+    let maxShippingPrice = 0;
+    items.forEach((item) => {
+      const itemShipping = Number(item.shippingOption?.price) || 0;
+      if (itemShipping > maxShippingPrice) {
+        maxShippingPrice = itemShipping;
+      }
+    });
+
+    // Règle 2 & 3 : Forfait max de 1 à 3 articles, puis +1€ par article supplémentaire
+    if (itemCount <= 3) {
+      return maxShippingPrice;
+    } else {
+      return maxShippingPrice + (itemCount - 3);
+    }
+  }, [items, subtotal, itemCount]);
+
+  const total = useMemo(
+    () => subtotal + shippingTotal,
+    [subtotal, shippingTotal],
   )
 
   const value = useMemo(
