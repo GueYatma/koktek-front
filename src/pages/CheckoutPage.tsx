@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
+import StripeCheckoutForm from '../components/StripeCheckoutForm'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { formatPrice } from '../utils/format'
@@ -24,6 +27,10 @@ import {
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL as
   | string
   | undefined
+
+const N8N_STRIPE_INTENT_URL = import.meta.env.VITE_N8N_STRIPE_INTENT_URL as string | undefined
+
+const stripePromise = loadStripe((import.meta.env.VITE_STRIPE_PUBLIC_KEY as string) || '')
 
 type CheckoutStep = 'form' | 'payment' | 'success'
 type PaymentView = 'choice' | 'card'
@@ -61,6 +68,8 @@ const CheckoutPage = () => {
   const { user, login, updateProfile } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPayingCash, setIsPayingCash] = useState(false)
+  const [isPayingOnline, setIsPayingOnline] = useState(false)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [billingDifferent, setBillingDifferent] = useState(false)
   const [hoveredBtn, setHoveredBtn] = useState<'card' | 'cash' | null>(null)
@@ -148,7 +157,45 @@ const CheckoutPage = () => {
   }
 
   const handlePaymentOnline = async () => {
-    // TODO: Intégration Stripe à implémenter.
+    if (!orderId || isPayingOnline || !N8N_STRIPE_INTENT_URL) {
+      if (!N8N_STRIPE_INTENT_URL) {
+        setError('Le serveur de paiement n\'est pas configuré. Veuillez contacter le support.');
+      }
+      return;
+    }
+    
+    setIsPayingOnline(true)
+    setError(null)
+
+    try {
+      const response = await fetch(N8N_STRIPE_INTENT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: Math.round(total * 100), // Stripe exige des centimes
+          currency: 'eur',
+          order_id: orderId,
+          order_number: orderNumber ?? orderId,
+          receipt_email: customerSnapshot?.email || delivery.email.trim(),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.client_secret) {
+        throw new Error(data.message || 'Impossible de générer la session de paiement')
+      }
+
+      setClientSecret(data.client_secret)
+      setPaymentView('card')
+    } catch (e: any) {
+      console.error('Erreur Stripe webhook', e)
+      setError(e.message || 'Une erreur est survenue lors de la connexion au serveur de paiement.')
+    } finally {
+      setIsPayingOnline(false)
+    }
   }
 
   const handlePayCash = async () => {
@@ -938,21 +985,54 @@ const CheckoutPage = () => {
                       </button>
                     </div>
                   </>
+                ) : clientSecret ? (
+                  <div className="mt-4">
+                    <Elements options={{ clientSecret, appearance: { theme: 'stripe' } }} stripe={stripePromise}>
+                      <StripeCheckoutForm
+                        amount={total}
+                        orderId={orderId!}
+                        orderNumber={orderNumber ?? orderId!}
+                        customerEmail={customerSnapshot?.email || ''}
+                        webhookUrl=""
+                        onSuccess={() => setCheckoutStep('success')}
+                        onCancel={() => {
+                          setPaymentView('choice')
+                          setClientSecret(null)
+                        }}
+                      />
+                    </Elements>
+                  </div>
                 ) : (
                   <div className="mt-4 space-y-4">
                     <p className="text-sm text-gray-600">
                       Renseignez vos informations de carte pour régler votre commande en toute sécurité.
                     </p>
                     <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/60 px-4 py-4 text-sm text-indigo-700">
-                      Module de paiement sécurisé par carte (Stripe).
+                      Cliquez sur le bouton ci-dessous pour ouvrir le portail de paiement sécurisé Stripe.
                     </div>
                     <button
                       type="button"
+                      disabled={isPayingOnline || !N8N_STRIPE_INTENT_URL}
                       onClick={handlePaymentOnline}
-                      className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                      className="w-full flex justify-center items-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
                     >
-                      Payer par carte bancaire
+                      {isPayingOnline ? (
+                         <div className="flex items-center gap-2">
+                           <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                           </svg>
+                           Préparation...
+                         </div>
+                       ) : (
+                         'Payer par carte bancaire'
+                       )}
                     </button>
+                    {!N8N_STRIPE_INTENT_URL && (
+                      <p className="text-xs text-red-500 text-center">
+                        La clé du serveur de paiement n'est pas configurée dans .env
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={() => setPaymentView('choice')}

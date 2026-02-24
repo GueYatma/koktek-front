@@ -1,0 +1,119 @@
+{
+  "name": "[koktek_Stripe] - 02 - Payment Succeeded Webhook (Postgres)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stripe-webhook-postgres",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Stripe Event Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.type}}",
+              "value2": "payment_intent.succeeded"
+            }
+          ]
+        }
+      },
+      "name": "Is Payment Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "orders",
+        "updateKey": "id",
+        "columns": "status,payment_status,payment_reference"
+      },
+      "name": "Postgres - Update Order",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [700, 200],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIALS",
+          "name": "Mettre ici les identifiants de ta base de données Directus/Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "id",
+              "value": "={{$node[\"Stripe Event Webhook\"].json[\"body\"][\"data\"][\"object\"][\"metadata\"][\"order_id\"]}}"
+            },
+            {
+              "name": "status",
+              "value": "paid"
+            },
+            {
+              "name": "payment_status",
+              "value": "paid"
+            },
+            {
+              "name": "payment_reference",
+              "value": "={{$node[\"Stripe Event Webhook\"].json[\"body\"][\"data\"][\"object\"][\"id\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Postgres Columns",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [600, 400]
+    }
+  ],
+  "connections": {
+    "Stripe Event Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Payment Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Payment Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Set Postgres Columns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Postgres Columns": {
+      "main": [
+        [
+          {
+            "node": "Postgres - Update Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

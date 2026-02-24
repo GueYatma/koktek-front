@@ -1,0 +1,79 @@
+{
+  "name": "[koktek_Stripe] - 01 - Payment Intent Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stripe-intent",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "stripe-intent-koktek"
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "requestMethod": "POST",
+        "url": "https://api.stripe.com/v1/payment_intents",
+        "sendBody": true,
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "amount",
+              "value": "={{$json.body.amount}}"
+            },
+            {
+              "name": "currency",
+              "value": "={{$json.body.currency}}"
+            },
+            {
+              "name": "metadata[order_id]",
+              "value": "={{$json.body.order_id}}"
+            },
+            {
+              "name": "metadata[order_number]",
+              "value": "={{$json.body.order_number}}"
+            },
+            {
+              "name": "receipt_email",
+              "value": "={{$json.body.receipt_email}}"
+            }
+          ]
+        },
+        "options": {
+          "bodyContentType": "form-urlencoded"
+        }
+      },
+      "name": "Stripe API - Create Intent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "STRIPE_API_CREDENTIALS",
+          "name": "Au moment d'importer ce noeud, ajoute ta clé secrète Stripe ici (sk_live_...) sous le nom 'Authorization' et valeur 'Bearer sk_live_...'"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Stripe API - Create Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

@@ -9,10 +9,7 @@ type ProductCardProps = {
 }
 
 const ProductCard = ({ product, categoryName }: ProductCardProps) => {
-  const finalPrice =
-    product.product_variants && product.product_variants.length > 0
-      ? product.product_variants[0].price
-      : product.base_price
+  const finalPrice = product.retail_price
   return (
     <Link
       to={`/produit/${product.slug}`}
