@@ -57,6 +57,9 @@ const CatalogPage = () => {
     return "";
   };
 
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+
   const resolveCategorySelection = useCallback(
     (value: string | null) => {
       if (!value) return "all";
@@ -69,9 +72,6 @@ const CatalogPage = () => {
     },
     [allCategories], // Changed categories to allCategories
   );
-
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     let isMounted = true;
