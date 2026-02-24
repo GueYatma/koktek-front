@@ -76,8 +76,8 @@ const CheckoutPage = () => {
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>('form')
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
-  const [paymentView, setPaymentView] = useState<PaymentView>('choice')
   const [isCashConfirmOpen, setIsCashConfirmOpen] = useState(false)
+  const [confirmedMethod, setConfirmedMethod] = useState<'cash' | 'card' | null>(null)
   const checkoutStepRef = useRef<CheckoutStep>(checkoutStep)
   const [customerSnapshot, setCustomerSnapshot] = useState<{
     email: string
@@ -139,6 +139,19 @@ const CheckoutPage = () => {
   useEffect(() => {
     checkoutStepRef.current = checkoutStep
   }, [checkoutStep])
+
+  // Failsafe for Stripe 3D Secure redirects
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const step = searchParams.get('step')
+    const order = searchParams.get('order')
+    
+    if (step === 'success' && order) {
+      setOrderNumber(order)
+      setConfirmedMethod('card')
+      setCheckoutStep('success')
+    }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -212,6 +225,7 @@ const CheckoutPage = () => {
       })
 
       // Étape 2: afficher le message de succès immédiatement.
+      setConfirmedMethod('cash')
       setCheckoutStep('success')
 
       // Étape 3: notifier le workflow externe via webhook en arrière-plan.
@@ -993,7 +1007,10 @@ const CheckoutPage = () => {
                         orderNumber={orderNumber ?? orderId!}
                         customerEmail={customerSnapshot?.email || ''}
                         webhookUrl=""
-                        onSuccess={() => setCheckoutStep('success')}
+                        onSuccess={() => {
+                          setConfirmedMethod('card')
+                          setCheckoutStep('success')
+                        }}
                         onCancel={() => {
                           setPaymentView('choice')
                           setClientSecret(null)
@@ -1138,8 +1155,12 @@ const CheckoutPage = () => {
         imageUrl={ticketImageUrl}
         customerName={ticketCustomerName}
         total={total}
-        hintText="Retrouvez ce bon de commande dans votre espace client."
-        showPayByCard
+        headerLabel={confirmedMethod === 'card' ? "REÇU DE PAIEMENT" : "BON DE COMMANDE"}
+        title={confirmedMethod === 'card' ? "Paiement Validé !" : "Commande Réservée !"}
+        noticeTone={confirmedMethod === 'card' ? "success" : "danger"}
+        noticeText={confirmedMethod === 'card' ? "Votre paiement en ligne a été effectué avec succès. Votre commande est en cours de préparation." : undefined}
+        hintText="Retrouvez le détail de l'opération dans votre espace client."
+        showPayByCard={confirmedMethod !== 'card'}
         payByCardLabel="← Retour en arrière — Finalement, je paie par carte"
         onPayByCard={() => {
           setCheckoutStep('payment')
