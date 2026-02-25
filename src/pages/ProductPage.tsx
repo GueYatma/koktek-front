@@ -309,7 +309,7 @@ const ProductPage = () => {
             <img
               src={displayImage}
               alt={product.title}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain p-4"
             />
           </div>
           {images.length > 1 && (
