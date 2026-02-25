@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import Layout from './components/Layout'
 import AdminLayout from './layouts/AdminLayout'
@@ -8,6 +8,11 @@ import ProductPage from './pages/ProductPage'
 import CheckoutPage from './pages/CheckoutPage'
 import SalesHistoryPage from './pages/SalesHistoryPage'
 import AccountingPage from './pages/AccountingPage'
+
+const AdminRedirect = () => {
+  const location = useLocation()
+  return <Navigate to={`/admin/comptabilite${location.search}`} replace />
+}
 
 const App = () => {
   return (
@@ -34,6 +39,7 @@ const App = () => {
           />
         </Route>
         <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminRedirect />} />
           <Route
             path="/admin/historique"
             element={<SalesHistoryPage />}
