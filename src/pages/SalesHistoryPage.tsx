@@ -168,6 +168,7 @@ const SalesHistoryPage = () => {
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-[0.2em] text-gray-400">
                   <th className="py-3 pr-4">Paiement</th>
+                  <th className="py-3 pr-4">Méthode</th>
                   <th className="py-3 pr-4">Livraison</th>
                   <th className="py-3 pr-4">Commande</th>
                   <th className="py-3 pr-4">Date</th>
@@ -181,6 +182,7 @@ const SalesHistoryPage = () => {
                     order.total_price ?? order.total ?? order.subtotal ?? 0
                   const paymentStatus = order.payment_status ?? order.status ?? '—'
                   const deliveryStatus = deliveries[order.id]?.status ?? '—'
+                  const isCash = paymentStatus === 'pending_cash' || order.payment_reference === 'cash'
                   return (
                     <tr key={order.id} className="text-gray-700">
                       <td className="py-4 pr-4">
@@ -190,6 +192,11 @@ const SalesHistoryPage = () => {
                           )}`}
                         >
                           {normalizeStatus(paymentStatus)}
+                        </span>
+                      </td>
+                      <td className="py-4 pr-4">
+                        <span className="text-xs font-semibold text-gray-600">
+                          {isCash ? '💵 Espèces' : '💳 Carte'}
                         </span>
                       </td>
                       <td className="py-4 pr-4">
@@ -209,17 +216,22 @@ const SalesHistoryPage = () => {
                         {formatPrice(Number(total))}
                       </td>
                       <td className="py-4 pl-4 text-center">
-                        <button
-                          onClick={() => setSearchParams({ validate_order: order.order_number ?? order.id })}
-                          disabled={paymentStatus === 'paid' || paymentStatus === 'processing'}
-                          className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                            paymentStatus === 'paid' || paymentStatus === 'processing'
-                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                          }`}
-                        >
-                          {paymentStatus === 'paid' || paymentStatus === 'processing' ? 'Validée' : 'Valider'}
-                        </button>
+                        {!isCash ? (
+                          <span className="text-xs text-gray-400">
+                            {paymentStatus === 'paid' ? 'Payé via Stripe' : 'Attente Stripe'}
+                          </span>
+                        ) : paymentStatus === 'pending_cash' ? (
+                          <button
+                            onClick={() => setSearchParams({ validate_order: order.order_number ?? order.id })}
+                            className="rounded-xl px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
+                          >
+                            Valider Espèces
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            Versement effectué
+                          </span>
+                        )}
                       </td>
                     </tr>
                   )
