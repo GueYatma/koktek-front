@@ -305,11 +305,11 @@ const ProductPage = () => {
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
         <div className="md:sticky md:top-24 md:self-start">
-          <div className="animate-float h-72 overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] md:h-[520px]">
+          <div className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
             <img
               src={displayImage}
               alt={product.title}
-              className="h-full w-full object-contain p-4"
+              className="h-full w-full object-cover"
             />
           </div>
           {images.length > 1 && (

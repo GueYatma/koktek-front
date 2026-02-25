@@ -606,7 +606,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
         </button>
         <div className="space-y-6 mt-4">
       {/* Wrapping Root */}
-      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
         {" "}
         {/* Header Section */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -654,7 +654,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
           <div className="space-y-6">
             {" "}
             {/* Colonne Données */}
-            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
               {" "}
               {/* Box Identité */}
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
@@ -696,7 +696,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
               {/* Fin Align */}
             </section>{" "}
             {/* Fin Box */}
-            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
               {" "}
               {/* Box Client */}
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
@@ -734,7 +734,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
               )}
             </section>{" "}
             {/* Fin Box */}
-            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
               {" "}
               {/* Box Items */}
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -840,7 +840,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
           <div className="space-y-6">
             {" "}
             {/* Colonne de droite (Paiement) */}
-            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
               {" "}
               {/* Box Calcul */}
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
@@ -888,7 +888,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
               {/* Fin TTC */}
             </section>{" "}
             {/* Fin section calcul */}
-            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
               {" "}
               {/* Box Action Bouton */}
               {success || order?.payment_status === "paid" || order?.status === "processing" || order?.status === "paid" ? ( // Validation UX si cliqué

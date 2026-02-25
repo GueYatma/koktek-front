@@ -218,7 +218,7 @@ const SalesHistoryPage = () => {
                       <td className="py-4 pl-4 text-center">
                         {!isCash ? (
                           <span className="text-xs text-gray-400">
-                            {paymentStatus === 'paid' ? 'Payé via Stripe' : 'Attente Stripe'}
+                            {paymentStatus === 'paid' ? 'Payé via Stripe' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
                           </span>
                         ) : paymentStatus === 'pending_cash' ? (
                           <button
