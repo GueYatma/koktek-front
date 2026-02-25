@@ -18,7 +18,7 @@ const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
 const N8N_WEBHOOK_URL =
   "https://n8n.srv747988.hstgr.cloud/webhook/versement-espece";
 const N8N_CJ_WEBHOOK_URL =
-  "https://n8n.srv747988.hstgr.cloud/webhook/export-cj-order";
+  "https://n8n.srv747988.hstgr.cloud/webhook/creation-commande-CJ-apres-paiement";
 
 type ProductSummary = { id: string; title: string; image_url?: string }; // Typage Produit
 type VariantSummary = {
