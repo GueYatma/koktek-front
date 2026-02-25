@@ -629,19 +629,6 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
             {/* S/Titre */}
           </div>{" "}
           {/* Fin bloc texte */}
-          <div className="flex flex-wrap items-center gap-2">
-            {" "}
-            {/* Badges généraux */}
-            <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-              Statut: {order?.status ?? "—"}
-            </span>{" "}
-            {/* Badge1 */}
-            <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-              Paiement: {order?.payment_status ?? "—"}
-            </span>{" "}
-            {/* Badge2 */}
-          </div>{" "}
-          {/* Fin bloc badge */}
         </div>{" "}
         {/* Fin alignement */}
         {isLoading ? ( // Affichage Loading
@@ -694,6 +681,10 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
                   {/* KOK num */}
                   <p className="text-sm text-gray-500">ID: {order.id}</p>{" "}
                   {/* UUID */}
+                  <p className="mt-1 text-xs text-gray-400">
+                    Date: {order.created_at || (order as any).date_created ? new Date(order.created_at || (order as any).date_created).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "—"}
+                  </p>{" "}
+                  {/* Date */}
                 </div>{" "}
                 {/* Fin Ids */}
                 <div className="flex flex-wrap items-center gap-2">
@@ -739,6 +730,16 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
                 {/* Tel */}
               </div>{" "}
               {/* Fin Grille */}
+              {delivery && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs uppercase text-gray-400">Adresse de livraison</p>
+                  <p className="mt-1 text-sm text-gray-900 leading-relaxed">
+                    {(delivery as any).address_line1 || (delivery as any).address || ""} <br />
+                    {(delivery as any).postal_code || (delivery as any).zip || ""} {(delivery as any).city || ""} <br />
+                    {(delivery as any).country || ""}
+                  </p>
+                </div>
+              )}
             </section>{" "}
             {/* Fin Box */}
             <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -864,6 +865,13 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
                   </span>
                 </div>{" "}
                 {/* HT */}
+                <div className="flex items-center justify-between">
+                  <span>Frais de port</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatPrice(totals.shipping)}
+                  </span>
+                </div>{" "}
+                {/* Port */}
                 <div className="flex items-center justify-between">
                   <span>TVA incl.</span>
                   <span className="font-semibold text-gray-900">
