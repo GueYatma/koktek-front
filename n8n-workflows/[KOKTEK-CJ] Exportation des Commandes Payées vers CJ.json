@@ -1,0 +1,173 @@
+{
+  "name": "[KOKTEK-CJ] Exportation des Commandes Payées vers CJ",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "c1e8b3ea-800e-4116-96dc-fe12a44b610f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a9cbe26e-070c-4735-9dcd-fe511e73ac29",
+      "name": "Le Déclencheur (Trigger)",
+      "webhookId": "c1e8b3ea-800e-4116-96dc-fe12a44b610f"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM orders WHERE id = $1;",
+        "options": {
+          "queryParameters": "={{ $json.body.order_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "node-db-details",
+      "name": "[DB] Get Order Details"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM order_items WHERE order_id = $1;",
+        "options": {
+          "queryParameters": "={{ $('[DB] Get Order Details').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        440,
+        0
+      ],
+      "id": "node-db-items",
+      "name": "[DB] Get Order Items"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const order = $(\"[DB] Get Order Details\").item.json;\nconst items = $(\"[DB] Get Order Items\").all().map(i => i.json);\n\nconst shipping = typeof order.shipping_address === 'string' \n  ? JSON.parse(order.shipping_address) \n  : (order.shipping_address || {});\n\nconst products = items.map(item => ({\n  vid: item.variant_id,\n  quantity: item.quantity\n}));\n\nconst payload = {\n  orderNumber: order.order_number || '',\n  shippingZip: shipping.postal_code || '',\n  shippingCountryCode: shipping.country || 'FR',\n  shippingProvince: shipping.region || shipping.city || '',\n  shippingCity: shipping.city || '',\n  shippingAddress: [shipping.address_line1, shipping.address_line2].filter(Boolean).join(' '),\n  shippingCustomerName: order.recipient_name || order.customer_name || 'Client', \n  shippingPhone: order.phone || '0000000000',\n  logisticName: order.logistic_name || 'Standard',\n  products: products\n};\n\nreturn { json: payload };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "node-code-format",
+      "name": "[CODE] Format CJ Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://developers.cjdropshipping.com/api2.0/v1/shopping/order/createOrder",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        880,
+        0
+      ],
+      "id": "node-api-cj",
+      "name": "[API] POST to CJ Dropshipping"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE orders SET cj_order_id = $1 WHERE id = $2;",
+        "options": {
+          "queryParameters": "={{ $json.data.orderId }},{{ $('[DB] Get Order Details').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "node-db-update",
+      "name": "[DB] Update CJ Order ID"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Le Déclencheur (Trigger)": {
+      "main": [
+        [
+          {
+            "node": "[DB] Get Order Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Get Order Details": {
+      "main": [
+        [
+          {
+            "node": "[DB] Get Order Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Get Order Items": {
+      "main": [
+        [
+          {
+            "node": "[CODE] Format CJ Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CODE] Format CJ Payload": {
+      "main": [
+        [
+          {
+            "node": "[API] POST to CJ Dropshipping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[API] POST to CJ Dropshipping": {
+      "main": [
+        [
+          {
+            "node": "[DB] Update CJ Order ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b8817b45-17a5-4f94-a950-65c5a61bb61f",
+  "meta": {
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "NOjb7pbOM0m1gb4z",
+  "tags": []
+}

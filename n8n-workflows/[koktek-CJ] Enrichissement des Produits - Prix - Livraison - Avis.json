@@ -14,25 +14,25 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -528,
-        -96
+        0,
+        0
       ],
-      "id": "1527591e-2e8c-4e8b-b0ed-d391f4f322fd",
+      "id": "83434cb4-0141-4105-b9e4-3fe350c917c9",
       "name": "Toutes les heures"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * FROM koktek.products \nWHERE status = 'published' \nAND shipping_options IS NULL \nLIMIT 10;",
+        "query": "SELECT * FROM koktek.products \nWHERE status = 'published' \nAND shipping_options IS NULL \nAND id IN (SELECT product_id FROM koktek.product_variants)\nLIMIT 100;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        -288,
-        -96
+        240,
+        0
       ],
-      "id": "1edc7ed1-ef3a-47aa-9bd9-8b14be42a75a",
+      "id": "3dd71c08-642f-4050-975e-75e9a08c0963",
       "name": "[PG] Chercher 10 produits à enrichir",
       "credentials": {
         "postgres": {
@@ -48,10 +48,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -64,
-        -96
+        464,
+        0
       ],
-      "id": "25a14aba-5f99-4f9b-9e9d-0452aa42bc26",
+      "id": "e005265e-8c04-4f15-ad05-81c8f89fada1",
       "name": "[LOOP] Produit par Produit"
     },
     {
@@ -75,23 +75,23 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        368,
-        -80
+        896,
+        16
       ],
-      "id": "50f67d6a-42a4-41fb-9fa0-53ba0d2d6298",
+      "id": "88d1142c-f98f-4cab-8ac5-193cd19f0ee9",
       "name": "[CJ] Calculer Frais de Port"
     },
     {
       "parameters": {
-        "jsCode": "const shippingMethods = $json.data || [];\nconst validMethods = shippingMethods.filter(s => s.logisticPrice <= 9);\nconst safeMethods = validMethods.length > 0 ? validMethods : shippingMethods;\n\n// 1. Tri et Top 3 (Identique à avant)\nconst sortedByPrice = [...safeMethods].sort((a, b) => a.logisticPrice - b.logisticPrice);\nconst sortedByTime = [...safeMethods].sort((a, b) => {\n  const timeA = parseInt((a.logisticAging || \"99\").split('-').pop());\n  const timeB = parseInt((b.logisticAging || \"99\").split('-').pop());\n  return timeA - timeB;\n});\n\nconst top3 = [\n  sortedByPrice[0],\n  sortedByTime[0],\n  sortedByPrice[Math.floor(sortedByPrice.length / 2)]\n].filter(Boolean);\n\nconst uniqueTop3 = Array.from(new Set(top3.map(a => a.logisticName)))\n  .map(name => top3.find(a => a.logisticName === name));\n\n\n// ==========================================\n// 2. LE MOTEUR COMPTABLE (Calcul à l'envers)\n// ==========================================\nconst basePrice = parseFloat($node[\"[LOOP] Produit par Produit\"].json.base_price) || 0;\n\n// A. Les coûts fixes (TVA Import 20%)\nconst tvaImport = basePrice * 0.20;\n\n// B. On choisit le transport moyen (celui du milieu dans notre Top 3)\nconst medianShipping = uniqueTop3[Math.floor(uniqueTop3.length / 2)].logisticPrice;\n\n// C. Ton objectif de Marge Nette (Dans ta poche)\n// Tu as demandé 120% du prix d'achat.\nlet targetNetMargin = basePrice * 1.20;\n// Mon filet de sécurité vital : Jamais moins de 4€ de bénéfice net.\nif (targetNetMargin < 4.00) {\n   targetNetMargin = 4.00; \n}\n\n// D. L'Équation URSSAF\n// L'URSSAF (12.3%) s'applique sur le TOTAL payé par le client (Produit + Transport).\n// Formule mathématique : Total_Client * (1 - 0.123) = Coûts_Totaux + Marge_Nette\nconst urssafRate = 0.123;\nconst costsAndMargin = basePrice + tvaImport + medianShipping + targetNetMargin;\nconst totalCustomerPays = costsAndMargin / (1 - urssafRate);\n\n// L'URSSAF réelle en euros\nconst urssafFee = totalCustomerPays * urssafRate;\n\n// E. Le Prix Produit (Ce qu'on affiche sur le site React)\n// On retire le transport du total, car le client l'ajoutera plus tard dans son panier\nconst retailPriceSite = totalCustomerPays - medianShipping;\n\nreturn {\n  retail_price: retailPriceSite.toFixed(2),\n  margin: targetNetMargin.toFixed(2),\n  urssaf_fee: urssafFee.toFixed(2),\n  vat_amount: tvaImport.toFixed(2),\n  shipping_options: { \n    list: uniqueTop3.map(s => ({\n      name: s.logisticName,\n      price: s.logisticPrice,\n      days: s.logisticAging + 'j'\n    }))\n  }\n};"
+        "jsCode": "const shippingMethods = $json.data || [];\nconst validMethods = shippingMethods.filter(s => s.logisticPrice <= 9);\nconst safeMethods = validMethods.length > 0 ? validMethods : shippingMethods;\n\n// 1. Tri et Top 3 \nconst sortedByPrice = [...safeMethods].sort((a, b) => a.logisticPrice - b.logisticPrice);\nconst sortedByTime = [...safeMethods].sort((a, b) => {\n  const timeA = parseInt((a.logisticAging || \"99\").split('-').pop());\n  const timeB = parseInt((b.logisticAging || \"99\").split('-').pop());\n  return timeA - timeB;\n});\n\nconst top3 = [\n  sortedByPrice[0],\n  sortedByTime[0],\n  sortedByPrice[Math.floor(sortedByPrice.length / 2)]\n].filter(Boolean);\n\n// Sécurité : on filtre avec Boolean pour enlever les \"undefined\" si le tableau initial était vide\nconst uniqueTop3 = Array.from(new Set(top3.map(a => a.logisticName)))\n  .map(name => top3.find(a => a.logisticName === name))\n  .filter(Boolean); \n\n\n// ==========================================\n// 2. LE MOTEUR COMPTABLE (Calcul à l'envers)\n// ==========================================\nconst basePrice = parseFloat($node[\"[LOOP] Produit par Produit\"].json.base_price) || 0;\n\n// A. Les coûts fixes (TVA Import 20%)\nconst tvaImport = basePrice * 0.20;\n\n// B. Le transport moyen\n// L'ASTUCE INTELLIGENTE EST ICI : On met 5.00€ par défaut pour sauver le calcul\nlet medianShipping = 5.00; \nif (uniqueTop3.length > 0) {\n  medianShipping = uniqueTop3[Math.floor(uniqueTop3.length / 2)].logisticPrice;\n}\n\n// C. Ton objectif de Marge Nette (Dans ta poche)\nlet targetNetMargin = basePrice * 1.20;\nif (targetNetMargin < 4.00) {\n   targetNetMargin = 4.00; \n}\n\n// D. L'Équation URSSAF\nconst urssafRate = 0.123;\nconst costsAndMargin = basePrice + tvaImport + medianShipping + targetNetMargin;\nconst totalCustomerPays = costsAndMargin / (1 - urssafRate);\n\n// L'URSSAF réelle en euros\nconst urssafFee = totalCustomerPays * urssafRate;\n\n// E. Le Prix Produit (Ce qu'on affiche sur le site React)\nconst retailPriceSite = totalCustomerPays - medianShipping;\n\nreturn {\n  retail_price: retailPriceSite.toFixed(2),\n  margin: targetNetMargin.toFixed(2),\n  urssaf_fee: urssafFee.toFixed(2),\n  vat_amount: tvaImport.toFixed(2),\n  \n  // S'il n'y a pas de livraison, ça renverra juste un objet { list: [] } proprement\n  shipping_options: { \n    list: uniqueTop3.map(s => ({\n      name: s.logisticName,\n      price: s.logisticPrice,\n      days: s.logisticAging + 'j'\n    }))\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        576,
-        -80
+        1104,
+        16
       ],
-      "id": "d0f14380-9aa0-40fc-893c-a1d4e7308d71",
+      "id": "9a8c7679-2a9e-44c2-ba15-03b2bb5ab727",
       "name": "[CODE] - Calculateur de Marge & Top 3 Transporteurs"
     },
     {
@@ -105,10 +105,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        784,
-        -80
+        1312,
+        16
       ],
-      "id": "0ebdb9aa-bdc4-4eac-b45f-8367364b1d09",
+      "id": "7a883059-27b3-4efb-9cc3-ba47874bb8f4",
       "name": "[AI] - Expert Notation & Review"
     },
     {
@@ -119,10 +119,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
-        784,
-        160
+        1312,
+        256
       ],
-      "id": "4cf1111a-3e1b-42b2-99a2-5a3543daf916",
+      "id": "48756e6b-0edf-48a8-9117-f7bb3e1b8934",
       "name": "OpenRouter Chat Model",
       "credentials": {
         "openRouterApi": {
@@ -140,10 +140,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        160,
-        -80
+        688,
+        16
       ],
-      "id": "45a42042-10ea-4990-b718-2412526ad887",
+      "id": "b8780e47-7fd5-47aa-9ca4-c29bf1905568",
       "name": "[PG] Récupérer 1 VID",
       "credentials": {
         "postgres": {
@@ -438,10 +438,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        1392,
-        -80
+        1920,
+        16
       ],
-      "id": "4342c536-9d16-44c5-be9b-7bc430b9a397",
+      "id": "b6e2c037-ed20-4bc7-83df-7d49db05393b",
       "name": "mise ajour",
       "credentials": {
         "postgres": {
@@ -457,10 +457,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1168,
-        -80
+        1696,
+        16
       ],
-      "id": "811a7cb2-7933-4dc3-9ff9-3a4859105756",
+      "id": "6e472a21-e228-48fd-963a-5aca4eecf5a4",
       "name": "[CODE] - Nettoyer Reponse IA"
     }
   ],
@@ -584,11 +584,10 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "a6ac3a24-329a-405e-80ce-7b8eb970ecca",
+  "versionId": "b7993144-e993-48d7-b42a-eecea5367928",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
   },
-  "id": "mwZU98ckI9NzUseM",
+  "id": "FeL1F4bj292Pn28P",
   "tags": []
 }

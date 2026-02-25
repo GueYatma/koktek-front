@@ -17,6 +17,8 @@ const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as
   | undefined; // Token API
 const N8N_WEBHOOK_URL =
   "https://n8n.srv747988.hstgr.cloud/webhook/versement-espece";
+const N8N_CJ_WEBHOOK_URL =
+  "https://n8n.srv747988.hstgr.cloud/webhook/export-cj-order";
 
 type ProductSummary = { id: string; title: string; image_url?: string }; // Typage Produit
 type VariantSummary = {
@@ -577,6 +579,29 @@ const VendorValidationPage = () => {
         }
       } catch (webhookError) {
         console.error("Erreur webhook n8n", webhookError);
+      }
+
+      // 3. Déclenchement Logistique : CJ Dropshipping Webhook
+      try {
+        console.log("Déclenchement logistique CJ Dropshipping (order_id: " + order.id + ")");
+        const cjResponse = await fetch(N8N_CJ_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ order_id: order.id }),
+        });
+
+        if (!cjResponse.ok) {
+          const body = await cjResponse.text().catch(() => "");
+          console.error(
+            "Erreur webhook CJ Dropshipping",
+            cjResponse.status,
+            body.slice(0, 200),
+          );
+        }
+      } catch (cjError) {
+        console.error("Erreur webhook CJ Dropshipping", cjError);
       }
 
       setOrder((prev) =>
