@@ -8,6 +8,7 @@ import {
 } from '../lib/commerceApi'
 import { useSearchParams } from 'react-router-dom'
 import ValidationModal from '../components/ValidationModal'
+import OrderDetailsModal from '../components/OrderDetailsModal'
 
 type DeliveryMap = Record<string, OrderDeliveryRecord>
 
@@ -53,10 +54,17 @@ const SalesHistoryPage = () => {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const validateOrderId = searchParams.get('validate_order')
+  const viewOrderId = searchParams.get('view_order')
 
   const handleCloseModal = () => {
     const newParams = new URLSearchParams(searchParams)
     newParams.delete('validate_order')
+    setSearchParams(newParams, { replace: true })
+  }
+
+  const handleCloseDetailsModal = () => {
+    const newParams = new URLSearchParams(searchParams)
+    newParams.delete('view_order')
     setSearchParams(newParams, { replace: true })
   }
 
@@ -102,15 +110,23 @@ const SalesHistoryPage = () => {
     return orders.filter((order) => {
       const paymentStatus = (order.payment_status ?? order.status ?? '').toLowerCase()
       const deliveryStatus = (deliveries[order.id]?.status ?? '').toLowerCase()
+
+      const customer = order.customer_id as Record<string, any> | undefined
+      const customerName = [customer?.first_name, customer?.last_name, customer?.name]
+        .filter(Boolean)
+        .join(' ')
+      const customerEmail = customer?.email || ''
+
       const matchesPayment =
         paymentFilter === 'all' || paymentStatus === paymentFilter
       const matchesDelivery =
         deliveryFilter === 'all' || deliveryStatus === deliveryFilter
       const matchesQuery =
         !search ||
-        String(order.order_number ?? order.id)
-          .toLowerCase()
-          .includes(search)
+        String(order.order_number ?? order.id).toLowerCase().includes(search) ||
+        customerName.toLowerCase().includes(search) ||
+        customerEmail.toLowerCase().includes(search)
+
       return matchesPayment && matchesDelivery && matchesQuery
     })
   }, [orders, deliveries, paymentFilter, deliveryFilter, query])
@@ -167,12 +183,13 @@ const SalesHistoryPage = () => {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-[0.2em] text-gray-400">
-                  <th className="py-3 pr-4">Paiement</th>
-                  <th className="py-3 pr-4">Méthode</th>
-                  <th className="py-3 pr-4">Livraison</th>
+                  <th className="py-3 pr-4">Client</th>
                   <th className="py-3 pr-4">Commande</th>
                   <th className="py-3 pr-4">Date</th>
                   <th className="py-3 pr-4 text-right">Montant</th>
+                  <th className="py-3 pr-4 text-center">Méthode</th>
+                  <th className="py-3 pr-4 text-center">Paiement</th>
+                  <th className="py-3 pr-4 text-center">Livraison</th>
                   <th className="py-3 pl-4 text-center">Action</th>
                 </tr>
               </thead>
@@ -183,9 +200,33 @@ const SalesHistoryPage = () => {
                   const paymentStatus = order.payment_status ?? order.status ?? '—'
                   const deliveryStatus = deliveries[order.id]?.status ?? '—'
                   const isCash = paymentStatus === 'pending_cash' || order.payment_reference === 'cash'
+                  const customer = order.customer_id as Record<string, any> | undefined
+                  const customerName = [customer?.first_name, customer?.last_name, customer?.name]
+                    .filter(Boolean)
+                    .join(' ') || 'Non renseigné'
+
                   return (
-                    <tr key={order.id} className="text-gray-700">
-                      <td className="py-4 pr-4">
+                    <tr 
+                      key={order.id} 
+                      onClick={() => setSearchParams({ view_order: order.id })}
+                      className="text-gray-700 hover:bg-gray-50 cursor-pointer transition"
+                    >
+                      <td className="py-4 pr-4 font-medium text-gray-900 whitespace-nowrap">
+                        {customerName}
+                      </td>
+                      <td className="py-4 pr-4 font-semibold text-gray-900 whitespace-nowrap">
+                        {order.order_number ?? order.id}
+                      </td>
+                      <td className="py-4 pr-4 whitespace-nowrap">{formatDateTime(order.created_at)}</td>
+                      <td className="py-4 pr-4 text-right font-semibold text-gray-900 whitespace-nowrap">
+                        {formatPrice(Number(total))}
+                      </td>
+                      <td className="py-4 pr-4 text-center">
+                        <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                          {isCash ? '💵 Espèces' : '💳 Carte'}
+                        </span>
+                      </td>
+                      <td className="py-4 pr-4 text-center whitespace-nowrap">
                         <span
                           className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${resolvePaymentTone(
                             paymentStatus,
@@ -194,12 +235,7 @@ const SalesHistoryPage = () => {
                           {normalizeStatus(paymentStatus)}
                         </span>
                       </td>
-                      <td className="py-4 pr-4">
-                        <span className="text-xs font-semibold text-gray-600">
-                          {isCash ? '💵 Espèces' : '💳 Carte'}
-                        </span>
-                      </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-4 pr-4 text-center whitespace-nowrap">
                         <span
                           className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${resolveDeliveryTone(
                             deliveryStatus,
@@ -208,14 +244,7 @@ const SalesHistoryPage = () => {
                           {normalizeStatus(deliveryStatus)}
                         </span>
                       </td>
-                      <td className="py-4 pr-4 font-semibold text-gray-900">
-                        {order.order_number ?? order.id}
-                      </td>
-                      <td className="py-4 pr-4">{formatDateTime(order.created_at)}</td>
-                      <td className="py-4 pr-4 text-right font-semibold text-gray-900">
-                        {formatPrice(Number(total))}
-                      </td>
-                      <td className="py-4 pl-4 text-center">
+                      <td className="py-4 pl-4 text-center" onClick={(e) => e.stopPropagation()}>
                         {!isCash ? (
                           <span className="text-xs text-gray-400">
                             {paymentStatus === 'paid' ? 'Payé via Stripe' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
@@ -252,6 +281,14 @@ const SalesHistoryPage = () => {
         selectedOrder={validateOrderId}
         onClose={handleCloseModal}
       />
+      
+      {viewOrderId && (
+        <OrderDetailsModal
+          isOpen={true}
+          orderId={viewOrderId}
+          onClose={handleCloseDetailsModal}
+        />
+      )}
     </div>
   )
 }
