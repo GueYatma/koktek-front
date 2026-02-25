@@ -643,15 +643,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
           <p className="mt-4 text-sm text-gray-500">
             Aucune commande trouvée. Scannez ou saisissez.
           </p> // Texte Vide
-        ) : (
-          // Affichage Succès Fetch
-          <p className="mt-4 text-sm text-gray-500">
-            Commande chargée :{" "}
-            <span className="font-semibold text-gray-900">
-              {order.order_number ?? order.id}
-            </span>
-          </p> // Info Num
-        )}{" "}
+        ) : null}{" "}
         {/* Fin Switcher */}
       </section>{" "}
       {/* Fin Header Section */}
@@ -899,10 +891,10 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
             <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               {" "}
               {/* Box Action Bouton */}
-              {success ? ( // Validation UX si cliqué
-                <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  Paiement validé avec succès en DB.
-                </p> // Message vert
+              {success || order?.payment_status === "paid" || order?.status === "processing" || order?.status === "paid" ? ( // Validation UX si cliqué
+                <div className="w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700">
+                  Commande déjà validée
+                </div> // Message confirmation
               ) : (
                 // Bouton par defaut
                 <button

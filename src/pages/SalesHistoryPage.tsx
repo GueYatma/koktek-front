@@ -6,6 +6,8 @@ import {
   type OrderDeliveryRecord,
   type OrderRecord,
 } from '../lib/commerceApi'
+import { useSearchParams } from 'react-router-dom'
+import ValidationModal from '../components/ValidationModal'
 
 type DeliveryMap = Record<string, OrderDeliveryRecord>
 
@@ -48,6 +50,15 @@ const SalesHistoryPage = () => {
   const [paymentFilter, setPaymentFilter] = useState('all')
   const [deliveryFilter, setDeliveryFilter] = useState('all')
   const [query, setQuery] = useState('')
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const validateOrderId = searchParams.get('validate_order')
+
+  const handleCloseModal = () => {
+    const newParams = new URLSearchParams(searchParams)
+    newParams.delete('validate_order')
+    setSearchParams(newParams, { replace: true })
+  }
 
   useEffect(() => {
     let isActive = true
@@ -161,6 +172,7 @@ const SalesHistoryPage = () => {
                   <th className="py-3 pr-4">Commande</th>
                   <th className="py-3 pr-4">Date</th>
                   <th className="py-3 pr-4 text-right">Montant</th>
+                  <th className="py-3 pl-4 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -196,6 +208,19 @@ const SalesHistoryPage = () => {
                       <td className="py-4 pr-4 text-right font-semibold text-gray-900">
                         {formatPrice(Number(total))}
                       </td>
+                      <td className="py-4 pl-4 text-center">
+                        <button
+                          onClick={() => setSearchParams({ validate_order: order.order_number ?? order.id })}
+                          disabled={paymentStatus === 'paid' || paymentStatus === 'processing'}
+                          className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                            paymentStatus === 'paid' || paymentStatus === 'processing'
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          }`}
+                        >
+                          {paymentStatus === 'paid' || paymentStatus === 'processing' ? 'Validée' : 'Valider'}
+                        </button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -209,6 +234,12 @@ const SalesHistoryPage = () => {
           </div>
         )}
       </section>
+
+      <ValidationModal
+        isOpen={!!validateOrderId}
+        selectedOrder={validateOrderId}
+        onClose={handleCloseModal}
+      />
     </div>
   )
 }

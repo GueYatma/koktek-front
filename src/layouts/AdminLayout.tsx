@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { ExternalLink } from 'lucide-react'
 
 const AdminLayout = () => {
   const baseLinkClass =
@@ -7,19 +8,30 @@ const AdminLayout = () => {
   const idleClass = 'text-gray-700 hover:bg-gray-100'
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-gray-900">
-      <div className="flex min-h-screen">
+    <div className="min-h-screen bg-[#f4f5f7] text-gray-900 flex flex-col">
+      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <a href="https://koktek.com" className="flex items-center gap-2">
+            <span className="text-xl font-black tracking-widest text-gray-900">KOKTEK</span>
+          </a>
+          <span className="hidden sm:inline-block rounded bg-gray-100 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            Back-Office
+          </span>
+        </div>
+        <a 
+          href="https://koktek.com" 
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+        >
+          <span className="hidden sm:inline">Aller vers la boutique koktek.com</span>
+          <span className="sm:hidden">Boutique</span>
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </header>
+      <div className="flex flex-1">
         <aside className="hidden w-64 flex-col border-r border-gray-200 bg-white px-5 py-6 lg:flex">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-gray-400">
-              Back-Office
-            </p>
-            <h1 className="mt-2 text-2xl font-black tracking-[0.2em] text-gray-900">
-              KOKTEK
-            </h1>
-          </div>
-
-          <nav className="mt-10 space-y-3">
+          <nav className="space-y-3">
             <NavLink
               to="/admin/historique"
               className={({ isActive }) =>
