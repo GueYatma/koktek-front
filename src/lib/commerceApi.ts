@@ -206,6 +206,12 @@ const omitNil = (payload: Record<string, unknown>) => {
   return payload
 }
 
+const chunkArray = <T>(array: T[], size: number): T[][] => {
+  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
+    array.slice(i * size, i * size + size)
+  )
+}
+
 const requestDirectus = async <T>(
   path: string,
   options: RequestOptions = {},
@@ -426,12 +432,8 @@ export const getOrdersForHistory = async (input?: {
         'order_number',
         'status',
         'payment_status',
-        'currency',
-        'subtotal',
-        'total',
         'total_price',
         'shipping_price',
-        'item_count',
         'created_at',
       ],
     }),
@@ -444,15 +446,22 @@ export const getOrderItemsByOrderIds = async (
 ): Promise<OrderItemRecord[]> => {
   const uniqueIds = Array.from(new Set(orderIds.filter(Boolean)))
   if (uniqueIds.length === 0) return []
-  const params: Record<string, string> = {
-    'filter[order_id][_in]': uniqueIds.join(','),
-    fields: 'id,order_id,product_id,variant_id,quantity,unit_price,line_total,currency',
-  }
-  const payload = await requestDirectus<DirectusListResponse<OrderItemRecord>>(
-    `/items/order_items`,
-    { params },
+  
+  const chunks = chunkArray(uniqueIds, 50)
+  const results = await Promise.all(
+    chunks.map(async (chunk) => {
+      const params: Record<string, string> = {
+        'filter[order_id][_in]': chunk.join(','),
+        fields: 'id,order_id,product_id,variant_id,quantity,unit_price',
+      }
+      const payload = await requestDirectus<DirectusListResponse<OrderItemRecord>>(
+        `/items/order_items`,
+        { params },
+      )
+      return payload.data ?? []
+    })
   )
-  return payload.data
+  return results.flat()
 }
 
 export const getOrderDeliveriesByOrderIds = async (
@@ -460,15 +469,22 @@ export const getOrderDeliveriesByOrderIds = async (
 ): Promise<OrderDeliveryRecord[]> => {
   const uniqueIds = Array.from(new Set(orderIds.filter(Boolean)))
   if (uniqueIds.length === 0) return []
-  const params: Record<string, string> = {
-    'filter[order_id][_in]': uniqueIds.join(','),
-    fields:
-      'id,order_id,status,delivery_method,carrier,tracking_number,shipped_at,delivered_at',
-  }
-  const payload = await requestDirectus<
-    DirectusListResponse<OrderDeliveryRecord>
-  >(`/items/order_delivery`, { params })
-  return payload.data
+
+  const chunks = chunkArray(uniqueIds, 50)
+  const results = await Promise.all(
+    chunks.map(async (chunk) => {
+      const params: Record<string, string> = {
+        'filter[order_id][_in]': chunk.join(','),
+        fields:
+          'id,order_id,status,delivery_method,carrier,tracking_number,shipped_at,delivered_at',
+      }
+      const payload = await requestDirectus<
+        DirectusListResponse<OrderDeliveryRecord>
+      >(`/items/order_delivery`, { params })
+      return payload.data ?? []
+    })
+  )
+  return results.flat()
 }
 
 export const getVariantsByIds = async (
@@ -476,15 +492,27 @@ export const getVariantsByIds = async (
 ): Promise<VariantCostRecord[]> => {
   const uniqueIds = Array.from(new Set(variantIds.filter(Boolean)))
   if (uniqueIds.length === 0) return []
-  const params: Record<string, string> = {
-    'filter[id][_in]': uniqueIds.join(','),
-    fields: 'id,product_id,sku,price,cost_price',
-  }
-  const payload = await requestDirectus<DirectusListResponse<VariantCostRecord>>(
-    `/items/product_variants`,
-    { params },
-  )
-  return payload.data
+  
+    const chunks = chunkArray(uniqueIds, 50)
+    const results = await Promise.all(
+      chunks.map(async (chunk) => {
+        try {
+          const params: Record<string, string> = {
+            'filter[id][_in]': chunk.join(','),
+            fields: 'id,product_id,sku,price,cost_price',
+          }
+          const payload = await requestDirectus<DirectusListResponse<VariantCostRecord>>(
+            `/items/product_variants`,
+            { params },
+          )
+          return payload.data ?? []
+        } catch (error) {
+          console.warn('Could not fetch variants:', error)
+          return []
+        }
+      })
+    )
+  return results.flat()
 }
 
 export const createOrderItems = async (

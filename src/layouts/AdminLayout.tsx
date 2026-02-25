@@ -21,14 +21,6 @@ const AdminLayout = () => {
 
           <nav className="mt-10 space-y-3">
             <NavLink
-              to="/validation-vendeur"
-              className={({ isActive }) =>
-                `${baseLinkClass} ${isActive ? activeClass : idleClass}`
-              }
-            >
-              Validation Rapide
-            </NavLink>
-            <NavLink
               to="/admin/historique"
               className={({ isActive }) =>
                 `${baseLinkClass} ${isActive ? activeClass : idleClass}`

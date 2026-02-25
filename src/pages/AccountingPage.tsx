@@ -8,6 +8,8 @@ import {
   type OrderRecord,
   type VariantCostRecord,
 } from '../lib/commerceApi'
+import { useSearchParams } from 'react-router-dom'
+import ValidationModal from '../components/ValidationModal'
 
 type Grouping = 'day' | 'week' | 'month'
 
@@ -85,7 +87,16 @@ const AccountingPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [grouping, setGrouping] = useState<Grouping>('month')
-  const [paymentFilter, setPaymentFilter] = useState<'paid' | 'all'>('paid')
+  const [paymentFilter, setPaymentFilter] = useState<'paid' | 'all'>('all')
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const validateOrderId = searchParams.get('validate_order')
+
+  const handleCloseModal = () => {
+    const newParams = new URLSearchParams(searchParams)
+    newParams.delete('validate_order')
+    setSearchParams(newParams, { replace: true })
+  }
 
   useEffect(() => {
     let isActive = true
@@ -358,6 +369,12 @@ const AccountingPage = () => {
         Les coûts unitaires utilisent le champ <span className="font-semibold">cost_price</span>{' '}
         des variantes. Valeur par défaut: {formatPrice(DEFAULT_COST_PRICE)}.
       </p>
+
+      <ValidationModal
+        isOpen={!!validateOrderId}
+        selectedOrder={validateOrderId}
+        onClose={handleCloseModal}
+      />
     </div>
   )
 }

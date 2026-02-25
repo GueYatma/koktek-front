@@ -245,7 +245,7 @@ const CheckoutPage = () => {
             order_number: orderNumber ?? orderId,
             total_amount: total,
             shipping_amount: shippingTotal,
-            backoffice_url: `${window.location.origin}/validation-vendeur?order=${orderNumber ?? orderId}`,
+            backoffice_url: `${window.location.origin}/admin/comptabilite?validate_order=${orderNumber ?? orderId}`,
             customer: {
               name: ticketCustomerName,
               email: customerSnapshot?.email || delivery.email.trim(),

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react"; // Import des hooks de base React
-import { useSearchParams } from "react-router-dom"; // Import pour manipuler l'URL
+import { useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
 import { DIRECTUS_BASE_URL } from "../utils/directus"; // URL backend
 import { formatPrice } from "../utils/format"; // Formateur de prix
 import { resolveImageUrl } from "../utils/image"; // Formateur d'image
@@ -158,43 +158,30 @@ const fetchProductSummaries = async (ids: string[]) => {
   return map; // Retour final
 }; // Fin fonction
 
-const VendorValidationPage = () => {
-  // Composant principal
-  const [searchParams, setSearchParams] = useSearchParams();
-  const orderParam = useMemo(
-    () => searchParams.get("order")?.trim() ?? "",
-    [searchParams],
-  );
+type ValidationModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedOrder: string | null;
+};
 
-  const extractOrderValue = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "";
-    try {
-      const url = new URL(trimmed);
-      const param = url.searchParams.get("order");
-      return param?.trim() || trimmed;
-    } catch {
-      return trimmed;
-    }
-  };
-
-  const initialQuery = useMemo(() => extractOrderValue(orderParam), [orderParam]);
-
-  const [searchInput, setSearchInput] = useState(initialQuery);
-  const [activeQuery, setActiveQuery] = useState(initialQuery);
+const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProps) => {
+  const activeQuery = selectedOrder || "";
   
   const [order, setOrder] = useState<OrderFullDetails | null>(null);
   const [productMap, setProductMap] = useState<Record<string, ProductSummary>>({});
-  const [isLoading, setIsLoading] = useState(Boolean(initialQuery));
+  const [isLoading, setIsLoading] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const clean = extractOrderValue(orderParam);
-    setSearchInput(clean);
-    setActiveQuery(clean);
-  }, [orderParam]);
+    if (!isOpen) {
+      setOrder(null);
+      setProductMap({});
+      setError(null);
+      setSuccess(false);
+    }
+  }, [isOpen]);
 
 
   const resolveOrderId = async (value: string) => {
@@ -221,21 +208,7 @@ const VendorValidationPage = () => {
     return payload.data?.[0]?.id ?? ""; // Retourne UUID
   }; // Fin fonction
 
-  const handleSearch = (value: string) => {
-    const next = extractOrderValue(value);
-    if (!next) {
-      setError("Saisissez un identifiant ou numéro de commande.");
-      setOrder(null);
-      setProductMap({});
-      setSuccess(false);
-      return;
-    }
-    setError(null);
-    setSuccess(false);
-    setSearchInput(next);
-    setActiveQuery(next);
-    setSearchParams({ order: next });
-  };
+  // Recherche supprimée car l'ID est fourni par la props
 
   useEffect(() => {
     // Moteur de chargement commande
@@ -620,10 +593,18 @@ const VendorValidationPage = () => {
     } // Fin bloc
   }; // Fin de fonction
 
+  if (!isOpen) return null;
+
   return (
-    // JSX Rendering
-    <div className="space-y-6">
-      {" "}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-[#f4f5f7] p-6 shadow-xl">
+        <button
+          onClick={onClose}
+          className="absolute right-6 top-6 rounded-full p-2 text-gray-500 hover:bg-gray-200 transition"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div className="space-y-6 mt-4">
       {/* Wrapping Root */}
       <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         {" "}
@@ -663,33 +644,6 @@ const VendorValidationPage = () => {
           {/* Fin bloc badge */}
         </div>{" "}
         {/* Fin alignement */}
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-          {" "}
-          {/* Zone recherche */}
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSearch(searchInput);
-              }
-            }}
-            placeholder="ID ou KOK-..."
-            className="w-full flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none"
-          />{" "}
-          {/* Input */}
-          <button
-            type="button"
-            onClick={() => handleSearch(searchInput)}
-            className="rounded-2xl border bg-gray-900 px-4 py-3 text-sm font-semibold text-white"
-          >
-            Rechercher
-          </button>{" "}
-          {/* Bouton OK */}
-        </div>{" "}
-        {/* Fin zone */}
         {isLoading ? ( // Affichage Loading
           <p className="mt-4 text-sm text-gray-500">
             Chargement de la commande...
@@ -960,8 +914,9 @@ const VendorValidationPage = () => {
         </div> // Fin Grille Complète
       ) : null}{" "}
       {/* Fin de l'affichage sécurisé si order chargée */}
-    </div> // Root closing
-  ); // JSX End
-}; // Component End
-
-export default VendorValidationPage; // Export module
+      </div>
+      </div>
+    </div>
+  );
+};
+export default ValidationModal;
