@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { DIRECTUS_BASE_URL } from "../utils/directus"; // URL backend
 import { formatPrice } from "../utils/format"; // Formateur de prix
 import { resolveImageUrl } from "../utils/image"; // Formateur d'image
+import { resolveVariantValue } from "../utils/variant";
 import {
   getCustomerById,
   getOrderFullDetails,
@@ -114,9 +115,7 @@ const extractVariantSummary = (value: unknown): VariantSummary | null => {
   const option1_name = String(
     record.option1_name ?? record.option_name ?? "",
   ).trim(); // Option Nom
-  const option1_value = String(
-    record.option1_value ?? record.option_value ?? "",
-  ).trim(); // Option Val
+  const option1_value = resolveVariantValue(record); // Option Val
   return { id, sku, option1_name, option1_value }; // Retour
 }; // Fin fonction
 
@@ -359,7 +358,6 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
     if (!order) return { subtotal: 0, shipping: 0, total: 0 }; // Défaut
     const subtotal =
       parseAmount(order.total_products_price) ??
-      parseAmount(order.subtotal) ??
       lineItems.reduce((sum, item) => {
         // Agg HT
         const unit = parseAmount(item.unit_price) ?? 0; // unitaire
@@ -468,7 +466,6 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
             // Les champs à écraser
             status: "paid", // MAJ statut de commande
             payment_status: "paid", // MAJ statut de l'argent
-            payment_reference: "cash", // Trace d'audit
           }), // Fin Payload
         },
       ); // Fin Appel
@@ -481,7 +478,6 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
           ...order,
           status: "paid",
           payment_status: "paid",
-          payment_reference: "cash",
         };
 
         const itemsPayload = lineItems.map((item) => {
@@ -794,7 +790,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
                           {/* Nom */}
                           <p className="mt-1 text-xs text-gray-500">
                             {productInfo.variant?.option1_name || "Var"}:{" "}
-                            {productInfo.variant?.option1_value || "—"}
+                            {resolveVariantValue(productInfo.variant) || "—"}
                           </p>{" "}
                           {/* Opt */}
                           <p className="text-xs text-gray-500">

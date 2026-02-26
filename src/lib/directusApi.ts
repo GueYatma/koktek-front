@@ -206,7 +206,10 @@ const mapVariant = (row: Record<string, unknown>): VariantWithImage => {
       row.option1_name ?? row.optionName ?? row.option,
     ),
     option1_value: toStringValue(
-      row.option1_value ?? row.optionValue ?? row.value,
+      row.option1_value_factorized ??
+        row.option1_value ??
+        row.optionValue ??
+        row.value,
     ),
     price: toNumberValue(row.price ?? row.Price ?? row.base_price),
     stock_quantity: toNumberValue(

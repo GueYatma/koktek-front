@@ -3,6 +3,7 @@ import { Minus, Plus, X } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
+import { resolveVariantValue } from '../utils/variant'
 
 type CartDrawerProps = {
   open: boolean
@@ -64,7 +65,9 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             </div>
           ) : (
             <div className="space-y-5">
-              {items.map((item) => (
+              {items.map((item) => {
+                const variantValue = resolveVariantValue(item.variant)
+                return (
                 <div
                   key={item.variant.id}
                   className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-4"
@@ -81,7 +84,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                           {item.product.title}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {item.variant.option1_name} : {item.variant.option1_value}
+                          {item.variant.option1_name} : {variantValue || '—'}
                         </p>
                         {item.shippingOption?.name && (
                           <p className="text-[10px] text-indigo-600 mt-1 uppercase tracking-wider font-semibold">
@@ -127,7 +130,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>

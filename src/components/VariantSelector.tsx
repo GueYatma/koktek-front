@@ -1,4 +1,5 @@
 import type { Variant } from '../types'
+import { resolveVariantValue } from '../utils/variant'
 
 type VariantSelectorProps = {
   variants: Variant[]
@@ -14,6 +15,7 @@ const VariantSelector = ({
   if (variants.length === 0) return null
   const optionName = variants[0]?.option1_name ?? 'Option'
   const selected = variants.find((variant) => variant.id === selectedVariantId)
+  const selectedValue = resolveVariantValue(selected)
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
@@ -22,12 +24,13 @@ const VariantSelector = ({
           {optionName}
         </span>
         <span className="text-sm font-semibold text-gray-900">
-          {selected?.option1_value}
+          {selectedValue}
         </span>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {variants.map((variant) => {
           const isSelected = variant.id === selectedVariantId
+          const label = resolveVariantValue(variant)
           return (
             <button
               key={variant.id}
@@ -39,7 +42,7 @@ const VariantSelector = ({
                   : 'border border-gray-300 bg-white text-gray-700 hover:border-gray-900'
               }`}
             >
-              {variant.option1_value}
+              {label}
             </button>
           )
         })}

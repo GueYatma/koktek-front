@@ -3,6 +3,7 @@ import { X, Package, CreditCard, User, Truck } from 'lucide-react'
 import { getOrderFullDetails, type OrderFullDetails } from '../lib/commerceApi'
 import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
+import { resolveVariantValue } from '../utils/variant'
 
 type OrderDetailsModalProps = {
   isOpen: boolean
@@ -50,10 +51,19 @@ const OrderDetailsModal = ({
   if (!isOpen) return null
 
   const customer = typeof order?.customer_id === 'object' ? order.customer_id : null
+  const customerName =
+    [customer?.first_name, customer?.last_name].filter(Boolean).join(' ') ||
+    delivery?.recipient_name ||
+    'Non renseigné'
   const delivery = order?.order_delivery
   const items = order?.order_items ?? []
 
-  const isCash = order?.payment_status === 'pending_cash' || order?.payment_reference === 'cash'
+  const isCash = order?.payment_status === 'pending_cash'
+  const paymentMethodLabel = isCash
+    ? '💵 Espèces'
+    : order?.payment_status
+      ? '💳 Carte (Stripe)'
+      : '—'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm sm:p-6" onClick={onClose}>
@@ -92,7 +102,7 @@ const OrderDetailsModal = ({
                 <h3 className="font-semibold text-gray-900">Client</h3>
               </div>
               <div className="space-y-2 text-sm text-gray-700">
-                <p><span className="text-gray-400">Nom:</span> {customer?.name || customer?.first_name || delivery?.recipient_name || 'Non renseigné'}</p>
+                <p><span className="text-gray-400">Nom:</span> {customerName}</p>
                 <p><span className="text-gray-400">Email:</span> {customer?.email || delivery?.email || 'Non renseigné'}</p>
                 <p><span className="text-gray-400">Téléphone:</span> {customer?.phone || delivery?.phone || 'Non renseigné'}</p>
               </div>
@@ -105,11 +115,11 @@ const OrderDetailsModal = ({
                 <h3 className="font-semibold text-gray-900">Paiement</h3>
               </div>
               <div className="space-y-2 text-sm text-gray-700">
-                <p><span className="text-gray-400">Méthode:</span> <span className="font-medium">{isCash ? '💵 Espèces' : '💳 Carte (Stripe)'}</span></p>
+                <p><span className="text-gray-400">Méthode:</span> <span className="font-medium">{paymentMethodLabel}</span></p>
                 <div className="pt-2 border-t border-gray-100 mt-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Sous-total</span>
-                    <span>{formatPrice(order.subtotal ?? 0)}</span>
+                    <span>{formatPrice(order.total_products_price ?? 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Frais de port</span>
@@ -117,7 +127,7 @@ const OrderDetailsModal = ({
                   </div>
                   <div className="flex justify-between mt-2 pt-2 border-t border-gray-100 font-semibold text-gray-900">
                     <span>Total payé</span>
-                    <span className="text-base">{formatPrice(order.total_price ?? order.total ?? order.subtotal ?? 0)}</span>
+                    <span className="text-base">{formatPrice(order.total_price ?? order.total ?? order.total_products_price ?? 0)}</span>
                   </div>
                 </div>
               </div>
@@ -166,6 +176,8 @@ const OrderDetailsModal = ({
                   const variant = typeof item.variant_id === 'object' ? item.variant_id as Record<string, any> : null
                   const title = product?.title || `Produit #${item.product_id}`
                   const image = resolveImageUrl(product?.image_url as string | undefined)
+                  const variantLabel = variant ? resolveVariantValue(variant) : ''
+                  const variantDisplay = variantLabel || variant?.sku || ''
                   
                   return (
                     <div key={item.id} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
@@ -174,9 +186,9 @@ const OrderDetailsModal = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{title as string}</p>
-                        {variant && (
+                        {variant && variantDisplay && (
                           <p className="text-xs text-gray-500">
-                            {variant.sku || variant.option1_value}
+                            {variantDisplay}
                           </p>
                         )}
                       </div>

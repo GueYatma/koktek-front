@@ -52,12 +52,10 @@ export type OrderRecord = {
   id: string
   order_number?: string | null
   cart_id?: string | null
-  customer_id?: string | null
+  customer_id?: string | CustomerRecord | null
   status?: string
   payment_status?: string | null
-  payment_reference?: string | null
   currency?: string
-  subtotal?: number | null
   total?: number | null
   total_price?: number | null
   total_products_price?: number | null
@@ -432,14 +430,12 @@ export const getOrdersForHistory = async (input?: {
         'order_number',
         'status',
         'payment_status',
-        'payment_reference',
         'total_price',
-        'subtotal',
+        'total_products_price',
         'shipping_price',
         'created_at',
         'customer_id.first_name',
         'customer_id.last_name',
-        'customer_id.name',
         'customer_id.email',
       ],
     }),
@@ -617,13 +613,11 @@ export const markOrderPaid = async (
   input: {
     status?: string
     payment_status?: string
-    payment_reference?: string | null
   },
 ): Promise<OrderRecord> => {
   return updateOne<OrderRecord>('orders', orderId, {
     status: input.status ?? 'paid',
     payment_status: input.payment_status ?? 'paid',
-    payment_reference: input.payment_reference ?? null,
   })
 }
 

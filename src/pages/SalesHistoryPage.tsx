@@ -112,7 +112,7 @@ const SalesHistoryPage = () => {
       const deliveryStatus = (deliveries[order.id]?.status ?? '').toLowerCase()
 
       const customer = order.customer_id as Record<string, any> | undefined
-      const customerName = [customer?.first_name, customer?.last_name, customer?.name]
+      const customerName = [customer?.first_name, customer?.last_name]
         .filter(Boolean)
         .join(' ')
       const customerEmail = customer?.email || ''
@@ -196,12 +196,17 @@ const SalesHistoryPage = () => {
               <tbody className="divide-y divide-gray-100">
                 {rows.map((order) => {
                   const total =
-                    order.total_price ?? order.total ?? order.subtotal ?? 0
-                  const paymentStatus = order.payment_status ?? order.status ?? '—'
+                    order.total_price ?? order.total ?? order.total_products_price ?? 0
+                  const paymentStatus = order.payment_status ?? order.status ?? ''
                   const deliveryStatus = deliveries[order.id]?.status ?? '—'
-                  const isCash = paymentStatus === 'pending_cash' || order.payment_reference === 'cash'
+                  const isCash = paymentStatus === 'pending_cash'
+                  const paymentMethodLabel = isCash
+                    ? '💵 Espèces'
+                    : paymentStatus
+                      ? '💳 Carte'
+                      : '—'
                   const customer = order.customer_id as Record<string, any> | undefined
-                  const customerName = [customer?.first_name, customer?.last_name, customer?.name]
+                  const customerName = [customer?.first_name, customer?.last_name]
                     .filter(Boolean)
                     .join(' ') || 'Non renseigné'
 
@@ -223,7 +228,7 @@ const SalesHistoryPage = () => {
                       </td>
                       <td className="py-4 pr-4 text-center">
                         <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">
-                          {isCash ? '💵 Espèces' : '💳 Carte'}
+                          {paymentMethodLabel}
                         </span>
                       </td>
                       <td className="py-4 pr-4 text-center whitespace-nowrap">

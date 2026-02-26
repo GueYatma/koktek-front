@@ -9,6 +9,7 @@ import { useUI } from '../context/UIContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 import { saveOrderForEmail } from '../utils/customerOrders'
+import { resolveVariantValue } from '../utils/variant'
 import OrderTicketModal from '../components/OrderTicketModal'
 import {
   addCartItem,
@@ -130,7 +131,7 @@ const CheckoutPage = () => {
     : ''
   const ticketVariantName = ticketMainItem?.variant.option1_name?.trim()
   const ticketVariantValue =
-    ticketMainItem?.variant.option1_value?.trim() || '—'
+    resolveVariantValue(ticketMainItem?.variant ?? null) || '—'
   const ticketSku = ticketMainItem?.variant.sku?.trim() || ''
   const ticketCustomerName = [
     customerSnapshot?.first_name || delivery.first_name,
@@ -225,7 +226,6 @@ const CheckoutPage = () => {
       await markOrderPaid(orderId, {
         status: 'pending_cash',
         payment_status: 'pending_cash',
-        payment_reference: null,
       })
 
       // Étape 2: afficher le message de succès immédiatement.
@@ -254,7 +254,7 @@ const CheckoutPage = () => {
             items: items.map((item) => ({
               product_title: item.product.title,
               variant_name: item.variant.option1_name,
-              variant_value: item.variant.option1_value,
+              variant_value: resolveVariantValue(item.variant),
               quantity: item.quantity,
               unit_price: item.product.retail_price,
               image: resolveImageUrl(item.product.image_url)
@@ -274,7 +274,7 @@ const CheckoutPage = () => {
           total,
           productName: mainItem ? mainItem.product.title : 'Commande Koktek',
           variantName: mainItem?.variant.option1_name ?? null,
-          variantValue: mainItem?.variant.option1_value ?? null,
+          variantValue: resolveVariantValue(mainItem?.variant ?? null) || null,
           imageUrl: mainItem ? resolveImageUrl(mainItem.product.image_url) : null,
           sku: mainItem?.variant.sku ?? null,
           status: 'pending_cash',
@@ -512,7 +512,7 @@ const CheckoutPage = () => {
           total,
           productName: mainItem ? mainItem.product.title : 'Commande Koktek',
           variantName: mainItem?.variant.option1_name ?? null,
-          variantValue: mainItem?.variant.option1_value ?? null,
+          variantValue: resolveVariantValue(mainItem?.variant ?? null) || null,
           imageUrl: mainItem ? resolveImageUrl(mainItem.product.image_url) : null,
           sku: mainItem?.variant.sku ?? null,
           status: order.status ?? 'pending_payment',
@@ -937,7 +937,9 @@ const CheckoutPage = () => {
               </section>
 
               <section className="space-y-4">
-                {items.map((item) => (
+                {items.map((item) => {
+                  const variantValue = resolveVariantValue(item.variant)
+                  return (
                   <div
                     key={item.variant.id}
                     className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-5"
@@ -954,7 +956,7 @@ const CheckoutPage = () => {
                             {item.product.title}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {item.variant.option1_value}
+                            {variantValue || '—'}
                           </p>
                         </div>
                         <span className="font-display text-sm font-bold text-gray-900">
@@ -966,7 +968,7 @@ const CheckoutPage = () => {
                       </p>
                     </div>
                   </div>
-                ))}
+                )})}
               </section>
             </form>
           ) : checkoutStep === 'payment' ? (
@@ -1078,7 +1080,9 @@ const CheckoutPage = () => {
               </div>
 
               <section className="space-y-4">
-                {items.map((item) => (
+                {items.map((item) => {
+                  const variantValue = resolveVariantValue(item.variant)
+                  return (
                   <div
                     key={item.variant.id}
                     className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-5"
@@ -1095,7 +1099,7 @@ const CheckoutPage = () => {
                             {item.product.title}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {item.variant.option1_value}
+                            {variantValue || '—'}
                           </p>
                         </div>
                         <span className="font-display text-sm font-bold text-gray-900">
@@ -1107,7 +1111,7 @@ const CheckoutPage = () => {
                       </p>
                     </div>
                   </div>
-                ))}
+                )})}
               </section>
             </div>
           ) : null}
