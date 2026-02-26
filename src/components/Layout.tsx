@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom'
 import { Menu, Search, ShoppingBag, User, X } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useUI } from '../context/UIContext'
@@ -51,6 +51,23 @@ const Layout = () => {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const currentSearch = searchParams.get('search') || '';
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const q = formData.get('search');
+    if (q && q.toString().trim() !== '') {
+      navigate(`/catalogue?search=${encodeURIComponent(q.toString().trim())}`);
+      setIsMobileMenuOpen(false);
+    } else {
+      navigate(`/catalogue`);
+      setIsMobileMenuOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -121,15 +138,17 @@ const Layout = () => {
               )}
             </button>
             <div className="hidden md:block">
-              <div className="relative w-56">
+              <form onSubmit={handleSearch} className="relative w-56">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
+                  name="search"
                   type="search"
+                  defaultValue={currentSearch}
                   placeholder="Rechercher..."
                   className="w-full rounded-full border-2 border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                   aria-label="Rechercher"
                 />
-              </div>
+              </form>
             </div>
             {user ? (
               <button
@@ -184,15 +203,17 @@ const Layout = () => {
               </NavLink>
             ))}
           </nav>
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
+              name="search"
               type="search"
+              defaultValue={currentSearch}
               placeholder="Rechercher..."
               className="w-full rounded-full border-2 border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
               aria-label="Rechercher"
             />
-          </div>
+          </form>
           <button
             type="button"
             onClick={() => {

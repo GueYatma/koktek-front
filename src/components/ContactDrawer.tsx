@@ -1,4 +1,5 @@
-import { MessageCircle, Phone, Send, ShieldCheck, X } from 'lucide-react'
+import { useState } from 'react'
+import { MessageCircle, Phone, Send, ShieldCheck, X, Loader2, CheckCircle2 } from 'lucide-react'
 
 type ContactDrawerProps = {
   open: boolean
@@ -6,6 +7,47 @@ type ContactDrawerProps = {
 }
 
 const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
+  const [email, setEmail] = useState('')
+  const [subject, setSubject] = useState('')
+  const [message, setMessage] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email || !message) return
+    
+    setStatus('loading')
+    try {
+      const response = await fetch('https://formsubmit.co/ajax/contact@koktek.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          _subject: subject || 'Nouveau message Koktek',
+          message,
+          _replyto: email, // Set the reply-to header to the customer's email
+          _template: 'box' // Beautiful built-in template
+        })
+      })
+      if (response.ok) {
+        setStatus('success')
+        setEmail('')
+        setSubject('')
+        setMessage('')
+        setTimeout(() => setStatus('idle'), 6000)
+      } else {
+        setStatus('error')
+        setTimeout(() => setStatus('idle'), 4000)
+      }
+    } catch {
+      setStatus('error')
+      setTimeout(() => setStatus('idle'), 4000)
+    }
+  }
+
   return (
     <div
       className={`fixed inset-0 z-[60] ${
@@ -61,27 +103,31 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
 
           <div className="mt-6 space-y-4">
             <a
-              href="tel:0758775291"
+              href="tel:+33758775291"
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-4 text-sm font-semibold text-white transition hover:bg-gray-900"
             >
               <Phone className="h-5 w-5" />
               Appeler le 07 58 77 52 91
             </a>
             <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
+              <a
+                href="https://wa.me/33758775291"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
                 <MessageCircle className="h-5 w-5" />
                 WhatsApp
-              </button>
-              <button
-                type="button"
+              </a>
+              <a
+                href="https://t.me/koktek_bot"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
               >
                 <Send className="h-5 w-5" />
                 Telegram
-              </button>
+              </a>
             </div>
           </div>
 
@@ -93,13 +139,32 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
             </div>
           </div>
 
-          <div className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {status === 'success' && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <div className="flex items-center gap-2 font-bold mb-1">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  Message envoyé !
+                </div>
+                <p className="text-xs">
+                  Nous vous répondrons très vite. (Il est possible que formsubmit.co vous demande une brève confirmation de votre rôle d'admin pour la première utilisation sur contact@koktek.com).
+                </p>
+              </div>
+            )}
+            {status === 'error' && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                Oups ! Une erreur est survenue lors de l'envoi du message. Veuillez réessayer plus tard.
+              </div>
+            )}
             <div>
               <label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                 Email
               </label>
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="vous@exemple.com"
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
               />
@@ -110,6 +175,8 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
               </label>
               <input
                 type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
                 placeholder="Commande, produit, livraison..."
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
               />
@@ -119,18 +186,29 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
                 Message
               </label>
               <textarea
+                required
                 rows={5}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 placeholder="Décrivez votre demande..."
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
               />
             </div>
             <button
-              type="button"
-              className="inline-flex w-full items-center justify-center rounded-xl border-2 border-black px-4 py-3 text-sm font-semibold text-black transition hover:bg-black hover:text-white"
+              type="submit"
+              disabled={status === 'loading'}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Envoyer
+              {status === 'loading' ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                'Envoyer le message'
+              )}
             </button>
-          </div>
+          </form>
         </div>
 
         <div className="border-t border-gray-200 px-6 py-5 text-sm text-gray-600">

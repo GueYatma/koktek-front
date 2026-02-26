@@ -146,6 +146,9 @@ const CatalogPage = () => {
   );
 
   const filteredProducts = useMemo(() => {
+    const searchQuery = searchParams.get("search");
+    const normalizedQuery = searchQuery ? normalizeKey(searchQuery) : "";
+
     return allProducts.filter((product) => {
       // 1. Check Category
       let matchesCategory = true;
@@ -178,9 +181,21 @@ const CatalogPage = () => {
         matchesBrand = normalizedProductBrand === selectedBrand;
       }
 
-      return matchesCategory && matchesBrand;
+      // 3. Check Search
+      let matchesSearch = true;
+      if (normalizedQuery) {
+        const titleMatch = normalizeKey(product.title).includes(normalizedQuery);
+        const variantMatch = product.product_variants?.some((v) => 
+          normalizeKey(v.option1_name).includes(normalizedQuery) ||
+          normalizeKey(v.option1_value).includes(normalizedQuery) ||
+          normalizeKey(v.sku).includes(normalizedQuery)
+        ) ?? false;
+        matchesSearch = titleMatch || variantMatch;
+      }
+
+      return matchesCategory && matchesBrand && matchesSearch;
     });
-  }, [allProducts, selectedCategory, selectedBrand, categoryNameById]);
+  }, [allProducts, selectedCategory, selectedBrand, categoryNameById, searchParams]);
 
 
 
