@@ -51,11 +51,11 @@ const OrderDetailsModal = ({
   if (!isOpen) return null
 
   const customer = typeof order?.customer_id === 'object' ? order.customer_id : null
+  const delivery = order?.order_delivery
   const customerName =
     [customer?.first_name, customer?.last_name].filter(Boolean).join(' ') ||
     delivery?.recipient_name ||
     'Non renseigné'
-  const delivery = order?.order_delivery
   const items = order?.order_items ?? []
 
   const isCash = order?.payment_status === 'pending_cash'
