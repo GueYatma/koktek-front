@@ -135,7 +135,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.product.retail_price * item.quantity, 0),
+    () => items.reduce((sum, item) => sum + (item.product.prix_calcule ?? item.product.retail_price) * item.quantity, 0),
     [items]
   )
 

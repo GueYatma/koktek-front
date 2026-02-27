@@ -8,6 +8,7 @@ import CartDrawer from './CartDrawer'
 import ContactDrawer from './ContactDrawer'
 import AuthModal from './AuthModal'
 import ProfileDrawer from './ProfileDrawer'
+import Footer from './Footer'
 
 const Layout = () => {
   const buildId = import.meta.env.VITE_BUILD_ID as string | undefined
@@ -51,7 +52,6 @@ const Layout = () => {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const hasUser = Boolean(user)
-  const [isChromeVisible, setIsChromeVisible] = useState(true)
   const [isScrolling, setIsScrolling] = useState(false)
 
   const handleAccountClick = () => {
@@ -103,38 +103,16 @@ const Layout = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    let lastScrollY = window.scrollY
-    let ticking = false
-    const threshold = 8
     let scrollStopTimer: number | null = null
 
     const onScroll = () => {
-      const currentY = window.scrollY
       setIsScrolling(true)
       if (scrollStopTimer) {
         window.clearTimeout(scrollStopTimer)
       }
       scrollStopTimer = window.setTimeout(() => {
         setIsScrolling(false)
-        setIsChromeVisible(true)
       }, 140)
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const delta = currentY - lastScrollY
-
-          if (currentY <= 16) {
-            setIsChromeVisible(true)
-          } else if (delta > threshold) {
-            setIsChromeVisible(false)
-          } else if (delta < -threshold) {
-            setIsChromeVisible(true)
-          }
-
-          lastScrollY = currentY
-          ticking = false
-        })
-        ticking = true
-      }
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -149,8 +127,8 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-white text-black">
       <header
-        className={`sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur transition-transform duration-300 will-change-transform md:translate-y-0 ${
-          isChromeVisible ? 'translate-y-0' : '-translate-y-full'
+        className={`fixed top-0 left-0 right-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur transition-opacity duration-200 will-change-opacity ${
+          isScrolling ? 'opacity-80' : 'opacity-100'
         }`}
       >
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
@@ -257,7 +235,7 @@ const Layout = () => {
           isScrolling ? 'opacity-70' : 'opacity-100'
         }`}
       >
-        <div className="mx-auto grid max-w-6xl grid-cols-5 px-2 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2">
+        <div className="mx-auto grid max-w-6xl grid-cols-5 px-2 pb-[calc(14px+env(safe-area-inset-bottom))] pt-3">
           <NavLink
             to="/"
             end
@@ -326,7 +304,7 @@ const Layout = () => {
         </div>
       </nav>
 
-      <main className="pb-24 md:pb-0">
+      <main className="pt-14 pb-24 md:pb-0">
         {isBuildToastVisible && (
           <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div
@@ -365,50 +343,7 @@ const Layout = () => {
         <Outlet />
       </main>
 
-      <footer className="mt-20 border-t border-gray-200 bg-gray-100 pb-24 md:pb-0">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
-          <div>
-            <p className="font-display text-xs uppercase tracking-[0.35em] text-gray-500">
-              KOKTEK
-            </p>
-            <p className="mt-3 text-sm text-gray-600">
-              Des accessoires premium pour protéger votre iPhone avec style et
-              précision.
-            </p>
-          </div>
-          <div className="text-sm text-gray-600">
-            <p className="font-semibold text-gray-900">Boutique</p>
-            <div className="mt-3 flex flex-col gap-2">
-              <Link to="/catalogue" className="hover:text-gray-900">
-                Catalogue
-              </Link>
-              <Link to="/checkout" className="hover:text-gray-900">
-                Votre panier
-              </Link>
-              <Link to="/" className="hover:text-gray-900">
-                Nouveautés
-              </Link>
-            </div>
-          </div>
-          <div className="text-sm text-gray-600">
-            <p className="font-semibold text-gray-900">Assistance</p>
-            <div className="mt-3 flex flex-col gap-2">
-              <span>Livraison 48h</span>
-              <span>Retours sous 30 jours</span>
-              <span>Support premium</span>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-          © 2026 KOKTEK. Tous droits réservés.
-          {buildLabel && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500">
-              Build {buildLabel}
-              {buildDateLabel ? ` · ${buildDateLabel}` : ''}
-            </span>
-          )}
-        </div>
-      </footer>
+      <Footer buildLabel={buildLabel} buildDateLabel={buildDateLabel} />
 
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <ContactDrawer open={isContactOpen} onClose={closeContact} />

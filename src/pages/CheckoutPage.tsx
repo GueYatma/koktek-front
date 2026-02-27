@@ -256,7 +256,7 @@ const CheckoutPage = () => {
               variant_name: item.variant.option1_name,
               variant_value: resolveVariantValue(item.variant),
               quantity: item.quantity,
-              unit_price: item.product.retail_price,
+              unit_price: item.product.prix_calcule ?? item.product.retail_price,
               image: resolveImageUrl(item.product.image_url)
             }))
           }),
@@ -370,7 +370,7 @@ const CheckoutPage = () => {
 
           if (existing) {
             const nextQuantity = item.quantity
-            const nextUnitPrice = item.product.retail_price
+            const nextUnitPrice = item.product.prix_calcule ?? item.product.retail_price
             const currentUnitPrice = existing.unit_price ?? null
 
             if (
@@ -388,7 +388,7 @@ const CheckoutPage = () => {
               product_id: item.product.id,
               variant_id: item.variant?.id ?? null,
               quantity: item.quantity,
-              unit_price: item.product.retail_price,
+              unit_price: item.product.prix_calcule ?? item.product.retail_price,
               currency: 'EUR',
             })
           }
@@ -413,8 +413,8 @@ const CheckoutPage = () => {
         product_id: item.product.id,
         variant_id: item.variant?.id ?? null,
         quantity: item.quantity,
-        unit_price: item.product.retail_price,
-        line_total: item.product.retail_price * item.quantity,
+        unit_price: item.product.prix_calcule ?? item.product.retail_price,
+        line_total: (item.product.prix_calcule ?? item.product.retail_price) * item.quantity,
         currency: 'EUR',
       }))
       const orderDelivery = {
@@ -960,7 +960,7 @@ const CheckoutPage = () => {
                           </p>
                         </div>
                         <span className="font-display text-sm font-bold text-gray-900">
-                          {formatPrice(item.product.retail_price * item.quantity)}
+                          {formatPrice((item.product.prix_calcule ?? item.product.retail_price) * item.quantity)}
                         </span>
                       </div>
                       <p className="mt-2 text-xs text-gray-500">
@@ -1103,7 +1103,7 @@ const CheckoutPage = () => {
                           </p>
                         </div>
                         <span className="font-display text-sm font-bold text-gray-900">
-                          {formatPrice(item.product.retail_price * item.quantity)}
+                          {formatPrice((item.product.prix_calcule ?? item.product.retail_price) * item.quantity)}
                         </span>
                       </div>
                       <p className="mt-2 text-xs text-gray-500">

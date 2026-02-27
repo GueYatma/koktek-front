@@ -36,7 +36,7 @@ const BRAND_SHOWCASE = [
     query: 'Honor',
   },
   {
-    name: 'Google Pixel',
+    name: 'Google',
     logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
     query: 'Google',
   },
@@ -91,7 +91,7 @@ const BRAND_STYLES: Record<
     text: 'text-cyan-900',
     ring: 'ring-cyan-200',
   },
-  'Google Pixel': {
+  Google: {
     surface: 'bg-gradient-to-br from-amber-50 to-amber-200',
     text: 'text-amber-900',
     ring: 'ring-amber-200',

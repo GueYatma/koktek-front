@@ -9,7 +9,7 @@ type ProductCardProps = {
 }
 
 const ProductCard = ({ product, categoryName }: ProductCardProps) => {
-  const finalPrice = product.retail_price
+  const finalPrice = product.prix_calcule ?? product.retail_price
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition md:hover:border-gray-300">
       <Link to={`/produit/${product.slug}`} className="block">

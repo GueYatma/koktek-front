@@ -139,7 +139,12 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <p className="mt-4 text-sm text-gray-600">
+            Une question ? Écrivez-nous via ce formulaire, ou contactez-nous
+            directement par téléphone, WhatsApp ou Telegram au 07 58 77 52 91.
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             {status === 'success' && (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <div className="flex items-center gap-2 font-bold mb-1">

@@ -122,16 +122,14 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
         }`}
         onClick={handleClose}
       />
-      <div className="relative flex min-h-screen items-center justify-center px-4 py-8">
-        <div
-          role="dialog"
-          aria-modal="true"
-          className={`relative flex w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300 sm:max-w-md ${
-            open ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'
-          }`}
-          style={{ maxHeight: '85vh' }}
-          onClick={(event) => event.stopPropagation()}
-        >
+      <aside
+        role="dialog"
+        aria-modal="true"
+        className={`fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
+          open ? 'translate-y-0 md:translate-x-0 md:translate-y-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
+        }`}
+        onClick={(event) => event.stopPropagation()}
+      >
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
@@ -395,8 +393,7 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
               </button>
             </div>
           )}
-        </div>
-      </div>
+      </aside>
 
       <OrderTicketModal
         open={Boolean(activeOrder)}

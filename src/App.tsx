@@ -6,6 +6,10 @@ import HomePage from './pages/HomePage'
 import CatalogPage from './pages/CatalogPage'
 import ProductPage from './pages/ProductPage'
 import CheckoutPage from './pages/CheckoutPage'
+import AboutPage from './pages/AboutPage'
+import LegalNoticePage from './pages/LegalNoticePage'
+import ShippingPage from './pages/ShippingPage'
+import TermsPage from './pages/TermsPage'
 import SalesHistoryPage from './pages/SalesHistoryPage'
 import AccountingPage from './pages/AccountingPage'
 
@@ -24,6 +28,10 @@ const App = () => {
           <Route path="/catalogue" element={<CatalogPage />} />
           <Route path="/produit/:slug" element={<ProductPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/a-propos" element={<AboutPage />} />
+          <Route path="/mentions-legales" element={<LegalNoticePage />} />
+          <Route path="/livraison" element={<ShippingPage />} />
+          <Route path="/cgv" element={<TermsPage />} />
           <Route
             path="*"
             element={

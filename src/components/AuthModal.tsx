@@ -53,32 +53,33 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
         }`}
         onClick={handleClose}
       />
-      <div className="relative flex min-h-screen items-center justify-center px-4 py-8">
-        <div
-          className={`absolute bottom-0 left-0 right-0 max-h-[85vh] w-full transform overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl transition-all duration-300 md:relative md:bottom-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl md:shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] ${
-            open ? 'translate-y-0 md:translate-y-0 md:scale-100 md:opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 md:opacity-0'
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {modalTitle}
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Accedez a vos commandes via votre email
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
-              aria-label="Fermer"
-            >
-              <X className="h-5 w-5" />
-            </button>
+      <aside
+        role="dialog"
+        aria-modal="true"
+        className={`fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
+          open ? 'translate-y-0 md:translate-x-0 md:translate-y-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
+        }`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between border-b border-gray-200 px-4 py-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{modalTitle}</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Accedez a vos commandes via votre email
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
+            aria-label="Fermer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          <div className="mt-6 flex flex-col gap-3">
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex flex-col gap-3">
             <button
               type="button"
               className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
@@ -118,7 +119,7 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
             </button>
           </form>
         </div>
-      </div>
+      </aside>
     </div>
   )
 }

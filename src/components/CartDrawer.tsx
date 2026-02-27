@@ -28,7 +28,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
       <aside
         role="dialog"
         aria-modal="true"
-        className={`absolute bottom-0 left-0 right-0 flex h-[85vh] w-full flex-col rounded-t-3xl bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:top-0 md:h-full md:max-w-md md:rounded-none ${
+        className={`fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
           open ? 'translate-y-0 md:translate-x-0 md:translate-y-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
         }`}
         onClick={(event) => event.stopPropagation()}
@@ -125,7 +125,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                         </button>
                       </div>
                       <span className="font-display text-sm font-bold text-gray-900">
-                        {formatPrice(item.product.retail_price * item.quantity)}
+                        {formatPrice((item.product.prix_calcule ?? item.product.retail_price) * item.quantity)}
                       </span>
                     </div>
                   </div>
@@ -135,7 +135,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
           )}
         </div>
 
-        <div className="border-t border-gray-200 px-6 py-5">
+        <div className="border-t border-gray-200 px-5 pt-4 pb-4">
           <div className="flex items-center justify-between text-sm text-gray-500">
             <span>Sous-total articles</span>
             <span className="font-display font-semibold text-gray-900">
@@ -177,7 +177,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
               }
               onClose()
             }}
-            className={`mt-4 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition ${
+            className={`mt-3 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition ${
               isCheckoutDisabled
                 ? 'cursor-not-allowed bg-gray-200 text-gray-400'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700'

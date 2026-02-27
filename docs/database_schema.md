@@ -175,6 +175,8 @@ Voici la liste de toutes tes tables et de leurs colonnes (champs) extraites de t
 - `image_url`: text
 - `created_at`: timestamp without time zone
 - `option1_value_factorized`: text
+- `shipping_price`: numeric (DEFAULT 0)
+- `prix_calcule`: numeric (GENERATED — formule auto)
 
 ## Table: `products`
 - `id`: uuid

@@ -22,6 +22,7 @@ export type Product = {
   description: string;
   base_price: number;
   retail_price: number;
+  prix_calcule?: number;
   status?: string;
   expert_stars?: number | string;
   expert_review?: string;
@@ -48,6 +49,7 @@ export type Variant = {
   option1_name: string;
   option1_value: string;
   price: number;
+  prix_calcule?: number;
   stock_quantity: number;
   cj_vid: string;
 };

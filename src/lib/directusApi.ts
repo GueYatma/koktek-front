@@ -212,6 +212,10 @@ const mapVariant = (row: Record<string, unknown>): VariantWithImage => {
         row.value,
     ),
     price: toNumberValue(row.price ?? row.Price ?? row.base_price),
+    prix_calcule:
+      row.prix_calcule !== undefined && row.prix_calcule !== null
+        ? toNumberValue(row.prix_calcule)
+        : undefined,
     stock_quantity: toNumberValue(
       row.stock_quantity ?? row.stockQuantity ?? row.quantity,
     ),
@@ -290,6 +294,15 @@ const mapProduct = (
     row.shipping_options ?? row.shippingOptions ?? row.shipping;
   const shippingOptions = normalizeShippingOptions(shippingOptionsRaw);
 
+  // Calculer prix_calcule du produit : prendre le min des prix calculés des variantes
+  const variantPrixCalcules = productVariants
+    .map((v) => v.prix_calcule)
+    .filter((p): p is number => p !== undefined && p > 0);
+  const productPrixCalcule =
+    variantPrixCalcules.length > 0
+      ? Math.min(...variantPrixCalcules)
+      : undefined;
+
   return {
     id,
     title,
@@ -308,6 +321,7 @@ const mapProduct = (
         row.price ??
         row.Price,
     ),
+    prix_calcule: productPrixCalcule,
     status: toStringValue(
       row.status ?? row.Status ?? row.STATUS ?? row.state ?? row.State ?? row.STATE,
     ),

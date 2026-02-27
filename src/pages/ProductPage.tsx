@@ -208,7 +208,7 @@ const ProductPage = () => {
     : ''
   const displayImage = safeSelectedImage || variantImage || fallbackImage
 
-  const displayPrice = product?.retail_price ?? 0
+  const displayPrice = product?.prix_calcule ?? product?.retail_price ?? 0
   const selectedVariantLabel =
     cleanVariantName(selectedVariant?.option1_value ?? '', product?.title) ||
     selectedVariant?.option1_value ||
