@@ -35,15 +35,18 @@ const CatalogPage = () => {
       html.style.overflow = "hidden";
       body.style.overflow = "hidden";
       body.style.touchAction = "none";
+      body.classList.add("filter-open");
     } else {
       html.style.overflow = "";
       body.style.overflow = "";
       body.style.touchAction = "";
+      body.classList.remove("filter-open");
     }
     return () => {
       html.style.overflow = "";
       body.style.overflow = "";
       body.style.touchAction = "";
+      body.classList.remove("filter-open");
     };
   }, [isFilterOpen]);
 
@@ -96,10 +99,12 @@ const CatalogPage = () => {
         const sortOrder = [
           "Coques & Protections",
           "Charge & Énergie",
+          "Audio & Son",
           "Audio",
-          "Saison",
+          "Support & Fixations",
           "Support & Fixation",
           "Décoration & Goodies",
+          "Autres",
           "Autre"
         ];
         
@@ -156,6 +161,39 @@ const CatalogPage = () => {
     [allCategories],
   );
 
+  const orderedCategories = useMemo(() => {
+    const byKey = new Map<string, Category[]>();
+    allCategories.forEach((category) => {
+      const key = normalizeKey(category.name);
+      const list = byKey.get(key) ?? [];
+      list.push(category);
+      byKey.set(key, list);
+    });
+
+    const desiredOrder = [
+      "coques protections",
+      "charge energie",
+      "audio son",
+      "support fixation",
+      "supports fixations",
+      "decoration goodies",
+      "autres",
+      "autre",
+    ];
+
+    const ordered: Category[] = [];
+    desiredOrder.forEach((key) => {
+      const list = byKey.get(key);
+      if (list && list.length > 0) {
+        ordered.push(...list);
+        byKey.delete(key);
+      }
+    });
+
+    const remaining = Array.from(byKey.values()).flat();
+    return [...ordered, ...remaining];
+  }, [allCategories]);
+
   const filteredProducts = useMemo(() => {
     const searchQuery = searchParams.get("search");
     const normalizedQuery = searchQuery ? normalizeKey(searchQuery) : "";
@@ -192,16 +230,16 @@ const CatalogPage = () => {
         matchesBrand = normalizedProductBrand === selectedBrand;
       }
 
-      // 3. Check Search
+      // 3. Check Search — each token must appear in (title + variant texts)
       let matchesSearch = true;
       if (normalizedQuery) {
-        const titleMatch = normalizeKey(product.title).includes(normalizedQuery);
-        const variantMatch = product.product_variants?.some((v) => 
-          normalizeKey(v.option1_name).includes(normalizedQuery) ||
-          normalizeKey(v.option1_value).includes(normalizedQuery) ||
-          normalizeKey(v.sku).includes(normalizedQuery)
-        ) ?? false;
-        matchesSearch = titleMatch || variantMatch;
+        const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+        // Build a combined text corpus: title + all variant fields
+        const variantTexts = (product.product_variants ?? [])
+          .map((v) => [v.option1_name, v.option1_value, v.sku].join(" "))
+          .join(" ");
+        const corpus = normalizeKey(product.title + " " + product.brand + " " + variantTexts);
+        matchesSearch = tokens.every((token) => corpus.includes(token));
       }
 
       return matchesCategory && matchesBrand && matchesSearch;
@@ -211,38 +249,32 @@ const CatalogPage = () => {
 
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-4 sm:px-6 sm:pb-28 sm:pt-8">
-      <div className="flex items-end justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="w-fit rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900 md:hidden"
-          >
-            ← Retour
-          </button>
-          <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-            Catalogue
-          </p>
-          <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
-            Accessoires premium
-          </h1>
-        </div>
+    <div className="mx-auto max-w-6xl px-4 pb-24 pt-2 sm:px-6 sm:pb-28 sm:pt-6">
+      <div className="static grid grid-cols-3 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="w-fit rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900 md:hidden"
+        >
+          ← Retour
+        </button>
+        <p className="text-center text-[11px] uppercase tracking-[0.35em] text-gray-500 md:hidden">
+          Catalogue
+        </p>
+        <div className="md:hidden" />
+      </div>
+
+      <div className="static mt-2 flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+          Accessoires premium
+        </h1>
         <button
           type="button"
           onClick={() => setIsFilterOpen(true)}
-          className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
+          className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-900 hover:text-gray-900 hover:shadow-md"
         >
           Catégorie
         </button>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-        <span className="rounded-full border border-gray-200 px-3 py-1">
-          {selectedCategory === "all"
-            ? "Toutes catégories"
-            : categoryNameById.get(selectedCategory) || "Catégorie"}
-        </span>
       </div>
 
       {/* --- GRILLE --- */}
@@ -276,10 +308,10 @@ const CatalogPage = () => {
       {isFilterOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
           <div
-            className="absolute inset-0 bg-black/35 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/20"
             onClick={() => setIsFilterOpen(false)}
           />
-          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400">
@@ -292,7 +324,7 @@ const CatalogPage = () => {
               <button
                 type="button"
                 onClick={() => setIsFilterOpen(false)}
-                className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+                className="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
                 aria-label="Fermer"
               >
                 <X className="h-5 w-5" />
@@ -301,13 +333,14 @@ const CatalogPage = () => {
 
             <div className="max-h-[70vh] overflow-y-auto px-4 py-4">
               <div>
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="mt-2 grid grid-cols-1 gap-2">
                   <button
                     onClick={() => {
                       setSelectedCategory("all");
                       setSelectedBrand("all");
+                      setIsFilterOpen(false);
                     }}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                       selectedCategory === "all"
                         ? "border-gray-900 bg-gray-900 text-white"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
@@ -315,7 +348,7 @@ const CatalogPage = () => {
                   >
                     Toutes
                   </button>
-                  {allCategories.map((category) => {
+                  {orderedCategories.map((category) => {
                     const isActive = selectedCategory === category.id;
                     return (
                       <button
@@ -323,8 +356,9 @@ const CatalogPage = () => {
                         onClick={() => {
                           setSelectedCategory(category.id);
                           setSelectedBrand("all");
+                          setIsFilterOpen(false);
                         }}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                           isActive
                             ? "border-gray-900 bg-gray-900 text-white"
                             : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
@@ -336,26 +370,6 @@ const CatalogPage = () => {
                   })}
                 </div>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCategory("all");
-                  setSelectedBrand("all");
-                }}
-                className="text-xs font-semibold text-gray-500 transition hover:text-gray-900"
-              >
-                Toutes les catégories
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(false)}
-                className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-semibold text-white"
-              >
-                Fermer
-              </button>
             </div>
           </div>
         </div>

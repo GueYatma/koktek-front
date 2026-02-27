@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Home, LayoutGrid, MessageCircle, Search, ShoppingBag, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useUI } from '../context/UIContext'
@@ -53,6 +53,9 @@ const Layout = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const hasUser = Boolean(user)
   const [isScrolling, setIsScrolling] = useState(false)
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
+  const isAnyModalOpen = isCartOpen || isContactOpen || isAuthOpen || isProfileOpen
 
   const handleAccountClick = () => {
     if (hasUser) {
@@ -63,6 +66,7 @@ const Layout = () => {
   }
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const currentSearch = searchParams.get('search') || '';
 
@@ -76,6 +80,15 @@ const Layout = () => {
       navigate(`/catalogue`);
     }
   };
+
+  const handleMobileSearchClick = () => {
+    setIsMobileSearchOpen(true)
+  }
+
+  const handleMobileSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    handleSearch(event)
+    setIsMobileSearchOpen(false)
+  }
 
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -100,6 +113,20 @@ const Layout = () => {
       body.style.touchAction = ''
     }
   }, [isCartOpen, isContactOpen, isAuthOpen, isProfileOpen])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    setIsMobileSearchOpen(false)
+  }, [location.pathname, location.search])
+
+  useEffect(() => {
+    if (!isMobileSearchOpen) return
+    const timer = window.setTimeout(() => {
+      mobileSearchInputRef.current?.focus()
+    }, 60)
+    return () => window.clearTimeout(timer)
+  }, [isMobileSearchOpen])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -164,7 +191,19 @@ const Layout = () => {
             </button>
           </nav>
 
-          <div className="ml-auto flex items-center gap-2 md:hidden">
+          <div className="ml-auto flex flex-1 items-center gap-2 md:hidden">
+            <form onSubmit={handleSearch} className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                id="mobile-search-input"
+                name="search"
+                type="search"
+                defaultValue={currentSearch}
+                placeholder="Rechercher..."
+                className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+                aria-label="Rechercher"
+              />
+            </form>
             <button
               type="button"
               onClick={handleAccountClick}
@@ -230,9 +269,40 @@ const Layout = () => {
         </div>
       </header>
 
+      {isMobileSearchOpen ? (
+        <div className="fixed left-4 right-4 z-50 md:hidden bottom-[calc(72px+env(safe-area-inset-bottom))]">
+          <form
+            onSubmit={handleMobileSearchSubmit}
+            className="relative flex items-center rounded-2xl border border-gray-200 bg-white/90 px-3 py-2 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] backdrop-blur"
+          >
+            <Search className="h-4 w-4 text-gray-400" />
+            <input
+              ref={mobileSearchInputRef}
+              name="search"
+              type="search"
+              defaultValue={currentSearch}
+              placeholder="Rechercher..."
+              className="ml-2 flex-1 bg-transparent text-sm font-medium text-gray-700 placeholder:text-gray-400 focus:outline-none"
+              aria-label="Rechercher"
+            />
+            <button
+              type="button"
+              onClick={() => setIsMobileSearchOpen(false)}
+              className="ml-2 rounded-full border border-gray-200 px-2 py-1 text-[10px] font-semibold text-gray-500 transition hover:border-gray-300 hover:text-gray-900"
+            >
+              Fermer
+            </button>
+          </form>
+        </div>
+      ) : null}
+
       <nav
-        className={`fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 shadow-[0_-10px_30px_-24px_rgba(0,0,0,0.5)] backdrop-blur transition-opacity duration-200 will-change-opacity md:hidden ${
-          isScrolling ? 'opacity-70' : 'opacity-100'
+        className={`koktek-bottom-nav fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 transition-opacity duration-200 will-change-opacity md:hidden ${
+          isAnyModalOpen
+            ? 'hidden'
+            : isScrolling
+              ? 'opacity-70'
+              : 'opacity-100'
         }`}
       >
         <div className="mx-auto grid max-w-6xl grid-cols-5 px-2 pb-[calc(14px+env(safe-area-inset-bottom))] pt-3">
@@ -263,6 +333,26 @@ const Layout = () => {
           </NavLink>
           <button
             type="button"
+            onClick={handleMobileSearchClick}
+            className="flex flex-col items-center gap-1 text-[11px] font-semibold text-gray-500 transition hover:text-gray-900"
+            aria-label="Rechercher"
+          >
+            <Search className="h-5 w-5" />
+            Recherche
+          </button>
+          <button
+            type="button"
+            onClick={openContact}
+            className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+              isContactOpen ? 'text-gray-900' : 'text-gray-500'
+            }`}
+            aria-label="Contact"
+          >
+            <MessageCircle className="h-5 w-5" />
+            Contact
+          </button>
+          <button
+            type="button"
             onClick={() => setIsCartOpen(true)}
             className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
               isCartOpen ? 'text-gray-900' : 'text-gray-500'
@@ -278,28 +368,6 @@ const Layout = () => {
               ) : null}
             </span>
             Panier
-          </button>
-          <button
-            type="button"
-            onClick={handleAccountClick}
-            className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-              isProfileOpen || isAuthOpen ? 'text-gray-900' : 'text-gray-500'
-            }`}
-            aria-label="Mon compte"
-          >
-            <User className="h-5 w-5" />
-            Compte
-          </button>
-          <button
-            type="button"
-            onClick={openContact}
-            className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-              isContactOpen ? 'text-gray-900' : 'text-gray-500'
-            }`}
-            aria-label="Contact"
-          >
-            <MessageCircle className="h-5 w-5" />
-            Contact
           </button>
         </div>
       </nav>

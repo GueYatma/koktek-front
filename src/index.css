@@ -100,4 +100,7 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  body.filter-open .koktek-bottom-nav {
+    display: none;
+  }
 }

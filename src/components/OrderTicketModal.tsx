@@ -70,7 +70,7 @@ const OrderTicketModal = ({
         onClick={onClose}
       />
       <aside
-        className="fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none"
+        className="fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-t-3xl rounded-b-[0px] bg-white shadow-2xl md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex-1 overflow-y-auto px-4 py-4">

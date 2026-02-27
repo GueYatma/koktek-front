@@ -56,7 +56,7 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
       <aside
         role="dialog"
         aria-modal="true"
-        className={`fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
+        className={`fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-t-3xl rounded-b-[0px] bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
           open ? 'translate-y-0 md:translate-x-0 md:translate-y-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
         }`}
         onClick={(event) => event.stopPropagation()}
