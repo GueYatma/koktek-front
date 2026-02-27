@@ -55,8 +55,8 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
       />
       <div className="relative flex min-h-screen items-center justify-center px-4 py-8">
         <div
-          className={`max-h-[90vh] w-full max-w-md transform overflow-y-auto rounded-2xl bg-white p-6 shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] transition-all duration-300 ${
-            open ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          className={`absolute bottom-0 left-0 right-0 max-h-[85vh] w-full transform overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl transition-all duration-300 md:relative md:bottom-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl md:shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] ${
+            open ? 'translate-y-0 md:translate-y-0 md:scale-100 md:opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 md:opacity-0'
           }`}
         >
           <div className="flex items-start justify-between">

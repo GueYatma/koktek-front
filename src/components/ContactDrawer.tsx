@@ -64,12 +64,12 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
       <aside
         role="dialog"
         aria-modal="true"
-        className={`fixed inset-y-0 right-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed bottom-4 left-4 right-4 flex max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
+          open ? 'translate-y-0 md:translate-x-0 md:translate-y-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
         }`}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
               Assistance premium
@@ -88,7 +88,7 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
             <div className="flex items-center gap-3 text-sm text-gray-700">
               <ShieldCheck className="h-5 w-5 text-emerald-600" />
@@ -211,7 +211,7 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
           </form>
         </div>
 
-        <div className="border-t border-gray-200 px-6 py-5 text-sm text-gray-600">
+        <div className="border-t border-gray-200 px-4 py-4 text-sm text-gray-600">
           <p className="font-semibold text-gray-900">Réponse sous 24h</p>
           <p className="mt-1">contact@koktek.com</p>
         </div>

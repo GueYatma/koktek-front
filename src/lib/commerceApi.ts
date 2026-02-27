@@ -681,3 +681,37 @@ export const closeCart = async (
 ): Promise<CartRecord> => {
   return updateOne<CartRecord>('carts', cartId, { status })
 }
+
+export type AdminOrderDashboardRecord = {
+  order_id: string
+  order_number: string
+  date_commande: string
+  status_commande: string
+  status_paiement: string
+  methode_paiement: string
+  client_nom_complet: string
+  client_email: string
+  total_paye_client: string | number
+  sous_total_produits: string | number
+  frais_port_encaisses: string | number
+  cout_produits_estime: string | number
+  frais_urssaf: string | number
+  benefice_net_estime: string | number
+  cj_order_id?: string | null
+  delai_livraison_estime?: string | null
+  nombre_articles: string | number
+  resume_articles?: string | null
+  details_articles_json?: any
+}
+
+export const getAdminOrdersDashboard = async (input?: {
+  limit?: number
+}): Promise<AdminOrderDashboardRecord[]> => {
+  const result = await directusClient.request(
+    readItems('admin_orders_dashboard_final', {
+      sort: ['-date_commande'],
+      limit: input?.limit ?? 200,
+    }),
+  )
+  return result as AdminOrderDashboardRecord[]
+}

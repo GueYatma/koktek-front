@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Link, useParams } from 'react-router-dom'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ChevronLeft } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../hooks/useProducts'
 import type { ShippingOption, Variant } from '../types'
@@ -209,6 +209,10 @@ const ProductPage = () => {
   const displayImage = safeSelectedImage || variantImage || fallbackImage
 
   const displayPrice = product?.retail_price ?? 0
+  const selectedVariantLabel =
+    cleanVariantName(selectedVariant?.option1_value ?? '', product?.title) ||
+    selectedVariant?.option1_value ||
+    'Standard'
   const expertStarsRaw = product?.expert_stars
   const expertReview = product?.expert_review?.trim() ?? ''
   const expertStarsScore = useMemo(() => {
@@ -302,9 +306,31 @@ const ProductPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 sm:pt-12 lg:px-8">
+      <div className="mb-4 flex items-center justify-between">
+        <Link
+          to="/catalogue"
+          className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Retour au catalogue
+        </Link>
+      </div>
+
+      <div className="mb-6 space-y-2 md:hidden">
+        <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+          Collection Koktek
+        </p>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          {product.title}
+        </h1>
+        <p className="text-xl font-semibold text-gray-900">
+          {formatPrice(displayPrice)}
+        </p>
+      </div>
+
       <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
-        <div className="md:sticky md:top-24 md:self-start">
+        <div className="order-1 md:sticky md:top-24 md:self-start">
           <div className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
             <img
               src={displayImage}
@@ -339,20 +365,21 @@ const ProductPage = () => {
           )}
         </div>
 
-        <div className="space-y-10">
+        <div className="order-2 space-y-8">
           <div className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              Collection Koktek
-            </p>
-            <h1 className="text-4xl font-bold text-gray-900">
-              {product.title}
-            </h1>
-            <p className="text-3xl font-semibold text-gray-900">
-              {formatPrice(displayPrice)}
-            </p>
+            <div className="hidden space-y-4 md:block">
+              <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+                Collection Koktek
+              </p>
+              <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
+                {product.title}
+              </h1>
+              <p className="text-xl font-semibold text-gray-900 sm:text-2xl md:text-3xl">
+                {formatPrice(displayPrice)}
+              </p>
+            </div>
             <div
-              className="prose prose-base max-w-none text-gray-600 text-justify"
-              style={{ textAlign: 'justify' }}
+              className="text-left text-sm leading-relaxed text-gray-600 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_ul]:mb-4 [&_ol]:mb-4 [&_li]:mb-1"
               dangerouslySetInnerHTML={{
                 __html: sanitizedDescription,
               }}
@@ -429,6 +456,150 @@ const ProductPage = () => {
               </p>
             )}
 
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedVariant) {
+                    addItem(product, selectedVariant, 1, shippingOptions[selectedShippingIndex])
+                  }
+                }}
+                disabled={!selectedVariant}
+                className={`hidden w-full rounded-2xl px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] transition active:scale-95 md:block ${
+                  selectedVariant
+                    ? 'bg-black text-white hover:bg-gray-900'
+                    : 'cursor-not-allowed bg-gray-200 text-gray-400'
+                }`}
+              >
+                Ajouter au panier
+              </button>
+
+              <p className="text-xs text-gray-500">
+                Livraison offerte dès 80€ d'achat.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {(expertReview || expertStarsRaw) && (
+              <details className="group rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
+                  Avis de l&apos;expert
+                  <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
+                </summary>
+                <div className="mt-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center">
+                          {renderExpertStars(expertStarsScore)}
+                          <span className="ml-2 text-xl font-bold text-gray-900">
+                            {expertStarsScore.toFixed(1)}
+                          </span>
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
+                          Note IA
+                        </span>
+                      </div>
+                    </div>
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                      IA certifiée
+                    </span>
+                  </div>
+                  <div className="mt-4 h-px w-full bg-gradient-to-r from-amber-100/80 via-transparent to-amber-100/80" />
+                  <p className="mt-4 text-sm text-gray-600">
+                    {expertReview || 'Analyse en cours de finalisation.'}
+                  </p>
+                </div>
+              </details>
+            )}
+
+            {shippingOptions.length > 0 && (
+              <details className="group rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
+                  Options de livraison
+                  <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
+                </summary>
+                <div className="mt-4">
+                  <p className="text-xs text-gray-500">Sélectionnez votre option</p>
+                  <div className="mt-3 grid gap-3">
+                    {shippingOptions.slice(0, 3).map((option, index) => {
+                      const isSelected = selectedShippingIndex === index
+                      const priceValue = Number(option.price ?? 0)
+                      const daysValue = Number(option.days ?? 0)
+                      return (
+                        <button
+                          key={`${index}-${option.name ?? 'shipping'}`}
+                          type="button"
+                          onClick={() => setSelectedShippingIndex(index)}
+                          className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                            isSelected
+                              ? 'border-gray-900 bg-gray-900 text-white shadow-lg'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={`mt-1 flex h-4 w-4 items-center justify-center rounded-full border ${
+                                isSelected
+                                  ? 'border-white bg-white'
+                                  : 'border-gray-300 bg-white'
+                              }`}
+                            >
+                              {isSelected ? (
+                                <span className="h-2 w-2 rounded-full bg-gray-900" />
+                              ) : null}
+                            </span>
+                            <div>
+                              <p className="text-sm font-semibold">
+                                {shippingLabels[index] ?? `Option ${index + 1}`}
+                              </p>
+                              <p
+                                className={`mt-1 text-xs ${
+                                  isSelected ? 'text-gray-200' : 'text-gray-500'
+                                }`}
+                              >
+                                {daysValue > 0
+                                  ? `Livraison en ${daysValue} jours`
+                                  : 'Délai communiqué après validation'}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            {formatPrice(priceValue)}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </details>
+            )}
+
+            <details className="group rounded-3xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600 shadow-sm sm:p-6">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
+                Inclus
+                <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
+              </summary>
+              <p className="mt-4">
+                Packaging premium, guide de pose et garantie Koktek 12 mois.
+              </p>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 md:hidden">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white/95 px-3 py-3 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.55)] backdrop-blur">
+            <div className="flex-1">
+              <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+                {selectedVariantLabel}
+              </p>
+              <p className="text-base font-semibold text-gray-900">
+                {formatPrice(displayPrice)}
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -437,7 +608,7 @@ const ProductPage = () => {
                 }
               }}
               disabled={!selectedVariant}
-              className={`w-full rounded-2xl px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] transition active:scale-95 ${
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-95 ${
                 selectedVariant
                   ? 'bg-black text-white hover:bg-gray-900'
                   : 'cursor-not-allowed bg-gray-200 text-gray-400'
@@ -445,108 +616,6 @@ const ProductPage = () => {
             >
               Ajouter au panier
             </button>
-
-            <p className="text-xs text-gray-500">
-              Livraison offerte dès 80€ d'achat.
-            </p>
-          </div>
-
-          {(expertReview || expertStarsRaw) && (
-            <section className="rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-white to-gray-50 p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                    Avis de l&apos;Expert KOKTEK
-                  </p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="flex items-center">
-                      {renderExpertStars(expertStarsScore)}
-                      <span className="ml-2 text-xl font-bold text-gray-900">{expertStarsScore.toFixed(1)}</span>
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
-                      Note IA
-                    </span>
-                  </div>
-                </div>
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                  IA certifiée
-                </span>
-              </div>
-              <div className="mt-4 h-px w-full bg-gradient-to-r from-amber-100/80 via-transparent to-amber-100/80" />
-              <p className="mt-4 text-sm text-gray-600">
-                {expertReview || 'Analyse en cours de finalisation.'}
-              </p>
-            </section>
-          )}
-
-          {shippingOptions.length > 0 && (
-            <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                  Options de livraison
-                </p>
-                <span className="text-xs text-gray-400">
-                  Sélectionnez votre option
-                </span>
-              </div>
-              <div className="mt-4 grid gap-3">
-                {shippingOptions.slice(0, 3).map((option, index) => {
-                  const isSelected = selectedShippingIndex === index
-                  const priceValue = Number(option.price ?? 0)
-                  const daysValue = Number(option.days ?? 0)
-                  return (
-                    <button
-                      key={`${index}-${option.name ?? 'shipping'}`}
-                      type="button"
-                      onClick={() => setSelectedShippingIndex(index)}
-                      className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
-                        isSelected
-                          ? 'border-gray-900 bg-gray-900 text-white shadow-lg'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-1 flex h-4 w-4 items-center justify-center rounded-full border ${
-                            isSelected
-                              ? 'border-white bg-white'
-                              : 'border-gray-300 bg-white'
-                          }`}
-                        >
-                          {isSelected ? (
-                            <span className="h-2 w-2 rounded-full bg-gray-900" />
-                          ) : null}
-                        </span>
-                        <div>
-                          <p className="text-sm font-semibold">
-                            {shippingLabels[index] ?? `Option ${index + 1}`}
-                          </p>
-                          <p
-                            className={`mt-1 text-xs ${
-                              isSelected ? 'text-gray-200' : 'text-gray-500'
-                            }`}
-                          >
-                            {daysValue > 0
-                              ? `Livraison en ${daysValue} jours`
-                              : 'Délai communiqué après validation'}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-sm font-semibold">
-                        {formatPrice(priceValue)}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
-          )}
-
-          <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 sm:p-6">
-            <p className="text-sm font-semibold text-gray-900">Inclus</p>
-            <p className="mt-3">
-              Packaging premium, guide de pose et garantie Koktek 12 mois.
-            </p>
           </div>
         </div>
       </div>

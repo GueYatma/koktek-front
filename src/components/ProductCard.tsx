@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
@@ -12,39 +11,41 @@ type ProductCardProps = {
 const ProductCard = ({ product, categoryName }: ProductCardProps) => {
   const finalPrice = product.retail_price
   return (
-    <Link
-      to={`/produit/${product.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[5px_5px_20px_rgba(0,0,0,0.1)]"
-    >
-      <img
-        src={resolveImageUrl(product.image_url)}
-        alt={product.title}
-        className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-64"
-        loading="lazy"
-        decoding="async"
-      />
-      <div className="space-y-2 p-4">
+    <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition md:hover:border-gray-300">
+      <Link to={`/produit/${product.slug}`} className="block">
+        <img
+          src={resolveImageUrl(product.image_url)}
+          alt={product.title}
+          className="h-28 w-full object-cover sm:h-36 md:h-44"
+          loading="lazy"
+          decoding="async"
+        />
+      </Link>
+      <div className="flex flex-1 flex-col gap-2 p-3">
         {categoryName && (
-          <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400">
             {categoryName}
           </p>
         )}
-        <h3 className="font-display text-sm font-medium text-gray-800 line-clamp-2">
+        <Link
+          to={`/produit/${product.slug}`}
+          className="font-display text-xs font-medium text-gray-800 line-clamp-2 sm:text-sm"
+        >
           {product.title}
-        </h3>
-        <div className="flex items-center justify-between pt-1">
-          <p className="font-display text-base font-bold text-black">
+        </Link>
+        <div className="mt-auto flex items-center justify-between">
+          <p className="font-display text-sm font-semibold text-gray-900">
             {formatPrice(finalPrice)}
           </p>
-          <div 
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-50 text-gray-500 opacity-70 transition-all duration-300 group-hover:scale-110 group-hover:bg-black group-hover:text-white group-hover:opacity-100 group-hover:shadow-[3px_3px_12px_rgba(0,0,0,0.25)]"
-            title="Ajouter au panier"
+          <Link
+            to={`/produit/${product.slug}`}
+            className="rounded-full border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
           >
-            <ShoppingBag className="h-[18px] w-[18px]" />
-          </div>
+            Choisir
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 

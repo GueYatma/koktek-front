@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom'
-import { Menu, Search, ShoppingBag, User, X } from 'lucide-react'
+import { Home, LayoutGrid, MessageCircle, Search, ShoppingBag, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useUI } from '../context/UIContext'
 import { useAuth } from '../context/AuthContext'
@@ -50,7 +50,17 @@ const Layout = () => {
   const { user } = useAuth()
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const hasUser = Boolean(user)
+  const [isChromeVisible, setIsChromeVisible] = useState(true)
+  const [isScrolling, setIsScrolling] = useState(false)
+
+  const handleAccountClick = () => {
+    if (hasUser) {
+      openProfile()
+    } else {
+      setIsAuthOpen(true)
+    }
+  }
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -62,128 +72,96 @@ const Layout = () => {
     const q = formData.get('search');
     if (q && q.toString().trim() !== '') {
       navigate(`/catalogue?search=${encodeURIComponent(q.toString().trim())}`);
-      setIsMobileMenuOpen(false);
     } else {
       navigate(`/catalogue`);
-      setIsMobileMenuOpen(false);
     }
   };
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const shouldLock =
+      isCartOpen || isContactOpen || isAuthOpen || isProfileOpen
+    const html = document.documentElement
+    const body = document.body
+
+    if (shouldLock) {
+      html.style.overflow = 'hidden'
+      body.style.overflow = 'hidden'
+      body.style.touchAction = 'none'
+    } else {
+      html.style.overflow = ''
+      body.style.overflow = ''
+      body.style.touchAction = ''
+    }
+
+    return () => {
+      html.style.overflow = ''
+      body.style.overflow = ''
+      body.style.touchAction = ''
+    }
+  }, [isCartOpen, isContactOpen, isAuthOpen, isProfileOpen])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    let lastScrollY = window.scrollY
+    let ticking = false
+    const threshold = 8
+    let scrollStopTimer: number | null = null
+
+    const onScroll = () => {
+      const currentY = window.scrollY
+      setIsScrolling(true)
+      if (scrollStopTimer) {
+        window.clearTimeout(scrollStopTimer)
+      }
+      scrollStopTimer = window.setTimeout(() => {
+        setIsScrolling(false)
+        setIsChromeVisible(true)
+      }, 140)
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const delta = currentY - lastScrollY
+
+          if (currentY <= 16) {
+            setIsChromeVisible(true)
+          } else if (delta > threshold) {
+            setIsChromeVisible(false)
+          } else if (delta < -threshold) {
+            setIsChromeVisible(true)
+          }
+
+          lastScrollY = currentY
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (scrollStopTimer) {
+        window.clearTimeout(scrollStopTimer)
+      }
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-white text-black">
-      <header className="sticky top-0 z-40 bg-white shadow-[0_4px_20px_-5px_rgba(0,0,0,0.1)]">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-5 sm:px-6 lg:px-8">
+      <header
+        className={`sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur transition-transform duration-300 will-change-transform md:translate-y-0 ${
+          isChromeVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="logo-koktek text-3xl font-black uppercase text-gray-900 sm:text-4xl"
+            className="logo-koktek text-2xl font-black uppercase text-gray-900 sm:text-3xl"
           >
             KOKTEK
           </Link>
-          <div className="flex flex-1 items-center justify-center">
-            <nav className="hidden items-center gap-8 text-lg font-bold text-gray-800 md:flex">
-              {[
-                { to: '/', label: 'Accueil', end: true },
-                { to: '/catalogue', label: 'Catalogue' },
-              ].map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  end={link.end}
-                  className={({ isActive }) =>
-                    `transition ${
-                      isActive ? 'text-gray-900' : 'hover:text-gray-900'
-                    }`
-                  }
-                >
-                  {link.label}
-                </NavLink>
-              ))}
-              <button
-                type="button"
-                onClick={openContact}
-                className="whitespace-nowrap transition hover:text-gray-900"
-              >
-                Contact
-              </button>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-gray-200 px-3 py-2 text-sm font-bold text-gray-800 transition hover:border-gray-900 hover:text-gray-900 md:hidden"
-              aria-expanded={isMobileMenuOpen}
-              aria-controls="mobile-menu"
-              aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-4 w-4" />
-              ) : (
-                <Menu className="h-4 w-4" />
-              )}
-              <span>Menu</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsCartOpen(true)}
-              className="relative inline-flex items-center gap-2 rounded-full border-2 border-gray-200 px-3 py-2 text-sm font-bold text-gray-800 transition hover:border-gray-900 hover:text-gray-900 sm:px-4"
-              aria-label="Ouvrir le panier"
-            >
-              <ShoppingBag className="h-4 w-4" />
-              <span className="hidden sm:inline">Panier</span>
-              {itemCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-semibold text-white">
-                  {itemCount}
-                </span>
-              )}
-            </button>
-            <div className="hidden md:block">
-              <form onSubmit={handleSearch} className="relative w-56">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  name="search"
-                  type="search"
-                  defaultValue={currentSearch}
-                  placeholder="Rechercher..."
-                  className="w-full rounded-full border-2 border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                  aria-label="Rechercher"
-                />
-              </form>
-            </div>
-            {user ? (
-              <button
-                type="button"
-                onClick={() => openProfile()}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
-              >
-                <div className="relative">
-                  <User className="h-4 w-4" />
-                  <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-green-500 ring-2 ring-gray-900" />
-                </div>
-                <span>Mon Espace</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsAuthOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-800 transition hover:border-gray-900 hover:text-gray-900"
-              >
-                <User className="h-4 w-4" />
-                <span>Connexion</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
 
-      <div
-        id="mobile-menu"
-        className={`border-b border-gray-200 bg-white shadow-sm md:hidden ${
-          isMobileMenuOpen ? 'block' : 'hidden'
-        }`}
-      >
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4">
-          <nav className="flex flex-col gap-3 text-base font-semibold text-gray-800">
+          <nav className="hidden items-center gap-7 text-sm font-semibold text-gray-700 md:flex">
             {[
               { to: '/', label: 'Accueil', end: true },
               { to: '/catalogue', label: 'Catalogue' },
@@ -192,44 +170,159 @@ const Layout = () => {
                 key={link.to}
                 to={link.to}
                 end={link.end}
-                onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
-                  `transition ${
-                    isActive ? 'text-gray-900' : 'hover:text-gray-900'
-                  }`
+                  `transition ${isActive ? 'text-gray-900' : 'hover:text-gray-900'}`
                 }
               >
                 {link.label}
               </NavLink>
             ))}
+            <button
+              type="button"
+              onClick={openContact}
+              className="whitespace-nowrap transition hover:text-gray-900"
+            >
+              Contact
+            </button>
           </nav>
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              name="search"
-              type="search"
-              defaultValue={currentSearch}
-              placeholder="Rechercher..."
-              className="w-full rounded-full border-2 border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-              aria-label="Rechercher"
-            />
-          </form>
+
+          <div className="ml-auto flex items-center gap-2 md:hidden">
+            <button
+              type="button"
+              onClick={openContact}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
+              aria-label="Contacter le support"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="ml-auto hidden items-center gap-3 md:flex">
+            <div className="relative w-52">
+              <form onSubmit={handleSearch} className="relative w-full">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  name="search"
+                  type="search"
+                  defaultValue={currentSearch}
+                  placeholder="Rechercher..."
+                  className="w-full rounded-full border-2 border-gray-200 bg-white py-2 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                  aria-label="Rechercher"
+                />
+              </form>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="relative inline-flex items-center gap-2 rounded-full border-2 border-gray-200 px-3 py-2 text-sm font-semibold text-gray-800 transition hover:border-gray-900 hover:text-gray-900"
+              aria-label="Ouvrir le panier"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>Panier</span>
+              {itemCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-semibold text-white">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleAccountClick}
+              className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-semibold transition ${
+                hasUser
+                  ? 'border-gray-900 bg-gray-900 text-white hover:bg-black'
+                  : 'border-gray-200 bg-white text-gray-800 hover:border-gray-900 hover:text-gray-900'
+              }`}
+            >
+              <div className="relative">
+                <User className="h-4 w-4" />
+                {hasUser ? (
+                  <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-green-500 ring-2 ring-gray-900" />
+                ) : null}
+              </div>
+              <span>{hasUser ? 'Mon Espace' : 'Connexion'}</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <nav
+        className={`fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 shadow-[0_-10px_30px_-24px_rgba(0,0,0,0.5)] backdrop-blur transition-opacity duration-200 will-change-opacity md:hidden ${
+          isScrolling ? 'opacity-70' : 'opacity-100'
+        }`}
+      >
+        <div className="mx-auto grid max-w-6xl grid-cols-5 px-2 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+                isActive ? 'text-gray-900' : 'text-gray-500'
+              }`
+            }
+            aria-label="Accueil"
+          >
+            <Home className="h-5 w-5" />
+            Accueil
+          </NavLink>
+          <NavLink
+            to="/catalogue"
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+                isActive ? 'text-gray-900' : 'text-gray-500'
+              }`
+            }
+            aria-label="Catalogue"
+          >
+            <LayoutGrid className="h-5 w-5" />
+            Catalogue
+          </NavLink>
           <button
             type="button"
-            onClick={() => {
-              openContact()
-              setIsMobileMenuOpen(false)
-            }}
-            className="inline-flex w-full items-center justify-center rounded-full border-2 border-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 transition hover:border-gray-900 hover:text-gray-900"
+            onClick={() => setIsCartOpen(true)}
+            className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+              isCartOpen ? 'text-gray-900' : 'text-gray-500'
+            }`}
+            aria-label="Panier"
           >
+            <span className="relative">
+              <ShoppingBag className="h-5 w-5" />
+              {itemCount > 0 ? (
+                <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-semibold text-white">
+                  {itemCount}
+                </span>
+              ) : null}
+            </span>
+            Panier
+          </button>
+          <button
+            type="button"
+            onClick={handleAccountClick}
+            className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+              isProfileOpen || isAuthOpen ? 'text-gray-900' : 'text-gray-500'
+            }`}
+            aria-label="Mon compte"
+          >
+            <User className="h-5 w-5" />
+            Compte
+          </button>
+          <button
+            type="button"
+            onClick={openContact}
+            className={`flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
+              isContactOpen ? 'text-gray-900' : 'text-gray-500'
+            }`}
+            aria-label="Contact"
+          >
+            <MessageCircle className="h-5 w-5" />
             Contact
           </button>
         </div>
-      </div>
+      </nav>
 
-      <main>
+      <main className="pb-24 md:pb-0">
         {isBuildToastVisible && (
-          <div className="pointer-events-none fixed bottom-6 right-6 z-50 h-56 w-56">
+          <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div
               className="toast-cube pointer-events-auto relative h-full w-full animate-[toast-cube-in_0.55s_ease-out,toast-cube-out_0.45s_ease-in_11.5s_forwards] rounded-[28px] border border-gray-200 bg-white/95 shadow-[0_22px_50px_-18px_rgba(0,0,0,0.45)] backdrop-blur"
               onAnimationEnd={(event) => {
@@ -266,7 +359,7 @@ const Layout = () => {
         <Outlet />
       </main>
 
-      <footer className="mt-20 border-t border-gray-200 bg-gray-100">
+      <footer className="mt-20 border-t border-gray-200 bg-gray-100 pb-24 md:pb-0">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
           <div>
             <p className="font-display text-xs uppercase tracking-[0.35em] text-gray-500">

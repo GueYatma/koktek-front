@@ -8,8 +8,8 @@
   :root {
     color-scheme: light;
   }
-  body {
-    @apply bg-white text-black antialiased font-sans font-medium;
+  html, body {
+    @apply bg-white text-black antialiased font-sans font-medium overflow-x-hidden;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;

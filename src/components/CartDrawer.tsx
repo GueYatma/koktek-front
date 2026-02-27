@@ -28,8 +28,8 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
       <aside
         role="dialog"
         aria-modal="true"
-        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        className={`absolute bottom-0 left-0 right-0 flex h-[85vh] w-full flex-col rounded-t-3xl bg-white shadow-2xl transition-transform duration-300 md:bottom-auto md:left-auto md:top-0 md:h-full md:max-w-md md:rounded-none ${
+          open ? 'translate-y-0 md:translate-x-0 md:translate-y-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
         }`}
         onClick={(event) => event.stopPropagation()}
       >

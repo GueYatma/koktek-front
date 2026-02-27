@@ -1,16 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatPrice } from '../utils/format'
 import {
-  getOrderDeliveriesByOrderIds,
-  getOrdersForHistory,
-  type OrderDeliveryRecord,
-  type OrderRecord,
+  getAdminOrdersDashboard,
+  type AdminOrderDashboardRecord,
 } from '../lib/commerceApi'
 import { useSearchParams } from 'react-router-dom'
 import ValidationModal from '../components/ValidationModal'
 import OrderDetailsModal from '../components/OrderDetailsModal'
-
-type DeliveryMap = Record<string, OrderDeliveryRecord>
 
 const formatDateTime = (value?: string) => {
   if (!value) return '—'
@@ -24,6 +20,15 @@ const formatDateTime = (value?: string) => {
 
 const normalizeStatus = (value?: string | null) =>
   value?.replace(/_/g, ' ') ?? '—'
+
+const toNumberValue = (value: unknown): number => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
 
 const resolvePaymentTone = (value?: string | null) => {
   const normalized = (value ?? '').toLowerCase()
@@ -44,8 +49,7 @@ const resolveDeliveryTone = (value?: string | null) => {
 }
 
 const SalesHistoryPage = () => {
-  const [orders, setOrders] = useState<OrderRecord[]>([])
-  const [deliveries, setDeliveries] = useState<DeliveryMap>({})
+  const [orders, setOrders] = useState<AdminOrderDashboardRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [paymentFilter, setPaymentFilter] = useState('all')
@@ -75,21 +79,9 @@ const SalesHistoryPage = () => {
       setLoading(true)
       setError(null)
       try {
-        const data = await getOrdersForHistory({ limit: 200 })
+        const data = await getAdminOrdersDashboard({ limit: 200 })
         if (!isActive) return
         setOrders(data)
-
-        const orderIds = data.map((order) => order.id).filter(Boolean)
-        const deliveryRows = await getOrderDeliveriesByOrderIds(orderIds)
-        if (!isActive) return
-
-        const map: DeliveryMap = {}
-        deliveryRows.forEach((delivery) => {
-          if (delivery.order_id) {
-            map[String(delivery.order_id)] = delivery
-          }
-        })
-        setDeliveries(map)
       } catch (fetchError) {
         console.error('Erreur chargement ventes', fetchError)
         if (isActive) setError('Impossible de charger les commandes.')
@@ -108,14 +100,11 @@ const SalesHistoryPage = () => {
   const rows = useMemo(() => {
     const search = query.trim().toLowerCase()
     return orders.filter((order) => {
-      const paymentStatus = (order.payment_status ?? order.status ?? '').toLowerCase()
-      const deliveryStatus = (deliveries[order.id]?.status ?? '').toLowerCase()
+      const paymentStatus = (order.status_paiement || '').toLowerCase()
+      const deliveryStatus = (order.status_commande || '').toLowerCase()
 
-      const customer = order.customer_id as Record<string, any> | undefined
-      const customerName = [customer?.first_name, customer?.last_name]
-        .filter(Boolean)
-        .join(' ')
-      const customerEmail = customer?.email || ''
+      const customerName = (order.client_nom_complet || '').toLowerCase()
+      const customerEmail = (order.client_email || '').toLowerCase()
 
       const matchesPayment =
         paymentFilter === 'all' || paymentStatus === paymentFilter
@@ -123,13 +112,18 @@ const SalesHistoryPage = () => {
         deliveryFilter === 'all' || deliveryStatus === deliveryFilter
       const matchesQuery =
         !search ||
-        String(order.order_number ?? order.id).toLowerCase().includes(search) ||
-        customerName.toLowerCase().includes(search) ||
-        customerEmail.toLowerCase().includes(search)
+        String(order.order_number || order.order_id).toLowerCase().includes(search) ||
+        customerName.includes(search) ||
+        customerEmail.includes(search)
 
       return matchesPayment && matchesDelivery && matchesQuery
     })
-  }, [orders, deliveries, paymentFilter, deliveryFilter, query])
+  }, [orders, paymentFilter, deliveryFilter, query])
+
+  const selectedOrder = useMemo(() => {
+    if (!viewOrderId) return null
+    return orders.find((order) => String(order.order_id) === String(viewOrderId)) ?? null
+  }, [orders, viewOrderId])
 
   return (
     <div className="space-y-6">
@@ -187,6 +181,8 @@ const SalesHistoryPage = () => {
                   <th className="py-3 pr-4">Commande</th>
                   <th className="py-3 pr-4">Date</th>
                   <th className="py-3 pr-4 text-right">Montant</th>
+                  <th className="py-3 pr-4 text-center">Articles</th>
+                  <th className="py-3 pr-4 text-right">Bénéfice net</th>
                   <th className="py-3 pr-4 text-center">Méthode</th>
                   <th className="py-3 pr-4 text-center">Paiement</th>
                   <th className="py-3 pr-4 text-center">Livraison</th>
@@ -195,36 +191,46 @@ const SalesHistoryPage = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {rows.map((order) => {
-                  const total =
-                    order.total_price ?? order.total ?? order.total_products_price ?? 0
-                  const paymentStatus = order.payment_status ?? order.status ?? ''
-                  const deliveryStatus = deliveries[order.id]?.status ?? '—'
+                  const total = toNumberValue(order.total_paye_client)
+                  const itemsCount = toNumberValue(order.nombre_articles)
+                  const netProfit = toNumberValue(order.benefice_net_estime)
+                  const paymentStatus = order.status_paiement || ''
+                  const deliveryStatus = order.status_commande || '—'
                   const isCash = paymentStatus === 'pending_cash'
-                  const paymentMethodLabel = isCash
-                    ? '💵 Espèces'
-                    : paymentStatus
-                      ? '💳 Carte'
-                      : '—'
-                  const customer = order.customer_id as Record<string, any> | undefined
-                  const customerName = [customer?.first_name, customer?.last_name]
-                    .filter(Boolean)
-                    .join(' ') || 'Non renseigné'
+                  const paymentMethodLabel =
+                    order.methode_paiement ||
+                    (isCash ? '💵 Espèces' : paymentStatus ? '💳 Carte' : '—')
+                  const customerName = order.client_nom_complet || 'Non renseigné'
+                  const profitTone =
+                    netProfit > 0
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : netProfit < 0
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : 'bg-gray-50 text-gray-600 border-gray-200'
 
                   return (
                     <tr 
-                      key={order.id} 
-                      onClick={() => setSearchParams({ view_order: order.id })}
+                      key={order.order_id} 
+                      onClick={() => setSearchParams({ view_order: order.order_id })}
                       className="text-gray-700 hover:bg-gray-50 cursor-pointer transition"
                     >
                       <td className="py-4 pr-4 font-medium text-gray-900 whitespace-nowrap">
                         {customerName}
                       </td>
                       <td className="py-4 pr-4 font-semibold text-gray-900 whitespace-nowrap">
-                        {order.order_number ?? order.id}
+                        {order.order_number || order.order_id}
                       </td>
-                      <td className="py-4 pr-4 whitespace-nowrap">{formatDateTime(order.created_at)}</td>
+                      <td className="py-4 pr-4 whitespace-nowrap">{formatDateTime(order.date_commande)}</td>
                       <td className="py-4 pr-4 text-right font-semibold text-gray-900 whitespace-nowrap">
                         {formatPrice(Number(total))}
+                      </td>
+                      <td className="py-4 pr-4 text-center whitespace-nowrap text-sm font-semibold text-gray-700">
+                        {itemsCount || 0}
+                      </td>
+                      <td className="py-4 pr-4 text-right whitespace-nowrap">
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${profitTone}`}>
+                          {formatPrice(netProfit)}
+                        </span>
                       </td>
                       <td className="py-4 pr-4 text-center">
                         <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">
@@ -256,7 +262,7 @@ const SalesHistoryPage = () => {
                           </span>
                         ) : paymentStatus === 'pending_cash' ? (
                           <button
-                            onClick={() => setSearchParams({ validate_order: order.order_number ?? order.id })}
+                            onClick={() => setSearchParams({ validate_order: order.order_number || order.order_id })}
                             className="rounded-xl px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
                           >
                             Valider Espèces
@@ -290,7 +296,7 @@ const SalesHistoryPage = () => {
       {viewOrderId && (
         <OrderDetailsModal
           isOpen={true}
-          orderId={viewOrderId}
+          order={selectedOrder}
           onClose={handleCloseDetailsModal}
         />
       )}

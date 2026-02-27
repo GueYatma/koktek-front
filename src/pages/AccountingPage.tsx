@@ -1,21 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatPrice } from '../utils/format'
 import {
-  getOrderItemsByOrderIds,
-  getOrdersForHistory,
-  getVariantsByIds,
-  type OrderItemRecord,
-  type OrderRecord,
-  type VariantCostRecord,
+  getAdminOrdersDashboard,
+  type AdminOrderDashboardRecord,
 } from '../lib/commerceApi'
 import { useSearchParams } from 'react-router-dom'
 import ValidationModal from '../components/ValidationModal'
+import { Landmark, PiggyBank, ShoppingBag, TrendingUp } from 'lucide-react'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+} from 'recharts'
 
 type Grouping = 'day' | 'week' | 'month'
-
-const VAT_RATE = 0.2
-const URSSAF_RATE = 0.13
-const DEFAULT_COST_PRICE = 0
 
 const parseAmount = (value: unknown): number => {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0
@@ -24,19 +26,6 @@ const parseAmount = (value: unknown): number => {
     return Number.isFinite(parsed) ? parsed : 0
   }
   return 0
-}
-
-const normalizeId = (value: unknown): string => {
-  if (typeof value === 'string' || typeof value === 'number') {
-    return String(value)
-  }
-  if (value && typeof value === 'object' && 'id' in value) {
-    const nestedId = (value as { id?: unknown }).id
-    if (typeof nestedId === 'string' || typeof nestedId === 'number') {
-      return String(nestedId)
-    }
-  }
-  return ''
 }
 
 const formatPeriodKey = (dateValue: string, grouping: Grouping) => {
@@ -81,9 +70,7 @@ const formatPeriodLabel = (key: string, grouping: Grouping) => {
 }
 
 const AccountingPage = () => {
-  const [orders, setOrders] = useState<OrderRecord[]>([])
-  const [items, setItems] = useState<OrderItemRecord[]>([])
-  const [variants, setVariants] = useState<VariantCostRecord[]>([])
+  const [orders, setOrders] = useState<AdminOrderDashboardRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [grouping, setGrouping] = useState<Grouping>('month')
@@ -105,21 +92,9 @@ const AccountingPage = () => {
       setLoading(true)
       setError(null)
       try {
-        const ordersResult = await getOrdersForHistory({ limit: 300 })
+        const data = await getAdminOrdersDashboard({ limit: 500 })
         if (!isActive) return
-        setOrders(ordersResult)
-
-        const orderIds = ordersResult.map((order) => order.id).filter(Boolean)
-        const itemsResult = await getOrderItemsByOrderIds(orderIds)
-        if (!isActive) return
-        setItems(itemsResult)
-
-        const variantIds = itemsResult
-          .map((item) => normalizeId(item.variant_id as unknown))
-          .filter(Boolean)
-        const variantsResult = await getVariantsByIds(variantIds)
-        if (!isActive) return
-        setVariants(variantsResult)
+        setOrders(data)
       } catch (fetchError) {
         console.error('Erreur chargement comptabilité', fetchError)
         if (isActive) setError('Impossible de charger les données comptables.')
@@ -136,24 +111,13 @@ const AccountingPage = () => {
   }, [])
 
   const rows = useMemo(() => {
-    const orderById = new Map(orders.map((order) => [order.id, order]))
-    const variantById = new Map(variants.map((variant) => [variant.id, variant]))
-    const quantityByOrder = new Map<string, number>()
-
-    items.forEach((item) => {
-      const orderId = normalizeId(item.order_id as unknown)
-      if (!orderId) return
-      const quantity = parseAmount(item.quantity)
-      quantityByOrder.set(orderId, (quantityByOrder.get(orderId) ?? 0) + quantity)
-    })
-
     const bucket = new Map<
       string,
       {
         revenue: number
-        cost: number
-        vat: number
+        subtotal: number
         shipping: number
+        cost: number
         urssaf: number
         margin: number
         orders: Set<string>
@@ -161,54 +125,41 @@ const AccountingPage = () => {
       }
     >()
 
-    items.forEach((item) => {
-      const orderId = normalizeId(item.order_id as unknown)
-      if (!orderId) return
-      const order = orderById.get(orderId)
-      if (!order?.created_at) return
+    orders.forEach((order) => {
+      const paymentStatus = (order.status_paiement || '').toLowerCase()
+      if (paymentFilter !== 'all' && !paymentStatus.includes(paymentFilter)) return
 
-      const paymentStatus = (order.payment_status ?? order.status ?? '').toLowerCase()
-      if (paymentFilter !== 'all' && paymentStatus !== paymentFilter) return
-
-      const periodKey = formatPeriodKey(order.created_at, grouping)
+      const periodKey = formatPeriodKey(order.date_commande, grouping)
       if (!periodKey) return
 
-      const quantity = parseAmount(item.quantity)
-      const unitPrice = parseAmount(item.unit_price)
-      const lineTotal =
-        parseAmount(item.line_total) || (unitPrice > 0 ? unitPrice * quantity : 0)
-      const variantId = normalizeId(item.variant_id as unknown)
-      const costUnit =
-        (variantId ? variantById.get(variantId)?.cost_price : undefined) ??
-        DEFAULT_COST_PRICE
-      const costTotal = costUnit * quantity
-      const vat = lineTotal * VAT_RATE
-      const urssaf = lineTotal * URSSAF_RATE
-      const shippingTotal = parseAmount(order.shipping_price)
-      const orderQty = quantityByOrder.get(orderId) ?? 0
-      const shippingShare = orderQty > 0 ? shippingTotal * (quantity / orderQty) : 0
-      const margin = lineTotal - costTotal - vat - urssaf - shippingShare
+      const revenue = parseAmount(order.total_paye_client)
+      const subtotal = parseAmount(order.sous_total_produits)
+      const shippingTotal = parseAmount(order.frais_port_encaisses)
+      const costTotal = parseAmount(order.cout_produits_estime)
+      const urssaf = parseAmount(order.frais_urssaf)
+      const margin = parseAmount(order.benefice_net_estime)
+      const quantity = parseAmount(order.nombre_articles)
 
       const entry =
         bucket.get(periodKey) ??
         ({
           revenue: 0,
-          cost: 0,
-          vat: 0,
+          subtotal: 0,
           shipping: 0,
+          cost: 0,
           urssaf: 0,
           margin: 0,
           orders: new Set<string>(),
           items: 0,
         })
 
-      entry.revenue += lineTotal
+      entry.revenue += revenue
+      entry.subtotal += subtotal
       entry.cost += costTotal
-      entry.vat += vat
-      entry.shipping += shippingShare
+      entry.shipping += shippingTotal
       entry.urssaf += urssaf
       entry.margin += margin
-      entry.orders.add(orderId)
+      entry.orders.add(order.order_id)
       entry.items += quantity
 
       bucket.set(periodKey, entry)
@@ -219,8 +170,8 @@ const AccountingPage = () => {
         key,
         label: formatPeriodLabel(key, grouping),
         revenue: entry.revenue,
+        subtotal: entry.subtotal,
         cost: entry.cost,
-        vat: entry.vat,
         shipping: entry.shipping,
         urssaf: entry.urssaf,
         margin: entry.margin,
@@ -229,20 +180,26 @@ const AccountingPage = () => {
         marginRate: entry.revenue > 0 ? entry.margin / entry.revenue : 0,
       }))
       .sort((a, b) => b.key.localeCompare(a.key))
-  }, [orders, items, variants, grouping, paymentFilter])
+  }, [orders, grouping, paymentFilter])
 
   const totals = useMemo(() => {
     return rows.reduce(
       (acc, row) => {
         acc.revenue += row.revenue
+        acc.subtotal += row.subtotal
+        acc.shipping += row.shipping
+        acc.urssaf += row.urssaf
         acc.margin += row.margin
         acc.orders += row.orders
         acc.items += row.items
         return acc
       },
-      { revenue: 0, margin: 0, orders: 0, items: 0 },
+      { revenue: 0, subtotal: 0, shipping: 0, urssaf: 0, margin: 0, orders: 0, items: 0 },
     )
   }, [rows])
+
+  const averageBasket = totals.orders > 0 ? totals.revenue / totals.orders : 0
+  const averageMarginRate = totals.revenue > 0 ? totals.margin / totals.revenue : 0
 
   return (
     <div className="space-y-6">
@@ -278,30 +235,131 @@ const AccountingPage = () => {
         </div>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
-            Chiffre d&apos;affaires
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">
-            {formatPrice(totals.revenue)}
-          </p>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="group rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-sm transition hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Chiffre d&apos;affaires global
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">
+                {formatPrice(totals.revenue)}
+              </p>
+            </div>
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+              <TrendingUp className="h-5 w-5" />
+            </span>
+          </div>
         </div>
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
-            Marge nette estimée
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">
-            {formatPrice(totals.margin)}
-          </p>
+        <div className="group rounded-3xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50 p-5 shadow-sm transition hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-emerald-400">
+                Bénéfice net total
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-emerald-700">
+                {formatPrice(totals.margin)}
+              </p>
+            </div>
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm">
+              <PiggyBank className="h-5 w-5" />
+            </span>
+          </div>
         </div>
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
-            Commandes / Articles
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">
-            {totals.orders} / {totals.items}
-          </p>
+        <div className="group rounded-3xl border border-amber-100 bg-gradient-to-br from-white to-amber-50 p-5 shadow-sm transition hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-amber-400">
+                Total URSSAF
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-amber-700">
+                {formatPrice(totals.urssaf)}
+              </p>
+            </div>
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm">
+              <Landmark className="h-5 w-5" />
+            </span>
+          </div>
+        </div>
+        <div className="group rounded-3xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50 p-5 shadow-sm transition hover:shadow-md">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-indigo-400">
+                Panier moyen
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">
+                {formatPrice(averageBasket)}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Marge moyenne: {(averageMarginRate * 100).toFixed(1)}%
+              </p>
+            </div>
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-sm">
+              <ShoppingBag className="h-5 w-5" />
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+              Évolution
+            </p>
+            <h3 className="mt-2 text-lg font-semibold text-gray-900">
+              Chiffre d&apos;affaires &amp; bénéfice net
+            </h3>
+          </div>
+          <div className="text-xs text-gray-500">
+            {grouping === 'day'
+              ? 'Vue journalière'
+              : grouping === 'week'
+                ? 'Vue hebdomadaire'
+                : 'Vue mensuelle'}
+          </div>
+        </div>
+        <div className="mt-6 h-56">
+          {rows.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={[...rows].reverse()}>
+                <defs>
+                  <linearGradient id="caGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0f172a" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#0f172a" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="marginGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value: number, name: string) =>
+                    [formatPrice(value), name === 'revenue' ? 'CA' : 'Bénéfice net']
+                  }
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#0f172a"
+                  strokeWidth={2}
+                  fill="url(#caGradient)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="margin"
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  fill="url(#marginGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-gray-500">Aucune donnée à afficher.</p>
+          )}
         </div>
       </section>
 
@@ -317,11 +375,12 @@ const AccountingPage = () => {
                 <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-[0.2em] text-gray-400">
                   <th className="py-3 pr-4">Période</th>
                   <th className="py-3 pr-4 text-right">CA</th>
-                  <th className="py-3 pr-4 text-right">Coût achat</th>
-                  <th className="py-3 pr-4 text-right">TVA (20%)</th>
-                  <th className="py-3 pr-4 text-right">Port</th>
-                  <th className="py-3 pr-4 text-right">URSSAF (13%)</th>
-                  <th className="py-3 pr-4 text-right">Marge nette</th>
+                  <th className="py-3 pr-4 text-right">Sous-total</th>
+                  <th className="py-3 pr-4 text-right">Port encaissé</th>
+                  <th className="py-3 pr-4 text-right">Coût CJ</th>
+                  <th className="py-3 pr-4 text-right">URSSAF</th>
+                  <th className="py-3 pr-4 text-right">Bénéfice net</th>
+                  <th className="py-3 pr-4 text-right">Articles</th>
                   <th className="py-3 pr-4 text-right">Marge %</th>
                 </tr>
               </thead>
@@ -335,19 +394,22 @@ const AccountingPage = () => {
                       {formatPrice(row.revenue)}
                     </td>
                     <td className="py-4 pr-4 text-right">
-                      {formatPrice(row.cost)}
-                    </td>
-                    <td className="py-4 pr-4 text-right">
-                      {formatPrice(row.vat)}
+                      {formatPrice(row.subtotal)}
                     </td>
                     <td className="py-4 pr-4 text-right">
                       {formatPrice(row.shipping)}
+                    </td>
+                    <td className="py-4 pr-4 text-right">
+                      {formatPrice(row.cost)}
                     </td>
                     <td className="py-4 pr-4 text-right">
                       {formatPrice(row.urssaf)}
                     </td>
                     <td className="py-4 pr-4 text-right font-semibold text-gray-900">
                       {formatPrice(row.margin)}
+                    </td>
+                    <td className="py-4 pr-4 text-right">
+                      {row.items}
                     </td>
                     <td className="py-4 pr-4 text-right">
                       {(row.marginRate * 100).toFixed(1)}%
@@ -364,11 +426,6 @@ const AccountingPage = () => {
           </div>
         )}
       </section>
-
-      <p className="text-xs text-gray-500">
-        Les coûts unitaires utilisent le champ <span className="font-semibold">cost_price</span>{' '}
-        des variantes. Valeur par défaut: {formatPrice(DEFAULT_COST_PRICE)}.
-      </p>
 
       <ValidationModal
         isOpen={!!validateOrderId}

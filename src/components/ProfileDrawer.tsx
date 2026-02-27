@@ -131,8 +131,8 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
         <div
           role="dialog"
           aria-modal="true"
-          className={`flex max-h-[90vh] w-[92%] max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-[0_30px_80px_-40px_rgba(0,0,0,0.6)] transition-all duration-300 lg:w-[80%] ${
-            open ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          className={`absolute bottom-0 left-0 right-0 flex h-[85vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl transition-all duration-300 md:relative md:bottom-auto md:h-auto md:max-h-[90vh] md:w-[92%] md:max-w-5xl md:rounded-3xl lg:w-[80%] ${
+            open ? 'translate-y-0 md:translate-y-0 md:scale-100 md:opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 md:opacity-0'
           }`}
           onClick={(event) => event.stopPropagation()}
         >
