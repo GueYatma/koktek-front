@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus } from 'lucide-react'
 import { useProducts } from '../hooks/useProducts'
 import { resolveImageUrl } from '../utils/image'
 import ProductCard from '../components/ProductCard'
@@ -58,23 +57,72 @@ const BRAND_SHOWCASE = [
   },
 ]
 
-const BRAND_SUBTITLES: Record<string, string> = {
-  Apple: 'Tout pour votre iPhone & iPad',
-  Samsung: "L'univers Galaxy sublimé",
-  Xiaomi: 'Innovation pour tous',
-  Redmi: 'Performance accessible',
-  Huawei: 'Design et puissance',
-  Honor: 'Style et technologie',
-  'Google Pixel': "L'expérience Android pure",
-  Oppo: 'Innovation et design',
-  Sony: "L'excellence Xperia",
-  Autres: 'Et bien plus encore...',
+const BRAND_STYLES: Record<
+  string,
+  { surface: string; text: string; ring: string }
+> = {
+  Apple: {
+    surface: 'bg-gradient-to-br from-slate-50 to-slate-200',
+    text: 'text-slate-900',
+    ring: 'ring-slate-200',
+  },
+  Samsung: {
+    surface: 'bg-gradient-to-br from-blue-50 to-blue-200',
+    text: 'text-blue-900',
+    ring: 'ring-blue-200',
+  },
+  Xiaomi: {
+    surface: 'bg-gradient-to-br from-orange-50 to-orange-200',
+    text: 'text-orange-900',
+    ring: 'ring-orange-200',
+  },
+  Redmi: {
+    surface: 'bg-gradient-to-br from-rose-50 to-rose-200',
+    text: 'text-rose-900',
+    ring: 'ring-rose-200',
+  },
+  Huawei: {
+    surface: 'bg-gradient-to-br from-emerald-50 to-emerald-200',
+    text: 'text-emerald-900',
+    ring: 'ring-emerald-200',
+  },
+  Honor: {
+    surface: 'bg-gradient-to-br from-cyan-50 to-cyan-200',
+    text: 'text-cyan-900',
+    ring: 'ring-cyan-200',
+  },
+  'Google Pixel': {
+    surface: 'bg-gradient-to-br from-amber-50 to-amber-200',
+    text: 'text-amber-900',
+    ring: 'ring-amber-200',
+  },
+  Oppo: {
+    surface: 'bg-gradient-to-br from-teal-50 to-teal-200',
+    text: 'text-teal-900',
+    ring: 'ring-teal-200',
+  },
+  Sony: {
+    surface: 'bg-gradient-to-br from-violet-50 to-violet-200',
+    text: 'text-violet-900',
+    ring: 'ring-violet-200',
+  },
+  Autres: {
+    surface: 'bg-gradient-to-br from-gray-50 to-gray-200',
+    text: 'text-gray-800',
+    ring: 'ring-gray-200',
+  },
 }
+
+const HERO_FALLBACKS = [
+  'https://images.unsplash.com/photo-1510557880182-3f8e6db3c525?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1523475472560-d2df97ec485c?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop',
+]
 
 const HomePage = () => {
   const { categories, products, loading } = useProducts()
-  const [logoErrors, setLogoErrors] = useState<Record<string, boolean>>({})
-  const featuredProducts = products
+  const [heroTick, setHeroTick] = useState(0)
   const featuredCategories = categories
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>()
@@ -87,76 +135,140 @@ const HomePage = () => {
     })
     return map
   }, [categories])
-  const categoryPlaceholders = [
-    'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1487014679447-9f8336841d58?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1600&auto=format&fit=crop',
-  ]
-  const heroImage = resolveImageUrl(
-    products[0]?.image_url ?? '',
-    'https://images.unsplash.com/photo-1510557880182-3f8e6db3c525?q=80&w=1600&auto=format&fit=crop',
-  )
+
+  const normalizeCategoryKey = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/&/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+
+  const resolveCategoryName = (product: any) => {
+    const byId = categoryNameById.get(String(product?.category_id ?? ''))
+    if (byId) return byId
+    const raw = product?.categories
+    if (typeof raw === 'string') return raw
+    if (Array.isArray(raw) && raw.length > 0) {
+      const first = raw[0]
+      if (typeof first === 'string') return first
+      if (first && typeof first === 'object') {
+        const candidate =
+          (first as any).name || (first as any).title || (first as any).valeur
+        if (typeof candidate === 'string') return candidate
+      }
+    }
+    if (raw && typeof raw === 'object') {
+      const candidate =
+        (raw as any).name || (raw as any).title || (raw as any).valeur
+      if (typeof candidate === 'string') return candidate
+    }
+    return ''
+  }
+
+  const productImagesByCategory = useMemo(() => {
+    const map = new Map<string, string[]>()
+    products.forEach((product) => {
+      const categoryName = resolveCategoryName(product)
+      if (!categoryName) return
+      const key = normalizeCategoryKey(categoryName)
+      const image = resolveImageUrl(product?.image_url ?? '', '')
+      if (!image) return
+      const list = map.get(key) ?? []
+      if (!list.includes(image)) list.push(image)
+      map.set(key, list)
+    })
+    return map
+  }, [products, categoryNameById])
+
+  const featuredProducts = useMemo(() => {
+    const picked: typeof products = []
+    const seen = new Set<string>()
+    products.forEach((product) => {
+      if (picked.length >= 6) return
+      const categoryName = resolveCategoryName(product)
+      if (!categoryName) return
+      const key = normalizeCategoryKey(categoryName)
+      if (seen.has(key)) return
+      seen.add(key)
+      picked.push(product)
+    })
+    return picked
+  }, [products])
+  const heroCandidates = useMemo(() => {
+    const fromProducts = products
+      .map((product) => resolveImageUrl(product.image_url ?? '', ''))
+      .filter((url) => url.length > 0)
+    const unique = Array.from(new Set(fromProducts))
+    return unique.length > 0 ? unique : HERO_FALLBACKS
+  }, [products])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setHeroTick((prev) => prev + 1)
+    }, 30_000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  const heroIndex =
+    heroCandidates.length > 0 ? heroTick % heroCandidates.length : 0
+  const hourIndex = useMemo(() => new Date().getHours(), [heroTick])
+  const heroImage = heroCandidates[heroIndex] ?? HERO_FALLBACKS[0]
 
   return (
     <div>
-      <section className="relative overflow-hidden bg-gray-100">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.15),_transparent_60%)]" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
-          <div className="space-y-6">
-            <p className="text-xs uppercase tracking-[0.4em] text-gray-500">
-              Koktek premium
-            </p>
-            <h1 className="text-4xl font-semibold leading-tight text-gray-900 sm:text-5xl">
-              Protégez votre iPhone avec style.
+      <section className="relative overflow-hidden bg-[#f6f7fb]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.12),_transparent_55%)]" />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 pt-6 pb-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:py-8">
+          <div className="space-y-3 text-center lg:text-left">
+            <div className="mx-auto inline-flex w-fit flex-col items-center gap-0.5 rounded-2xl border border-gray-800 bg-gray-900 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.7)] animate-soft-float">
+              <span>Commandez en ligne</span>
+              <span>et payez en espèces</span>
+            </div>
+            <h1 className="text-2xl font-semibold leading-tight text-gray-900 sm:text-3xl">
+              Accessoires pour toutes les marques, au même endroit.
             </h1>
-            <p className="text-base text-gray-600 sm:text-lg">
-              Des matières nobles, des finitions impeccables et une protection
-              pensée pour votre quotidien.
+            <p className="text-sm text-gray-600 sm:text-base">
+              Coques, chargeurs, vitres de protection et bien plus. Une sélection
+              claire, un catalogue riche, et un service pensé pour la confiance.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="rounded-2xl border border-gray-200 bg-white/80 px-4 py-3 text-base text-gray-800 shadow-sm sm:text-lg">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-gray-400">
+                Paiement en espèces
+              </p>
+              <p className="mt-2 font-semibold text-gray-900">
+                Commandez ici et payez en espèces en boutique ou sur nos stands.
+              </p>
+              <p className="mt-1 text-gray-600">
+                Retour sur place avec remboursement immédiat.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
               <Link
                 to="/catalogue"
-                className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                className="inline-flex items-center justify-center rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-black"
               >
                 Explorer le catalogue
               </Link>
               <Link
                 to="/catalogue"
-                className="inline-flex items-center justify-center rounded-xl border border-gray-900 px-5 py-3 text-sm font-semibold text-gray-900 transition hover:bg-gray-900 hover:text-white"
+                className="text-sm font-semibold text-gray-600 underline underline-offset-4 transition hover:text-gray-900"
               >
-                Découvrir les best-sellers
+                Best-sellers
               </Link>
             </div>
-            <div className="flex flex-wrap gap-6 text-sm text-gray-500">
-              <div>
-                <p className="font-semibold text-gray-900">+20 000</p>
-                <p>Clients satisfaits</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">48h</p>
-                <p>Livraison express</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">30 jours</p>
-                <p>Retours gratuits</p>
-              </div>
-            </div>
           </div>
-          <div className="relative">
-            <div className="rounded-[32px] bg-white p-4 shadow-xl">
-              <div className="overflow-hidden rounded-[28px] bg-gray-200">
+          <div className="relative lg:justify-self-end">
+            <div className="rounded-[22px] border border-white/70 bg-white/80 p-2.5 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.55)] lg:max-w-xs">
+              <div className="relative overflow-hidden rounded-[22px] bg-gray-200">
                 <img
                   src={heroImage}
                   alt="Collection Koktek"
-                  className="h-[360px] w-full object-cover"
+                  className="aspect-[4/5] w-full object-cover"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
               </div>
-            </div>
-            <div className="absolute -bottom-6 -left-6 hidden rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-lg lg:block">
-              Finition mate, toucher velours
             </div>
           </div>
         </div>
@@ -180,31 +292,37 @@ const HomePage = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {featuredCategories.map((category, index) => (
-            <Link
-              key={category.id}
-              to={`/catalogue?category=${encodeURIComponent(category.name)}`}
-              className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
-            >
-              <div className="h-36 overflow-hidden bg-gray-100">
-                <img
-                  src={
-                    categoryPlaceholders[index % categoryPlaceholders.length]
-                  }
-                  alt={category.name}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-              </div>
-              <div className="p-4">
-                <p className="text-sm font-semibold text-gray-900">
-                  {category.name}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  Sélection curée Koktek
-                </p>
-              </div>
-            </Link>
-          ))}
+          {featuredCategories.map((category) => {
+            const categoryKey = normalizeCategoryKey(category.name)
+            const categoryImages = productImagesByCategory.get(categoryKey) ?? []
+            const categoryImage =
+              categoryImages.length > 0
+                ? categoryImages[hourIndex % categoryImages.length]
+                : heroImage
+            return (
+              <Link
+                key={category.id}
+                to={`/catalogue?category=${encodeURIComponent(category.name)}`}
+                className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
+              >
+                <div className="h-36 overflow-hidden bg-gray-100">
+                  <img
+                    src={categoryImage}
+                    alt={category.name}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-4">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {category.name}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Sélection curée Koktek
+                  </p>
+                </div>
+              </Link>
+            )
+          })}
           {!loading && featuredCategories.length === 0 && (
             <p className="text-sm text-gray-500">Aucune catégorie.</p>
           )}
@@ -220,37 +338,25 @@ const HomePage = () => {
             Rechercher par marque
           </h2>
         </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-          {BRAND_SHOWCASE.map((brand) => (
-            <Link
-              key={brand.name}
-              to={`/catalogue?brand=${encodeURIComponent(brand.query)}`}
-              className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
-            >
-              <div className="flex h-32 items-center justify-center bg-white px-6">
-                {brand.logo && !logoErrors[brand.name] ? (
-                  <img
-                    src={brand.logo}
-                    alt={brand.name}
-                    className="h-12 w-28 object-contain"
-                    onError={() =>
-                      setLogoErrors((prev) => ({ ...prev, [brand.name]: true }))
-                    }
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-700">
-                    <Plus className="h-8 w-8" />
-                    <span className="text-sm font-semibold">{brand.name}</span>
+        <div className="grid grid-cols-5 gap-2 sm:grid-cols-5 lg:grid-cols-5">
+          {BRAND_SHOWCASE.map((brand) => {
+            const style = BRAND_STYLES[brand.name] ?? BRAND_STYLES.Autres
+            return (
+              <Link
+                key={brand.name}
+                to={`/catalogue?brand=${encodeURIComponent(brand.query)}`}
+                className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className={`relative flex h-16 items-center justify-center ${style.surface}`}>
+                  <div
+                    className={`flex h-8 w-14 items-center justify-center rounded-xl bg-white/80 text-[11px] font-semibold ${style.text} ring-1 ${style.ring}`}
+                  >
+                    {brand.name}
                   </div>
-                )}
-              </div>
-              <div className="border-t border-gray-200 px-4 py-3">
-                <p className="text-xs text-gray-500">
-                  {BRAND_SUBTITLES[brand.name] ?? ''}
-                </p>
-              </div>
-            </Link>
-          ))}
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </section>
 

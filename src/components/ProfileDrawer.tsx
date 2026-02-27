@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LogOut, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useUI } from '../context/UIContext'
 import { formatPrice } from '../utils/format'
@@ -13,7 +13,7 @@ type ProfileDrawerProps = {
 }
 
 const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
-  const { user, updateProfile, logout } = useAuth()
+  const { user, updateProfile } = useAuth()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
@@ -63,11 +63,6 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
   const handleClose = () => {
     setActiveOrder(null)
     onClose()
-  }
-
-  const handleLogout = () => {
-    logout()
-    handleClose()
   }
 
   const formatOrderDate = (value: string) => {
@@ -131,12 +126,13 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
         <div
           role="dialog"
           aria-modal="true"
-          className={`absolute bottom-0 left-0 right-0 flex h-[85vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl transition-all duration-300 md:relative md:bottom-auto md:h-auto md:max-h-[90vh] md:w-[92%] md:max-w-5xl md:rounded-3xl lg:w-[80%] ${
-            open ? 'translate-y-0 md:translate-y-0 md:scale-100 md:opacity-100' : 'translate-y-full md:translate-y-0 md:scale-95 md:opacity-0'
+          className={`relative flex w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300 sm:max-w-md ${
+            open ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'
           }`}
+          style={{ maxHeight: '85vh' }}
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
                 Mon Espace KOKTEK
@@ -155,19 +151,8 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="flex-1 overflow-y-auto px-4 py-4">
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => openProfile('profile')}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  activeProfileTab === 'profile'
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Mon Profil
-              </button>
               <button
                 type="button"
                 onClick={() => openProfile('orders')}
@@ -178,6 +163,17 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
                 }`}
               >
                 Mes Commandes
+              </button>
+              <button
+                type="button"
+                onClick={() => openProfile('profile')}
+                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                  activeProfileTab === 'profile'
+                    ? 'border-gray-900 bg-gray-900 text-white'
+                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Mon Profil
               </button>
             </div>
 
@@ -318,10 +314,10 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
               <div className="mt-8 space-y-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
-                    Mes commandes
+                    Historique de mes commandes
                   </p>
                   <p className="mt-2 text-sm text-gray-500">
-                    Retrouvez tous vos achats, bons et tickets de paiement.
+                    Retrouvez vos achats et vos tickets de paiement.
                   </p>
                 </div>
                 {orders.length === 0 ? (
@@ -388,23 +384,17 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
               </div>
             )}
           </div>
-          <div className="border-t border-gray-200 px-6 py-5 space-y-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
-            >
-              Enregistrer mes informations
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-              Se deconnecter
-            </button>
-          </div>
+          {activeProfileTab === 'profile' && (
+            <div className="border-t border-gray-200 px-4 py-4">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+              >
+                Mettre à jour mon profil
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

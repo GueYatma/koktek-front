@@ -18,7 +18,7 @@ const UIContext = createContext<UIContextValue | null>(null)
 export const UIProvider = ({ children }: { children: ReactNode }) => {
   const [isContactOpen, setIsContactOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [activeProfileTab, setActiveProfileTab] = useState<'profile' | 'orders'>('profile')
+  const [activeProfileTab, setActiveProfileTab] = useState<'profile' | 'orders'>('orders')
 
   const value = useMemo(
     () => ({

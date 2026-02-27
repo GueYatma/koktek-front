@@ -189,11 +189,17 @@ const Layout = () => {
           <div className="ml-auto flex items-center gap-2 md:hidden">
             <button
               type="button"
-              onClick={openContact}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
-              aria-label="Contacter le support"
+              onClick={handleAccountClick}
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:border-gray-900"
+              aria-label={hasUser ? 'Mon espace' : 'Connexion'}
             >
-              <MessageCircle className="h-4 w-4" />
+              <span className="relative flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white">
+                <User className="h-3.5 w-3.5" />
+                {hasUser ? (
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                ) : null}
+              </span>
+              <span>{hasUser ? 'Mon Espace' : 'Connexion'}</span>
             </button>
           </div>
 
