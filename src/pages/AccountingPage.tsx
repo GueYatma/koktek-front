@@ -337,9 +337,11 @@ const AccountingPage = () => {
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
-                  formatter={(value: number, name: string) =>
-                    [formatPrice(value), name === 'revenue' ? 'CA' : 'Bénéfice net']
-                  }
+                  formatter={(value: number, name: string) => {
+                    const formattedValue = formatPrice(value);
+                    const formattedName = name === 'revenue' ? 'CA' : 'Bénéfice net';
+                    return [formattedValue, formattedName] as any;
+                  }}
                 />
                 <Area
                   type="monotone"

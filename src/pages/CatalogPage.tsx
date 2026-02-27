@@ -6,19 +6,7 @@ import { getAllProducts } from "../lib/directusApi";
 import type { Category, Product } from "../types";
 
 const GENERIC_BRAND = "Générique";
-const BRAND_FILTERS = [
-  "Toutes",
-  "Apple",
-  "Samsung",
-  "Xiaomi",
-  "Redmi",
-  "Huawei",
-  "Honor",
-  "Google Pixel",
-  "Oppo",
-  "Sony",
-  "Autres",
-];
+
 
 const normalizeKey = (value: string) =>
   value
