@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Home, LayoutGrid, MessageCircle, Search, ShoppingBag, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
