@@ -8,53 +8,48 @@ import ProductCard from '../components/ProductCard'
 const BRAND_SHOWCASE = [
   {
     name: 'Apple',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
+    logo: '/logos/apple.svg',
     query: 'Apple',
   },
   {
     name: 'Samsung',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/1024px-Samsung_Logo.svg.png',
+    logo: '/logos/samsung.svg',
     query: 'Samsung',
   },
   {
     name: 'Xiaomi',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg',
+    logo: '/logos/xiaomi.svg',
     query: 'Xiaomi',
   },
   {
     name: 'Redmi',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Redmi_Logo.svg/1024px-Redmi_Logo.svg.png',
+    logo: '/logos/redmi.svg',
     query: 'Redmi',
   },
   {
     name: 'Huawei',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Huawei_Logo.svg/1024px-Huawei_Logo.svg.png',
+    logo: '/logos/huawei.svg',
     query: 'Huawei',
   },
   {
     name: 'Honor',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Honor_Logo_%282020%29.svg/1024px-Honor_Logo_%282020%29.svg.png',
+    logo: '/logos/honor.svg',
     query: 'Honor',
   },
   {
     name: 'Google',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+    logo: '/logos/google.svg',
     query: 'Google',
   },
   {
     name: 'Oppo',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b8/OPPO_Logo.svg',
+    logo: '/logos/oppo.svg',
     query: 'Oppo',
   },
   {
     name: 'Sony',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Sony_logo.svg/1024px-Sony_logo.svg.png',
+    logo: '/logos/sony.svg',
     query: 'Sony',
-  },
-  {
-    name: 'Autres',
-    logo: '',
-    query: 'Autres',
   },
 ]
 
@@ -68,6 +63,7 @@ const HERO_FALLBACKS = [
 const HomePage = () => {
   const { categories, products, loading } = useProducts()
   const [heroTick, setHeroTick] = useState(0)
+  const [rotationTick, setRotationTick] = useState(0)
   const featuredCategories = categories
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>()
@@ -128,19 +124,12 @@ const HomePage = () => {
   }, [products, categoryNameById])
 
   const featuredProducts = useMemo(() => {
-    const picked: typeof products = []
-    const seen = new Set<string>()
-    products.forEach((product) => {
-      if (picked.length >= 6) return
-      const categoryName = resolveCategoryName(product)
-      if (!categoryName) return
-      const key = normalizeCategoryKey(categoryName)
-      if (seen.has(key)) return
-      seen.add(key)
-      picked.push(product)
-    })
-    return picked
-  }, [products])
+    if (products.length === 0) return []
+    const windowSize = 8
+    const offset = (rotationTick * windowSize) % products.length
+    const looped = [...products, ...products]
+    return looped.slice(offset, offset + windowSize)
+  }, [products, rotationTick])
   const heroCandidates = useMemo(() => {
     const fromProducts = products
       .map((product) => resolveImageUrl(product.image_url ?? '', ''))
@@ -156,9 +145,15 @@ const HomePage = () => {
     return () => window.clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setRotationTick((prev) => prev + 1)
+    }, 300_000) // 5 minutes
+    return () => window.clearInterval(interval)
+  }, [])
+
   const heroIndex =
     heroCandidates.length > 0 ? heroTick % heroCandidates.length : 0
-  const hourIndex = useMemo(() => new Date().getHours(), [heroTick])
   const heroImage = heroCandidates[heroIndex] ?? HERO_FALLBACKS[0]
 
   return (
@@ -215,12 +210,12 @@ const HomePage = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {featuredCategories.map((category) => {
+          {featuredCategories.map((category, idx) => {
             const categoryKey = normalizeCategoryKey(category.name)
             const categoryImages = productImagesByCategory.get(categoryKey) ?? []
             const categoryImage =
               categoryImages.length > 0
-                ? categoryImages[hourIndex % categoryImages.length]
+                ? categoryImages[(rotationTick + idx) % categoryImages.length]
                 : heroImage
             return (
               <Link
@@ -252,8 +247,8 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
-        <div className="mb-8">
+      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+        <div className="mb-6">
           <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
             Vos appareils
           </p>
@@ -261,19 +256,19 @@ const HomePage = () => {
             Rechercher par marque
           </h2>
         </div>
-        <div className="grid grid-cols-5 gap-2 sm:gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3 lg:grid-cols-10 lg:gap-3">
           {BRAND_SHOWCASE.map((brand) => (
             <Link
               key={brand.name}
               to={`/catalogue?brand=${encodeURIComponent(brand.query)}`}
-              className="group flex aspect-square items-center justify-center rounded-2xl border border-gray-100 bg-white p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-gray-200 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.12)] sm:rounded-3xl sm:p-4"
+              className="group flex aspect-square items-center justify-center rounded-xl border border-gray-200 bg-white p-2.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.35)] transition-all duration-150 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_14px_32px_-14px_rgba(0,0,0,0.32)] sm:rounded-2xl sm:p-3 lg:rounded-xl"
               title={brand.name}
             >
               {brand.logo ? (
                 <img
                   src={brand.logo}
                   alt={brand.name}
-                  className="h-6 w-auto max-w-[80%] object-contain opacity-70 transition-opacity duration-200 group-hover:opacity-100 sm:h-8"
+                  className="h-7 w-auto max-w-[82%] object-contain opacity-80 transition-opacity duration-150 group-hover:opacity-100 sm:h-8 lg:h-9"
                   loading="lazy"
                   decoding="async"
                 />
@@ -301,6 +296,32 @@ const HomePage = () => {
               )}
             </Link>
           ))}
+          <Link
+            to="/catalogue"
+            className="group hidden aspect-square items-center justify-center rounded-xl border border-gray-200 bg-white p-2.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.35)] transition-all duration-150 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_14px_32px_-14px_rgba(0,0,0,0.32)] sm:rounded-2xl sm:p-3 lg:flex lg:rounded-xl"
+            title="Autres marques"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-7 w-7 text-gray-400 transition-colors group-hover:text-gray-600"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 transition-colors group-hover:text-gray-700">
+                Autres
+              </span>
+            </div>
+          </Link>
         </div>
       </section>
 
