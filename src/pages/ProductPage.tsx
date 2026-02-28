@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronDown, ChevronLeft } from 'lucide-react'
@@ -86,6 +86,27 @@ const ProductPage = () => {
     useState<VariantWithImage | null>(null)
   const [selectedImage, setSelectedImage] = useState('')
   const [selectedShippingIndex, setSelectedShippingIndex] = useState(0)
+
+  const mainImageRef = useRef<HTMLDivElement>(null)
+
+  const handleScrollToImage = () => {
+    if (window.innerWidth < 768 && mainImageRef.current) {
+      setTimeout(() => {
+        const y = mainImageRef.current!.getBoundingClientRect().top + window.scrollY - 70;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }, 50)
+    }
+  }
+
+  const handleVariantSelect = (variant: VariantWithImage) => {
+    setSelectedVariant(variant)
+    handleScrollToImage()
+  }
+
+  const handleImageSelect = (image: string) => {
+    setSelectedImage(image)
+    handleScrollToImage()
+  }
 
   useEffect(() => {
     let isActive = true
@@ -264,14 +285,11 @@ const ProductPage = () => {
         <h1 className="text-2xl font-semibold text-gray-900">
           {product.title}
         </h1>
-        <p className="text-xl font-semibold text-gray-900">
-          {formatPrice(displayPrice)}
-        </p>
       </div>
 
       <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
         <div className="order-1 md:sticky md:top-24 md:self-start">
-          <div className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
+          <div ref={mainImageRef} className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
             <img
               src={displayImage}
               alt={product.title}
@@ -286,7 +304,7 @@ const ProductPage = () => {
                   <button
                     key={image}
                     type="button"
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() => handleImageSelect(image)}
                     className={`aspect-square overflow-hidden rounded-2xl border bg-white transition-shadow ${
                       isActive
                         ? 'border-gray-900 shadow-xl ring-2 ring-gray-900 ring-offset-2 ring-offset-white'
@@ -305,19 +323,20 @@ const ProductPage = () => {
           )}
         </div>
 
-        <div className="order-2 space-y-8">
-          <div className="space-y-4">
-            <div className="hidden space-y-4 md:block">
-              <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-                Collection Koktek
-              </p>
-              <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
-                {product.title}
-              </h1>
-              <p className="text-xl font-semibold text-gray-900 sm:text-2xl md:text-3xl">
-                {formatPrice(displayPrice)}
-              </p>
-            </div>
+        <div className="order-2 flex flex-col gap-8">
+          <div className="order-1 hidden space-y-4 md:block">
+            <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+              Collection Koktek
+            </p>
+            <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
+              {product.title}
+            </h1>
+            <p className="text-xl font-semibold text-gray-900 sm:text-2xl md:text-3xl">
+              {formatPrice(displayPrice)}
+            </p>
+          </div>
+
+          <div className="order-3 md:order-2">
             <div
               className="text-left text-sm leading-relaxed text-gray-600 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_ul]:mb-4 [&_ol]:mb-4 [&_li]:mb-1"
               dangerouslySetInnerHTML={{
@@ -326,7 +345,7 @@ const ProductPage = () => {
             />
           </div>
 
-          <div className="space-y-4 rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="order-2 md:order-3 space-y-4 rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6" id="variant-selector">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
                 Modèle
@@ -345,7 +364,7 @@ const ProductPage = () => {
                     <button
                       key={variant.id}
                       type="button"
-                      onClick={() => setSelectedVariant(variant)}
+                      onClick={() => handleVariantSelect(variant)}
                       aria-pressed={isSelected}
                       aria-label={`Sélectionner le modèle ${label}`}
                       className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
@@ -367,7 +386,7 @@ const ProductPage = () => {
                     const next = variants.find(
                       (variant) => variant.id === event.target.value,
                     )
-                    if (next) setSelectedVariant(next)
+                    if (next) handleVariantSelect(next)
                   }}
                   aria-label="Choisir un modèle"
                   className="h-12 w-full appearance-none rounded-2xl border-2 border-gray-200 bg-white px-4 pr-10 text-sm font-semibold text-gray-900 transition focus:border-black focus:outline-none"
@@ -389,7 +408,11 @@ const ProductPage = () => {
               </p>
             )}
 
-            <div className="space-y-3">
+            <div className="md:hidden mt-6 border-t border-gray-100 pt-5">
+              <p className="text-3xl font-bold text-gray-900">{formatPrice(displayPrice)}</p>
+            </div>
+
+            <div className="space-y-3 mt-5">
               <button
                 type="button"
                 onClick={() => {
@@ -413,7 +436,7 @@ const ProductPage = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="order-4 space-y-3">
             {(expertReview || expertStarsRaw) && (
               <details className="group rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">

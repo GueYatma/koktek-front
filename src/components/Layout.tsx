@@ -170,8 +170,19 @@ const Layout = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    // Disable native scroll restoration to ensure our custom scroll fires correctly
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+    // Immediate scroll
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    // Delayed scroll to catch post-render layout shifts
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }, 50)
+    
     setIsMobileSearchOpen(false)
+    return () => clearTimeout(timer)
   }, [location.pathname])
 
   useEffect(() => {

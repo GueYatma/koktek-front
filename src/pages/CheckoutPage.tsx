@@ -189,8 +189,8 @@ const CheckoutPage = () => {
     const shouldAnimateCash = paymentView === 'choice' && confirmedMethod !== 'card'
 
     if (shouldAnimateCash) {
-      // Trigger immediately at 0s (wait briefly for render to attach classes)
-      resetTimeout = setTimeout(triggerAnimation, 50)
+      // Trigger after a slight delay (0.6s) to allow page insertion and scroll-to-top
+      resetTimeout = setTimeout(triggerAnimation, 600)
       
       // Repeat every 10s
       intervalId = setInterval(triggerAnimation, 10000)
