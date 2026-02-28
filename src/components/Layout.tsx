@@ -4,6 +4,7 @@ import { Home, LayoutGrid, MessageCircle, Search, ShoppingBag, User } from 'luci
 import { useCart } from '../context/CartContext'
 import { useUI } from '../context/UIContext'
 import { useAuth } from '../context/AuthContext'
+import { useProducts } from '../hooks/useProducts'
 import CartDrawer from './CartDrawer'
 import ContactDrawer from './ContactDrawer'
 import AuthModal from './AuthModal'
@@ -71,6 +72,32 @@ const Layout = () => {
   const currentSearch = searchParams.get('search') || '';
   const [searchQuery, setSearchQuery] = useState(currentSearch);
   const searchTimerRef = useRef<number | null>(null);
+
+  const { products } = useProducts();
+
+  const normalizeKey = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const hasVariantMatchOnly = useMemo(() => {
+    if (!searchQuery.trim() || products.length === 0) return false;
+    const normalizedQuery = normalizeKey(searchQuery);
+    const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+    
+    return products.some((product) => {
+      const titleStr = normalizeKey(product.title || "");
+      const titleMatches = tokens.every((t) => titleStr.includes(t));
+      if (titleMatches) return false; // Match is in the title, not JUST variants
+      
+      const variantTexts = (product.product_variants ?? [])
+        .map((v) => [v.option1_name, v.option1_value, v.sku].join(" "))
+        .join(" ");
+      const corpus = normalizeKey(product.title + " " + variantTexts);
+      return tokens.every((t) => corpus.includes(t));
+    });
+  }, [searchQuery, products]);
 
   // Sync searchQuery when URL changes externally (e.g. back button)
   useEffect(() => {
@@ -299,9 +326,9 @@ const Layout = () => {
       </header>
 
       {isMobileSearchOpen ? (
-        <div className="fixed left-4 right-4 z-50 md:hidden bottom-[calc(72px+env(safe-area-inset-bottom))]">
+        <div className="fixed left-6 right-6 z-50 md:hidden bottom-[calc(88px+env(safe-area-inset-bottom))]">
           <div
-            className="relative flex items-center rounded-2xl border border-gray-200 bg-white/90 px-3 py-2 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] backdrop-blur"
+            className="relative flex items-center rounded-2xl border border-gray-200 bg-white/95 px-3 py-2.5 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] backdrop-blur"
           >
             <Search className="h-4 w-4 text-gray-400" />
             <input
@@ -317,11 +344,19 @@ const Layout = () => {
             <button
               type="button"
               onClick={() => setIsMobileSearchOpen(false)}
-              className="ml-2 rounded-full border border-gray-200 px-2 py-1 text-[10px] font-semibold text-gray-500 transition hover:border-gray-300 hover:text-gray-900"
+              className="ml-2 rounded-full border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-600 shadow-sm transition hover:bg-gray-100 hover:text-gray-900 active:scale-95"
             >
               Fermer
             </button>
           </div>
+          {hasVariantMatchOnly && (
+            <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-300 rounded-xl bg-blue-50/95 p-3.5 text-xs text-blue-900 shadow-xl backdrop-blur-md border border-blue-200/50">
+              <span className="font-bold mb-1 flex items-center gap-1.5"><Search className="h-3 w-3" /> Info recherche</span>
+              <p className="opacity-90">
+                Votre recherche correspond à des variantes de ces produits. Ouvrez un produit pour voir les modèles compatibles.
+              </p>
+            </div>
+          )}
         </div>
       ) : null}
 
