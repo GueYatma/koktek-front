@@ -88,14 +88,33 @@ const ProductPage = () => {
   const [selectedShippingIndex, setSelectedShippingIndex] = useState(0)
 
   const mainImageRef = useRef<HTMLDivElement>(null)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleScrollToImage = () => {
-    if (window.innerWidth < 768 && mainImageRef.current) {
-      setTimeout(() => {
-        const y = mainImageRef.current!.getBoundingClientRect().top + window.scrollY - 70;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }, 50)
+    if (window.innerWidth >= 768 || !mainImageRef.current) return
+
+    // Debounce to prevent scroll spam jank
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
     }
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      // 1. Dynamic offset based on the actual header
+      const header = document.querySelector('header')
+      const headerHeight = header ? header.getBoundingClientRect().height : 60
+      // safe-area-inset-top padding + a small visual gap
+      const offset = headerHeight + 16
+
+      const y = mainImageRef.current!.getBoundingClientRect().top + window.scrollY - offset
+
+      // 2. Accessibility: check prefers-reduced-motion
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+      window.scrollTo({
+        top: y,
+        behavior: prefersReducedMotion ? 'instant' : 'smooth',
+      })
+    }, 150) // 150ms debounce
   }
 
   const handleVariantSelect = (variant: VariantWithImage) => {
