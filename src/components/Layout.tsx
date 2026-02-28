@@ -372,7 +372,7 @@ const Layout = () => {
         </div>
       </nav>
 
-      <main className="pt-14 pb-24 md:pb-0">
+      <main className="pt-14 pb-1 md:pb-0">
         {isBuildToastVisible && (
           <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div

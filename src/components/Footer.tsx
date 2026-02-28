@@ -13,19 +13,23 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
   const footerImage = '/footer-stand.jpg'
 
   return (
-    <footer className="mt-6 border-t border-gray-200 bg-gray-100 pb-24 md:pb-0">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <footer className="mt-0 border-t border-gray-200 bg-gray-100 pb-24 md:pb-0">
+      <div className="mx-auto max-w-6xl px-4 pt-1 pb-2 sm:px-6">
         <div
-          className="relative min-h-[150px] overflow-hidden rounded-3xl bg-center bg-cover p-5"
-          style={{ backgroundImage: `url(${footerImage})` }}
-        >
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="relative z-10 text-left">
-            <p className="text-sm font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
-              KOKTEK - Accessoires pour toutes les marques. Commandez en ligne,
-              payez en espèces et retirez sur nos stands en Provence.
-            </p>
-          </div>
+          className="relative min-h-[205px] overflow-hidden rounded-3xl bg-cover bg-top"
+          style={{
+            backgroundImage: `url(${footerImage})`,
+            backgroundPosition: 'center 18%',
+          }}
+        />
+
+        <div className="mt-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-900 shadow-sm sm:text-sm">
+          <ul className="list-disc space-y-1 leading-snug pl-5">
+            <li>Commandez sur le site.</li>
+            <li>Payez en espèces au stand.</li>
+            <li>Recevez votre article à domicile.</li>
+            <li>Retour et remboursement faciles au stand.</li>
+          </ul>
         </div>
 
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs font-semibold text-gray-700">
@@ -56,10 +60,10 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
           </a>
         </div>
 
-        <div className="mt-5 grid gap-6 sm:grid-cols-3">
-          <div className="text-sm text-gray-600">
-            <p className="font-semibold text-gray-900">Boutique</p>
-            <div className="mt-2 flex flex-col gap-1.5">
+        <div className="mt-4 grid grid-cols-3 gap-3 text-xs font-semibold text-gray-600 sm:text-sm sm:gap-4">
+          <div>
+            <p className="text-gray-900">Boutique</p>
+            <div className="mt-2 flex flex-col gap-1">
               <Link to="/" className="hover:text-gray-900">
                 Accueil
               </Link>
@@ -72,9 +76,9 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600">
-            <p className="font-semibold text-gray-900">Service Client</p>
-            <div className="mt-2 flex flex-col gap-1.5">
+          <div>
+            <p className="text-gray-900">Service Client</p>
+            <div className="mt-2 flex flex-col gap-1">
               <button
                 type="button"
                 onClick={openContact}
@@ -88,9 +92,9 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600">
-            <p className="font-semibold text-gray-900">Informations légales</p>
-            <div className="mt-2 flex flex-col gap-1.5">
+          <div>
+            <p className="text-gray-900">Informations légales</p>
+            <div className="mt-2 flex flex-col gap-1">
               <Link to="/a-propos" className="hover:text-gray-900">
                 À propos de nous
               </Link>
