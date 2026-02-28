@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { X } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
-import type { Category, Product } from "../types";
+import type { Category } from "../types";
 
 const GENERIC_BRAND = "Générique";
 
