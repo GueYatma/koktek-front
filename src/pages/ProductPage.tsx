@@ -12,59 +12,6 @@ type VariantWithImage = Variant & {
   image_url?: string
 }
 
-const MODEL_KEYWORDS = [
-  'iphone',
-  'samsung',
-  'pixel',
-  'xiaomi',
-  'redmi',
-  'huawei',
-  'honor',
-  'oppo',
-  'sony',
-]
-
-const cleanVariantName = (variantName: string, productTitle?: string) => {
-  const raw = variantName.trim()
-  if (!raw) return ''
-
-  const lower = raw.toLowerCase()
-  let matchIndex = -1
-
-  for (const keyword of MODEL_KEYWORDS) {
-    const idx = lower.indexOf(keyword)
-    if (idx !== -1 && (matchIndex === -1 || idx < matchIndex)) {
-      matchIndex = idx
-    }
-  }
-
-  let cleaned =
-    matchIndex !== -1
-      ? raw.slice(matchIndex).trim()
-      : raw
-
-  if (matchIndex === -1 && productTitle) {
-    const title = productTitle.trim()
-    if (title) {
-      const titleLower = title.toLowerCase()
-      if (lower.startsWith(titleLower)) {
-        cleaned = raw.slice(title.length).trim()
-        cleaned = cleaned.replace(/^[-–—:|]+/, '').trim()
-      }
-    }
-  }
-
-  if (!cleaned) return raw
-
-  cleaned = cleaned
-    .replace(/([a-zA-Z])(\d)/g, '$1 $2')
-    .replace(/(\d)([a-zA-Z])/g, '$1 $2')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  return cleaned || raw
-}
 
 const normalizeKey = (value: string) =>
   value
@@ -210,9 +157,7 @@ const ProductPage = () => {
 
   const displayPrice = product?.prix_calcule ?? product?.retail_price ?? 0
   const selectedVariantLabel =
-    cleanVariantName(selectedVariant?.option1_value ?? '', product?.title) ||
-    selectedVariant?.option1_value ||
-    'Standard'
+    selectedVariant?.option1_value || 'Standard'
   const expertStarsRaw = product?.expert_stars
   const expertReview = product?.expert_review?.trim() ?? ''
   const expertStarsScore = useMemo(() => {
@@ -264,11 +209,6 @@ const ProductPage = () => {
     () => product?.shipping_options?.list ?? [],
     [product?.shipping_options?.list],
   )
-  const shippingLabels = [
-    'Option 1 - Eco',
-    'Option 2 - Standard',
-    'Option 3 - Express',
-  ]
   const sanitizedDescription = useMemo(
     () => DOMPurify.sanitize(product?.description ?? ''),
     [product?.description],
@@ -392,10 +332,7 @@ const ProductPage = () => {
                 Modèle
               </p>
               <p className="mt-2 text-lg font-semibold text-gray-900">
-                {cleanVariantName(
-                  selectedVariant?.option1_value ?? '',
-                  product.title,
-                ) || 'Standard'}
+                {selectedVariant?.option1_value || 'Standard'}
               </p>
             </div>
 
@@ -403,9 +340,7 @@ const ProductPage = () => {
               <div className="flex flex-wrap gap-2">
                 {variants.map((variant) => {
                   const isSelected = variant.id === selectedVariant?.id
-                  const label =
-                    cleanVariantName(variant.option1_value ?? '', product.title) ||
-                    variant.option1_value
+                  const label = variant.option1_value || variant.sku
                   return (
                     <button
                       key={variant.id}
@@ -438,9 +373,7 @@ const ProductPage = () => {
                   className="h-12 w-full appearance-none rounded-2xl border-2 border-gray-200 bg-white px-4 pr-10 text-sm font-semibold text-gray-900 transition focus:border-black focus:outline-none"
                 >
                   {variants.map((variant) => {
-                    const label =
-                      cleanVariantName(variant.option1_value ?? '', product.title) ||
-                      variant.option1_value
+                    const label = variant.option1_value || variant.sku
                     return (
                       <option key={variant.id} value={variant.id}>
                         {label}
@@ -526,7 +459,8 @@ const ProductPage = () => {
                     {shippingOptions.slice(0, 3).map((option, index) => {
                       const isSelected = selectedShippingIndex === index
                       const priceValue = Number(option.price ?? 0)
-                      const daysValue = Number(option.days ?? 0)
+                      const daysValue = option.days // string like "8-15j" or number
+                      const optionName = option.name ?? `Option ${index + 1}`
                       return (
                         <button
                           key={`${index}-${option.name ?? 'shipping'}`}
@@ -552,15 +486,15 @@ const ProductPage = () => {
                             </span>
                             <div>
                               <p className="text-sm font-semibold">
-                                {shippingLabels[index] ?? `Option ${index + 1}`}
+                                {optionName}
                               </p>
                               <p
                                 className={`mt-1 text-xs ${
                                   isSelected ? 'text-gray-200' : 'text-gray-500'
                                 }`}
                               >
-                                {daysValue > 0
-                                  ? `Livraison en ${daysValue} jours`
+                                {daysValue != null && String(daysValue).trim().length > 0
+                                  ? `Livraison en ${daysValue}`
                                   : 'Délai communiqué après validation'}
                               </p>
                             </div>

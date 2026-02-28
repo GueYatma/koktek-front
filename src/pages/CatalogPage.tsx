@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { X } from "lucide-react";
 import ProductCard from "../components/ProductCard";
-import { getAllProducts } from "../lib/directusApi";
+import { useProducts } from "../hooks/useProducts";
 import type { Category, Product } from "../types";
 
 const GENERIC_BRAND = "Générique";
@@ -18,7 +18,7 @@ const normalizeKey = (value: string) =>
     .trim();
 
 const CatalogPage = () => {
-  const [loading, setLoading] = useState(true);
+  const { products: allProducts, categories: rawCategories, loading } = useProducts();
 
   // État du filtre
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -26,6 +26,8 @@ const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const navigate = useNavigate();
+  const actionButtonClass =
+    "inline-flex h-9 w-[92px] items-center justify-center whitespace-nowrap rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm transition hover:border-gray-900 hover:text-gray-900";
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -69,71 +71,42 @@ const CatalogPage = () => {
     return "";
   };
 
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  // Sort categories with explicit order
+  const allCategories = useMemo(() => {
+    const sortOrder = [
+      "Coques & Protections",
+      "Charge & Énergie",
+      "Audio & Son",
+      "Audio",
+      "Support & Fixations",
+      "Support & Fixation",
+      "Décoration & Goodies",
+      "Autres",
+      "Autre"
+    ];
+
+    return [...rawCategories].sort((a, b) => {
+      const indexA = sortOrder.indexOf(a.name);
+      const indexB = sortOrder.indexOf(b.name);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [rawCategories]);
 
   const resolveCategorySelection = useCallback(
     (value: string | null) => {
       if (!value) return "all";
       const normalized = normalizeKey(value);
-      const match = allCategories.find((category) => { // Changed categories to allCategories
+      const match = allCategories.find((category) => {
         const key = normalizeKey(category.slug || category.name);
         return key === normalized || category.id === value;
       });
       return match?.id ?? "all";
     },
-    [allCategories], // Changed categories to allCategories
+    [allCategories],
   );
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const payload = await getAllProducts();
-        if (!isMounted) return;
-        setAllProducts(payload.products);
-        
-        // Define explicit sort order
-        const sortOrder = [
-          "Coques & Protections",
-          "Charge & Énergie",
-          "Audio & Son",
-          "Audio",
-          "Support & Fixations",
-          "Support & Fixation",
-          "Décoration & Goodies",
-          "Autres",
-          "Autre"
-        ];
-        
-        const sortedCategories = [...payload.categories].sort((a, b) => {
-          const indexA = sortOrder.indexOf(a.name);
-          const indexB = sortOrder.indexOf(b.name);
-          // If both are in the array, sort by array index
-          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-          // If only one is in the array, it comes first
-          if (indexA !== -1) return -1;
-          if (indexB !== -1) return 1;
-          // If neither is in the array, sort alphabetically
-          return a.name.localeCompare(b.name);
-        });
-        
-        setAllCategories(sortedCategories);
-      } catch (error) {
-        console.error("Erreur lors du chargement du catalogue", error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    void loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Sync URL -> State
   useEffect(() => {
@@ -249,22 +222,36 @@ const CatalogPage = () => {
 
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-2 sm:px-6 sm:pb-28 sm:pt-6">
-      <div className="static grid grid-cols-3 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="w-fit rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900 md:hidden"
-        >
-          ← Retour
-        </button>
-        <p className="text-center text-[11px] uppercase tracking-[0.35em] text-gray-500 md:hidden">
-          Catalogue
-        </p>
-        <div className="md:hidden" />
+    <div className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6 sm:pb-28 md:pt-6">
+      <div className="md:hidden">
+        <div className="fixed left-0 right-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-30 border-b border-gray-200 bg-gray-50/95 shadow-sm backdrop-blur">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className={actionButtonClass}
+              >
+                ← Retour
+              </button>
+              <span className="inline-flex h-8 items-center justify-center rounded-md bg-gray-900 px-2.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
+                CATALOGUE
+              </span>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen(true)}
+                  className={actionButtonClass}
+                >
+                  Catégorie
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="static mt-2 flex items-center justify-between gap-3">
+      <div className="hidden md:flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
           Accessoires premium
         </h1>

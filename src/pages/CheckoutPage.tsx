@@ -68,7 +68,7 @@ type BillingFormState = {
 const CheckoutPage = () => {
   const navigate = useNavigate()
   const { openProfile } = useUI()
-  const { items, total, shippingTotal, itemCount, clearCart, cartId, setCartId } = useCart()
+  const { items, total, subtotal, shippingTotal, itemCount, clearCart, cartId, setCartId } = useCart()
   const { user, login, updateProfile } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPayingCash, setIsPayingCash] = useState(false)
@@ -76,7 +76,8 @@ const CheckoutPage = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [billingDifferent, setBillingDifferent] = useState(false)
-  const [hoveredBtn, setHoveredBtn] = useState<'card' | 'cash' | null>(null)
+  const [cashPulse, setCashPulse] = useState(false)
+  const [cashHovered, setCashHovered] = useState(false)
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>('form')
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
@@ -166,6 +167,38 @@ const CheckoutPage = () => {
     }
   }, [clearCart])
 
+  // Micro-animation for the cash button — subtle, starts after ~2.5s, repeats every 30s until card is chosen
+  useEffect(() => {
+    let startTimeout: ReturnType<typeof setTimeout> | undefined
+    let intervalId: ReturnType<typeof setInterval> | undefined
+    let resetTimeout: ReturnType<typeof setTimeout> | undefined
+
+    const triggerPulse = () => {
+      setCashPulse(true)
+      resetTimeout = setTimeout(() => setCashPulse(false), 1000)
+    }
+
+    const shouldAnimateCash = paymentView === 'choice' && confirmedMethod !== 'card'
+
+    if (shouldAnimateCash) {
+      startTimeout = setTimeout(() => {
+        triggerPulse()
+        intervalId = setInterval(triggerPulse, 30000)
+      }, 2500)
+    } else {
+      setCashPulse(false)
+    }
+
+    return () => {
+      if (startTimeout) clearTimeout(startTimeout)
+      if (intervalId) clearInterval(intervalId)
+      if (resetTimeout) clearTimeout(resetTimeout)
+    }
+  }, [paymentView, confirmedMethod])
+
+  const paymentButtonBase =
+    'flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm transition-all duration-300 ease-out transform focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:border-amber-200 hover:bg-amber-50/80'
+
   const resolveCountryCode = (value: string) => {
     const normalized = value.trim()
     if (!normalized) return normalized
@@ -182,6 +215,7 @@ const CheckoutPage = () => {
       return;
     }
     
+    setPaymentView('card')
     setIsPayingOnline(true)
     setError(null)
 
@@ -207,10 +241,10 @@ const CheckoutPage = () => {
       }
 
       setClientSecret(data.client_secret)
-      setPaymentView('card')
     } catch (e: any) {
       console.error('Erreur Stripe webhook', e)
       setError(e.message || 'Une erreur est survenue lors de la connexion au serveur de paiement.')
+      setPaymentView('choice')
     } finally {
       setIsPayingOnline(false)
     }
@@ -939,6 +973,12 @@ const CheckoutPage = () => {
               <section className="space-y-4">
                 {items.map((item) => {
                   const variantValue = resolveVariantValue(item.variant)
+                  const unitPrice = item.product.prix_calcule ?? item.product.retail_price
+                  const lineTotal = unitPrice * item.quantity
+                  const shippingName = item.shippingOption?.name
+                  const shippingDays = item.shippingOption?.days
+                  const shippingPrice = item.shippingOption?.price
+                  const weightGrams = item.variant.weight_grams
                   return (
                   <div
                     key={item.variant.id}
@@ -951,17 +991,34 @@ const CheckoutPage = () => {
                     />
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="space-y-0.5">
                           <p className="text-sm font-semibold text-gray-900">
                             {item.product.title}
                           </p>
                           <p className="text-xs text-gray-500">
                             {variantValue || '—'}
                           </p>
+                          {weightGrams != null && weightGrams > 0 && (
+                            <p className="text-xs text-gray-400">Poids : {weightGrams}g</p>
+                          )}
+                          {shippingName && (
+                            <p className="text-[10px] text-indigo-600 uppercase tracking-wider font-semibold">
+                              {shippingName}
+                              {shippingDays != null && String(shippingDays).trim().length > 0 ? ` — ${shippingDays}` : ''}
+                              {shippingPrice != null ? ` · ${Number(shippingPrice) > 0 ? formatPrice(Number(shippingPrice)) : 'Inclus'}` : ''}
+                            </p>
+                          )}
                         </div>
-                        <span className="font-display text-sm font-bold text-gray-900">
-                          {formatPrice((item.product.prix_calcule ?? item.product.retail_price) * item.quantity)}
-                        </span>
+                        <div className="text-right">
+                          {item.quantity > 1 && (
+                            <p className="text-[10px] text-gray-400">
+                              {formatPrice(unitPrice)} × {item.quantity}
+                            </p>
+                          )}
+                          <span className="text-sm font-bold text-gray-900">
+                            {formatPrice(lineTotal)}
+                          </span>
+                        </div>
                       </div>
                       <p className="mt-2 text-xs text-gray-500">
                         Quantité : {item.quantity}
@@ -977,7 +1034,7 @@ const CheckoutPage = () => {
                 <h2 className="text-lg font-semibold text-gray-900">
                   Données enregistrées
                 </h2>
-                {paymentView === 'choice' ? (
+                {!clientSecret ? (
                   <>
                     <p className="mt-2 text-sm text-gray-600">
                       Choisissez maintenant votre mode de paiement pour finaliser la commande.
@@ -985,40 +1042,40 @@ const CheckoutPage = () => {
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                       <button
                         type="button"
-                        onClick={() => {
-                          setPaymentView('card')
-                        }}
-                        onMouseEnter={() => setHoveredBtn('card')}
-                        onMouseLeave={() => setHoveredBtn(null)}
-                        className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-300 transform ${
-                          hoveredBtn === 'card'
-                            ? 'scale-105 shadow-xl bg-indigo-600 text-white border-transparent'
-                            : hoveredBtn === 'cash'
-                              ? 'opacity-50 bg-gray-100 text-gray-400 border-gray-200 scale-95'
-                              : 'bg-indigo-600 text-white border-transparent'
-                        }`}
+                        onClick={handlePaymentOnline}
+                        disabled={isPayingOnline || !N8N_STRIPE_INTENT_URL}
+                        className={paymentButtonBase}
                       >
-                        Payer par carte bancaire
+                        {isPayingOnline ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Préparation...
+                          </div>
+                        ) : (
+                          'Payer par carte bancaire'
+                        )}
                       </button>
                       <button
                         type="button"
                         onClick={() => setIsCashConfirmOpen(true)}
-                        onMouseEnter={() => setHoveredBtn('cash')}
-                        onMouseLeave={() => setHoveredBtn(null)}
-                        disabled={isPayingCash}
-                        className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-300 transform disabled:cursor-not-allowed disabled:opacity-60 ${
-                          hoveredBtn === 'cash'
-                            ? 'scale-105 shadow-xl bg-indigo-600 text-white border-transparent'
-                            : hoveredBtn === 'card'
-                              ? 'opacity-50 bg-gray-100 text-gray-400 border-gray-200 scale-95'
-                              : 'bg-white text-gray-900 border-gray-200'
-                        }`}
+                        onMouseEnter={() => { setCashHovered(true); setCashPulse(false) }}
+                        onMouseLeave={() => setCashHovered(false)}
+                        disabled={isPayingCash || isPayingOnline}
+                        className={`${paymentButtonBase} ${cashPulse && !cashHovered ? 'animate-cash-pulse' : ''}`}
                       >
                         {isPayingCash ? 'Validation...' : 'Payer en espèces'}
                       </button>
                     </div>
+                    {!N8N_STRIPE_INTENT_URL && (
+                      <p className="mt-3 text-xs text-red-500 text-center">
+                        La clé du serveur de paiement n'est pas configurée dans .env
+                      </p>
+                    )}
                   </>
-                ) : clientSecret ? (
+                ) : (
                   <div className="mt-4">
                     <Elements options={{ clientSecret, appearance: { theme: 'stripe' } }} stripe={stripePromise}>
                       <StripeCheckoutForm
@@ -1037,51 +1094,18 @@ const CheckoutPage = () => {
                       />
                     </Elements>
                   </div>
-                ) : (
-                  <div className="mt-4 space-y-4">
-                    <p className="text-sm text-gray-600">
-                      Renseignez vos informations de carte pour régler votre commande en toute sécurité.
-                    </p>
-                    <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/60 px-4 py-4 text-sm text-indigo-700">
-                      Cliquez sur le bouton ci-dessous pour ouvrir le portail de paiement sécurisé Stripe.
-                    </div>
-                    <button
-                      type="button"
-                      disabled={isPayingOnline || !N8N_STRIPE_INTENT_URL}
-                      onClick={handlePaymentOnline}
-                      className="w-full flex justify-center items-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                      {isPayingOnline ? (
-                         <div className="flex items-center gap-2">
-                           <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                           </svg>
-                           Préparation...
-                         </div>
-                       ) : (
-                         'Payer par carte bancaire'
-                       )}
-                    </button>
-                    {!N8N_STRIPE_INTENT_URL && (
-                      <p className="text-xs text-red-500 text-center">
-                        La clé du serveur de paiement n'est pas configurée dans .env
-                      </p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentView('choice')}
-                      className="w-full text-xs text-gray-400 underline underline-offset-4 transition hover:text-gray-700"
-                    >
-                      Revenir au choix du paiement
-                    </button>
-                  </div>
                 )}
               </div>
 
               <section className="space-y-4">
                 {items.map((item) => {
                   const variantValue = resolveVariantValue(item.variant)
+                  const unitPrice = item.product.prix_calcule ?? item.product.retail_price
+                  const lineTotal = unitPrice * item.quantity
+                  const shippingName = item.shippingOption?.name
+                  const shippingDays = item.shippingOption?.days
+                  const shippingPrice = item.shippingOption?.price
+                  const weightGrams = item.variant.weight_grams
                   return (
                   <div
                     key={item.variant.id}
@@ -1094,17 +1118,34 @@ const CheckoutPage = () => {
                     />
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="space-y-0.5">
                           <p className="text-sm font-semibold text-gray-900">
                             {item.product.title}
                           </p>
                           <p className="text-xs text-gray-500">
                             {variantValue || '—'}
                           </p>
+                          {weightGrams != null && weightGrams > 0 && (
+                            <p className="text-xs text-gray-400">Poids : {weightGrams}g</p>
+                          )}
+                          {shippingName && (
+                            <p className="text-[10px] text-indigo-600 uppercase tracking-wider font-semibold">
+                              {shippingName}
+                              {shippingDays != null && String(shippingDays).trim().length > 0 ? ` — ${shippingDays}` : ''}
+                              {shippingPrice != null ? ` · ${Number(shippingPrice) > 0 ? formatPrice(Number(shippingPrice)) : 'Inclus'}` : ''}
+                            </p>
+                          )}
                         </div>
-                        <span className="font-display text-sm font-bold text-gray-900">
-                          {formatPrice((item.product.prix_calcule ?? item.product.retail_price) * item.quantity)}
-                        </span>
+                        <div className="text-right">
+                          {item.quantity > 1 && (
+                            <p className="text-[10px] text-gray-400">
+                              {formatPrice(unitPrice)} × {item.quantity}
+                            </p>
+                          )}
+                          <span className="text-sm font-bold text-gray-900">
+                            {formatPrice(lineTotal)}
+                          </span>
+                        </div>
                       </div>
                       <p className="mt-2 text-xs text-gray-500">
                         Quantité : {item.quantity}
@@ -1116,53 +1157,76 @@ const CheckoutPage = () => {
             </div>
           ) : null}
 
-            <div className="h-fit rounded-2xl border border-gray-200 bg-gray-50 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Récapitulatif
-              </h2>
-              <div className="mt-4 space-y-2 text-sm text-gray-600">
-                <div className="flex items-center justify-between">
-                  <span>Sous-total</span>
-                  <span className="font-display font-medium text-gray-900">
-                    {formatPrice(total - shippingTotal)}
-                  </span>
+            <div className="flex flex-col h-fit gap-4">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Récapitulatif
+                </h2>
+                <div className="mt-4 space-y-2 text-sm text-gray-600">
+                  <div className="flex items-center justify-between">
+                    <span>Sous-total articles</span>
+                    <span className="font-semibold text-gray-900">
+                      {formatPrice(subtotal)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Frais de livraison</span>
+                    <span className="font-semibold text-gray-900">
+                      {shippingTotal > 0 ? formatPrice(shippingTotal) : items.length === 0 ? '—' : 'Inclus'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>TVA</span>
+                    <span className="font-semibold text-gray-900">0 %</span>
+                  </div>
+                  <div className="flex items-center justify-between font-bold text-gray-900 border-t border-gray-200 pt-3 mt-3">
+                    <span>Total estimé</span>
+                    <span className="text-lg">
+                      {formatPrice(total)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>Livraison</span>
-                  <span className="font-display font-medium text-gray-900">
-                    {shippingTotal > 0 ? formatPrice(shippingTotal) : 'Offerte'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between font-semibold text-gray-900">
-                  <span>Total</span>
-                  <span className="font-display font-bold text-gray-900">
-                    {formatPrice(total)}
-                  </span>
-                </div>
+
+                {error ? (
+                  <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    {error}
+                  </p>
+                ) : null}
+
+                {checkoutStep === 'form' ? (
+                  <button
+                    type="submit"
+                    form="checkout-form"
+                    disabled={isSubmitting}
+                    className="mt-6 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSubmitting
+                      ? 'Enregistrement...'
+                      : 'Continuer vers le paiement'}
+                  </button>
+                ) : null}
+
+                <p className="mt-3 text-xs text-gray-500">
+                  🔒 Étape suivante : Choix du paiement sécurisé.
+                </p>
               </div>
 
-              {error ? (
-                <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {error}
-                </p>
-              ) : null}
-
-              {checkoutStep === 'form' ? (
-                <button
-                  type="submit"
-                  form="checkout-form"
-                  disabled={isSubmitting}
-                  className="mt-6 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              <div className="flex flex-col gap-3">
+                <Link
+                  to="/?cart=open"
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200/80 bg-gray-50/60 px-4 py-3.5 text-sm font-semibold text-gray-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/80 hover:text-amber-900 hover:shadow-[0_8px_16px_-6px_rgba(245,158,11,0.15)]"
                 >
-                  {isSubmitting
-                    ? 'Enregistrement...'
-                    : 'Continuer vers le paiement'}
-                </button>
-              ) : null}
-
-              <p className="mt-3 text-xs text-gray-500">
-                🔒 Étape suivante : Choix du paiement sécurisé.
-              </p>
+                  <span className="transition-transform duration-300 ease-out group-hover:-translate-x-1">←</span>
+                  <span>Retour au panier</span>
+                </Link>
+                <Link
+                  to="/catalogue"
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200/80 bg-gray-50/60 px-4 py-3.5 text-sm font-semibold text-gray-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/80 hover:text-amber-900 hover:shadow-[0_8px_16px_-6px_rgba(245,158,11,0.15)]"
+                >
+                  <span className="transition-transform duration-300 ease-out group-hover:-translate-x-1">←</span>
+                  <span>Retour au catalogue</span>
+                </Link>
+              </div>
             </div>
           </div>
         )

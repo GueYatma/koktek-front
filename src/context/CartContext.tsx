@@ -17,6 +17,7 @@ type CartContextValue = {
   items: CartItem[]
   cartId: string | null
   itemCount: number
+  subtotal: number
   total: number
   shippingTotal: number
   addItem: (product: Product, variant: Variant, quantity?: number, shippingOption?: ShippingOption) => void
@@ -139,25 +140,49 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     [items]
   )
 
+
   const shippingTotal = useMemo(() => {
     if (items.length === 0) return 0;
-    if (subtotal >= 50) return 0; // Règle 1 : Franco de port
 
-    let maxShippingPrice = 0;
+    // ── Seuil de séparation Léger / Lourd ─────────────────────────────
+    const WEIGHT_THRESHOLD_G = 70;
+
+    // Développe chaque ligne panier en unités individuelles
+    // (qty=2 d'une coque = 2 entrées dans le tableau de calcul)
+    const units: { shippingPrice: number; weight: number }[] = [];
     items.forEach((item) => {
-      const itemShipping = Number(item.shippingOption?.price) || 0;
-      if (itemShipping > maxShippingPrice) {
-        maxShippingPrice = itemShipping;
+      const shippingPrice = Number(item.shippingOption?.price) || 0;
+      const weight = item.variant.weight_grams ?? 0;
+      for (let i = 0; i < item.quantity; i++) {
+        units.push({ shippingPrice, weight });
       }
     });
 
-    // Règle 2 & 3 : Forfait max de 1 à 3 articles, puis +1€ par article supplémentaire
-    if (itemCount <= 3) {
-      return maxShippingPrice;
-    } else {
-      return maxShippingPrice + (itemCount - 3);
-    }
-  }, [items, subtotal, itemCount]);
+    // ── Groupe A : Léger (≤ 70g) ──────────────────────────────────────
+    const groupA = units
+      .filter((u) => u.weight <= WEIGHT_THRESHOLD_G)
+      .sort((a, b) => b.shippingPrice - a.shippingPrice); // tri décroissant
+
+    let shippingA = 0;
+    groupA.forEach((unit, index) => {
+      if (index === 0) {
+        shippingA += unit.shippingPrice; // 1er : 100%
+      } else if (index === 1) {
+        shippingA += 0;                  // 2ème : offert
+      } else {
+        shippingA += 1;                  // 3ème et + : +1 € chacun
+      }
+    });
+
+    // ── Groupe B : Lourd (> 70g) ──────────────────────────────────────
+    // Tolérance zéro : somme de chaque frais réel, sans remise.
+    const shippingB = units
+      .filter((u) => u.weight > WEIGHT_THRESHOLD_G)
+      .reduce((sum, u) => sum + u.shippingPrice, 0);
+
+    return shippingA + shippingB;
+  }, [items]);
+
 
   const total = useMemo(
     () => subtotal + shippingTotal,
@@ -169,6 +194,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       items,
       cartId,
       itemCount,
+      subtotal,
       total,
       shippingTotal,
       addItem,
@@ -181,6 +207,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       items,
       cartId,
       itemCount,
+      subtotal,
       total,
       shippingTotal,
       addItem,

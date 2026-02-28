@@ -8,7 +8,7 @@ export type Category = {
 export type ShippingOption = {
   name?: string;
   price?: number;
-  days?: number;
+  days?: string | number;
 };
 
 export type ShippingOptions = {
@@ -52,6 +52,7 @@ export type Variant = {
   prix_calcule?: number;
   stock_quantity: number;
   cj_vid: string;
+  weight_grams?: number;
 };
 
 export type CartItem = {

@@ -11,7 +11,7 @@ type CartDrawerProps = {
 }
 
 const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
-  const { items, total, shippingTotal, updateQuantity, removeItem, clearCart } = useCart()
+  const { items, subtotal, total, shippingTotal, updateQuantity, removeItem, clearCart } = useCart()
   const isCheckoutDisabled = items.length === 0
 
   return (
@@ -33,6 +33,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         }`}
         onClick={(event) => event.stopPropagation()}
       >
+        {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
@@ -49,6 +50,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
           </button>
         </div>
 
+        {/* Items */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {items.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
@@ -67,93 +69,138 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             <div className="space-y-5">
               {items.map((item) => {
                 const variantValue = resolveVariantValue(item.variant)
+                const unitPrice = item.product.prix_calcule ?? item.product.retail_price
+                const lineTotal = unitPrice * item.quantity
+                const shippingPrice = item.shippingOption?.price
+                const shippingName = item.shippingOption?.name
+                const shippingDays = item.shippingOption?.days
+                const weightGrams = item.variant.weight_grams
+
                 return (
-                <div
-                  key={item.variant.id}
-                  className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-4"
-                >
-                  <img
-                    src={resolveImageUrl(item.product.image_url)}
-                    alt={item.product.title}
-                    className="h-20 w-20 rounded-xl object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {item.product.title}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {item.variant.option1_name} : {variantValue || '—'}
-                        </p>
-                        {item.shippingOption?.name && (
-                          <p className="text-[10px] text-indigo-600 mt-1 uppercase tracking-wider font-semibold">
-                            Livraison : {item.shippingOption.name}
+                  <div
+                    key={item.variant.id}
+                    className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-4"
+                  >
+                    <img
+                      src={resolveImageUrl(item.product.image_url)}
+                      alt={item.product.title}
+                      className="h-20 w-20 rounded-xl object-cover"
+                    />
+                    <div className="flex-1">
+                      {/* Title row */}
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {item.product.title}
                           </p>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.variant.id)}
-                        className="text-xs text-gray-400 transition hover:text-gray-900"
-                      >
-                        Retirer
-                      </button>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                          <p className="text-xs text-gray-500">
+                            {item.variant.option1_name} : {variantValue || '—'}
+                          </p>
+                          {/* Weight */}
+                          {weightGrams != null && weightGrams > 0 && (
+                            <p className="text-xs text-gray-400">
+                              Poids : {weightGrams}g
+                            </p>
+                          )}
+                          {/* Per-item shipping detail */}
+                          {shippingName && (
+                            <p className="text-[10px] text-indigo-600 uppercase tracking-wider font-semibold">
+                              {shippingName}
+                              {shippingDays != null && String(shippingDays).trim().length > 0
+                                ? ` — ${shippingDays}`
+                                : ''}
+                              {shippingPrice != null
+                                ? ` · ${shippingPrice > 0 ? formatPrice(shippingPrice) : 'Livraison incluse'}`
+                                : ''}
+                            </p>
+                          )}
+                        </div>
                         <button
                           type="button"
-                          onClick={() =>
-                            updateQuantity(item.variant.id, item.quantity - 1)
-                          }
-                          className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
+                          onClick={() => removeItem(item.variant.id)}
+                          className="text-xs text-gray-400 transition hover:text-gray-900"
                         >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-6 text-center text-sm font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQuantity(item.variant.id, item.quantity + 1)
-                          }
-                          className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
-                        >
-                          <Plus className="h-4 w-4" />
+                          Retirer
                         </button>
                       </div>
-                      <span className="font-display text-sm font-bold text-gray-900">
-                        {formatPrice((item.product.prix_calcule ?? item.product.retail_price) * item.quantity)}
-                      </span>
+
+                      {/* Qty + price breakdown */}
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateQuantity(item.variant.id, item.quantity - 1)
+                            }
+                            className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-medium">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateQuantity(item.variant.id, item.quantity + 1)
+                            }
+                            className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                        {/* Prix unitaire × quantité = total ligne */}
+                        <div className="text-right">
+                          {item.quantity > 1 && (
+                            <p className="text-[10px] text-gray-400">
+                              {formatPrice(unitPrice)} × {item.quantity}
+                            </p>
+                          )}
+                          <span className="text-sm font-bold text-gray-900">
+                            {formatPrice(lineTotal)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )})}
+                )
+              })}
             </div>
           )}
         </div>
 
+        {/* Summary */}
         <div className="border-t border-gray-200 px-5 pt-4 pb-4">
+          {/* Sous-total articles */}
           <div className="flex items-center justify-between text-sm text-gray-500">
             <span>Sous-total articles</span>
-            <span className="font-display font-semibold text-gray-900">
-              {formatPrice(total - shippingTotal)}
+            <span className="font-semibold text-gray-900">
+              {formatPrice(subtotal)}
             </span>
           </div>
+
+          {/* Frais de livraison */}
           <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
             <span>Frais de livraison</span>
-            <span className="font-display font-semibold text-gray-900">
-              {shippingTotal > 0 ? formatPrice(shippingTotal) : 'Offerte'}
+            <span className="font-semibold text-gray-900">
+              {shippingTotal > 0 ? formatPrice(shippingTotal) : items.length === 0 ? '—' : 'Inclus'}
             </span>
           </div>
-          <div className="flex items-center justify-between text-base font-bold text-gray-900 mt-4">
+
+          {/* TVA */}
+          <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
+            <span>TVA</span>
+            <span className="font-semibold text-gray-900">0 %</span>
+          </div>
+
+          {/* Total */}
+          <div className="flex items-center justify-between text-base font-bold text-gray-900 mt-4 border-t border-gray-100 pt-3">
             <span>Total estimé</span>
-            <span className="font-display text-lg">
+            <span className="text-lg">
               {formatPrice(total)}
             </span>
           </div>
+
           <div className="mt-4 flex justify-end">
             <button
               type="button"
@@ -185,6 +232,14 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             aria-disabled={isCheckoutDisabled}
           >
             Passer à la caisse
+          </Link>
+          <Link
+            to="/catalogue"
+            onClick={onClose}
+            className="group mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200/80 bg-gray-50/60 px-4 py-3.5 text-sm font-semibold text-gray-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/80 hover:text-amber-900 hover:shadow-[0_8px_16px_-6px_rgba(245,158,11,0.15)]"
+          >
+            <span className="transition-transform duration-300 ease-out group-hover:-translate-x-1">←</span>
+            <span>Retour au catalogue</span>
           </Link>
         </div>
       </aside>

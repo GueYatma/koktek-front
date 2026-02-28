@@ -103,7 +103,14 @@ const toShippingOption = (value: unknown): ShippingOption | null => {
         : undefined;
   const price =
     record.price !== undefined ? toNumberValue(record.price) : undefined;
-  const days = record.days !== undefined ? toNumberValue(record.days) : undefined;
+  // Keep days as-is: it may be a string like "8-15j" or a plain number.
+  const daysRaw = record.days;
+  const days: string | number | undefined =
+    typeof daysRaw === "string" && daysRaw.trim().length > 0
+      ? daysRaw.trim()
+      : typeof daysRaw === "number"
+        ? daysRaw
+        : undefined;
 
   if (!name && price === undefined && days === undefined) return null;
   return { name, price, days };
@@ -221,6 +228,10 @@ const mapVariant = (row: Record<string, unknown>): VariantWithImage => {
     ),
     cj_vid: toStringValue(row.cj_vid ?? row.cjVid ?? row.vendor_id),
     image_url: toStringValue(row.image_url ?? row.imageUrl ?? row.image),
+    weight_grams:
+      row.weight_grams !== undefined && row.weight_grams !== null
+        ? toNumberValue(row.weight_grams)
+        : undefined,
   };
 };
 
@@ -457,8 +468,6 @@ export const getAllProducts = async (): Promise<{
   variants: Variant[];
 }> => {
   const data = await fetchDirectusItems<Record<string, unknown>>("products");
-
-  console.log("RAW DATA PRODUCT:", data[0]);
 
   const [categoriesResult, variantsResult] = await Promise.allSettled([
     fetchCategoriesRaw(),

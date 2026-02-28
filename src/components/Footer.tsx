@@ -10,20 +10,24 @@ type FooterProps = {
 const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
   const { openContact } = useUI()
 
-  const footerImage = '/footer-stand.jpg'
+  const footerImage = '/footer-stand.webp'
 
   return (
     <footer className="mt-0 border-t border-gray-200 bg-gradient-to-b from-gray-200 via-gray-250 to-gray-300 pb-24 md:pb-0">
       <div className="w-full bg-gray-800/85">
         <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:py-7">
           <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-8 lg:max-w-5xl lg:mx-auto">
-            <div
-              className="relative w-full min-h-[175px] overflow-hidden rounded-3xl bg-cover bg-top lg:min-h-[200px] lg:rounded-[22px] lg:bg-center"
-              style={{
-                backgroundImage: `url(${footerImage})`,
-                backgroundPosition: 'center 18%',
-              }}
-            />
+            <div className="relative w-full min-h-[175px] overflow-hidden rounded-3xl lg:min-h-[200px] lg:rounded-[22px]">
+              <img
+                src={footerImage}
+                alt="Stand Koktek"
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ objectPosition: 'center 18%' }}
+              />
+            </div>
 
             <div className="space-y-3 lg:space-y-3">
               <div className="rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-left text-sm font-medium text-gray-900 shadow-sm sm:text-sm">

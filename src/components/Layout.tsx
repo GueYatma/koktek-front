@@ -67,7 +67,7 @@ const Layout = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const currentSearch = searchParams.get('search') || '';
   const [searchQuery, setSearchQuery] = useState(currentSearch);
   const searchTimerRef = useRef<number | null>(null);
@@ -76,6 +76,17 @@ const Layout = () => {
   useEffect(() => {
     setSearchQuery(searchParams.get('search') || '');
   }, [searchParams]);
+
+  // Open cart drawer via URL parameter (used by Checkout page back button)
+  useEffect(() => {
+    if (searchParams.get('cart') === 'open') {
+      setIsCartOpen(true);
+      setSearchParams((prev) => {
+        prev.delete('cart');
+        return prev;
+      }, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Debounced live search: navigate 300ms after the user stops typing
   const handleSearchChange = useCallback((value: string) => {
@@ -390,7 +401,7 @@ const Layout = () => {
         </div>
       </nav>
 
-      <main className="pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0">
+      <main className="min-h-screen pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0">
         {isBuildToastVisible && (
           <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div

@@ -46,52 +46,69 @@ type ProductsState = {
   variants: Variant[]
 }
 
+// ── Module-level cache ──────────────────────────────────────────────
+// Once loaded, the data stays in memory until the page is fully
+// refreshed (F5). Navigation between routes reuses the cached data
+// instantly → no white flash, no re-fetch.
+let cachedState: ProductsState | null = null
+let fetchPromise: Promise<ProductsState> | null = null
+
+const loadProducts = (): Promise<ProductsState> => {
+  if (cachedState) return Promise.resolve(cachedState)
+
+  if (!fetchPromise) {
+    fetchPromise = getAllProducts()
+      .then((payload) => {
+        const state: ProductsState = {
+          categories:
+            payload.categories.length > 0
+              ? payload.categories
+              : mockCategories,
+          products: payload.products,
+          variants: payload.variants,
+        }
+        cachedState = state
+        return state
+      })
+      .catch((error) => {
+        console.error('Erreur lors du chargement Directus', error)
+        fetchPromise = null // allow retry on next mount
+        const fallback: ProductsState = {
+          categories: mockCategories,
+          products: [],
+          variants: [],
+        }
+        return fallback
+      })
+  }
+
+  return fetchPromise
+}
+
 export const useProducts = () => {
-  const [state, setState] = useState<ProductsState>({
-    categories: [],
-    products: [],
-    variants: [],
-  })
-  const [loading, setLoading] = useState(true)
+  const [state, setState] = useState<ProductsState>(
+    () => cachedState ?? { categories: [], products: [], variants: [] },
+  )
+  const [loading, setLoading] = useState(!cachedState)
 
   useEffect(() => {
+    if (cachedState) {
+      setState(cachedState)
+      setLoading(false)
+      return
+    }
+
     let isMounted = true
-    const timer = setTimeout(() => {
-      const load = async () => {
-        try {
-          const payload = await getAllProducts()
 
-          if (!isMounted) return
-
-          setState({
-            categories:
-              payload.categories.length > 0
-                ? payload.categories
-                : mockCategories,
-            products: payload.products,
-            variants: payload.variants,
-          })
-        } catch (error) {
-          console.error('Erreur lors du chargement Directus', error)
-          if (!isMounted) return
-          setState({
-            categories: mockCategories,
-            products: [],
-            variants: [],
-          })
-        } finally {
-          if (isMounted) {
-            setLoading(false)
-          }
-        }
+    loadProducts().then((data) => {
+      if (isMounted) {
+        setState(data)
+        setLoading(false)
       }
-
-      void load()
-    }, 250)
+    })
 
     return () => {
       isMounted = false
-      clearTimeout(timer)
     }
   }, [])
 

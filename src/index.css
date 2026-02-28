@@ -103,4 +103,41 @@
   body.filter-open .koktek-bottom-nav {
     display: none;
   }
+
+  @keyframes cash-pulse {
+    0% {
+      transform: translateY(0) scale(1);
+      box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.2);
+      background-color: #ffffff;
+      border-color: #e5e7eb;
+    }
+    25% {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 12px 26px -14px rgba(245, 158, 11, 0.35);
+      background-color: #fff8eb;
+      border-color: #fcd34d;
+    }
+    50% {
+      transform: translateY(-3px) scale(1.035);
+      box-shadow: 0 14px 30px -16px rgba(245, 158, 11, 0.42);
+      background-color: #fff4e2;
+      border-color: #fbbf24;
+    }
+    75% {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 10px 22px -14px rgba(0, 0, 0, 0.2);
+      background-color: #fff9f0;
+      border-color: #fcd34d;
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.2);
+      background-color: #ffffff;
+      border-color: #e5e7eb;
+    }
+  }
+  .animate-cash-pulse {
+    animation: cash-pulse 1s ease-out;
+    will-change: transform, box-shadow, background-color, border-color;
+  }
 }
