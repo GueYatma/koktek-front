@@ -167,30 +167,38 @@ const CheckoutPage = () => {
     }
   }, [clearCart])
 
-  // Micro-animation for the cash button — subtle, starts after ~2.5s, repeats every 30s until card is chosen
+  const cashHoveredRef = useRef(cashHovered)
   useEffect(() => {
-    let startTimeout: ReturnType<typeof setTimeout> | undefined
+    cashHoveredRef.current = cashHovered
+    if (cashHovered) {
+      setCashPulse(false)
+    }
+  }, [cashHovered])
+
+  // Cartoon animation for the cash button
+  useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | undefined
     let resetTimeout: ReturnType<typeof setTimeout> | undefined
 
-    const triggerPulse = () => {
+    const triggerAnimation = () => {
+      if (cashHoveredRef.current) return
       setCashPulse(true)
-      resetTimeout = setTimeout(() => setCashPulse(false), 1000)
+      resetTimeout = setTimeout(() => setCashPulse(false), 1200)
     }
 
     const shouldAnimateCash = paymentView === 'choice' && confirmedMethod !== 'card'
 
     if (shouldAnimateCash) {
-      startTimeout = setTimeout(() => {
-        triggerPulse()
-        intervalId = setInterval(triggerPulse, 30000)
-      }, 2500)
+      // Trigger immediately at 0s (wait briefly for render to attach classes)
+      resetTimeout = setTimeout(triggerAnimation, 50)
+      
+      // Repeat every 10s
+      intervalId = setInterval(triggerAnimation, 10000)
     } else {
       setCashPulse(false)
     }
 
     return () => {
-      if (startTimeout) clearTimeout(startTimeout)
       if (intervalId) clearInterval(intervalId)
       if (resetTimeout) clearTimeout(resetTimeout)
     }
@@ -1061,10 +1069,10 @@ const CheckoutPage = () => {
                       <button
                         type="button"
                         onClick={() => setIsCashConfirmOpen(true)}
-                        onMouseEnter={() => { setCashHovered(true); setCashPulse(false) }}
+                        onMouseEnter={() => setCashHovered(true)}
                         onMouseLeave={() => setCashHovered(false)}
                         disabled={isPayingCash || isPayingOnline}
-                        className={`${paymentButtonBase} ${cashPulse && !cashHovered ? 'animate-cash-pulse' : ''}`}
+                        className={`${paymentButtonBase} ${cashPulse && !cashHovered ? 'animate-cartoon-bounce z-10' : ''}`}
                       >
                         {isPayingCash ? 'Validation...' : 'Payer en espèces'}
                       </button>
