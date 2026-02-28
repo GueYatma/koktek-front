@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Home, LayoutGrid, MessageCircle, Search, ShoppingBag, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
@@ -69,25 +69,41 @@ const Layout = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const currentSearch = searchParams.get('search') || '';
+  const [searchQuery, setSearchQuery] = useState(currentSearch);
+  const searchTimerRef = useRef<number | null>(null);
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const q = formData.get('search');
-    if (q && q.toString().trim() !== '') {
-      navigate(`/catalogue?search=${encodeURIComponent(q.toString().trim())}`);
-    } else {
-      navigate(`/catalogue`);
+  // Sync searchQuery when URL changes externally (e.g. back button)
+  useEffect(() => {
+    setSearchQuery(searchParams.get('search') || '');
+  }, [searchParams]);
+
+  // Debounced live search: navigate 300ms after the user stops typing
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    if (searchTimerRef.current) {
+      window.clearTimeout(searchTimerRef.current);
     }
-  };
+    searchTimerRef.current = window.setTimeout(() => {
+      const trimmed = value.trim();
+      if (trimmed) {
+        navigate(`/catalogue?search=${encodeURIComponent(trimmed)}`, { replace: true });
+      } else {
+        if (location.pathname === '/catalogue') {
+          navigate('/catalogue', { replace: true });
+        }
+      }
+    }, 300);
+  }, [navigate, location.pathname]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) window.clearTimeout(searchTimerRef.current);
+    };
+  }, []);
 
   const handleMobileSearchClick = () => {
     setIsMobileSearchOpen(true)
-  }
-
-  const handleMobileSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    handleSearch(event)
-    setIsMobileSearchOpen(false)
   }
 
   useEffect(() => {
@@ -118,7 +134,7 @@ const Layout = () => {
     if (typeof window === 'undefined') return
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
     setIsMobileSearchOpen(false)
-  }, [location.pathname, location.search])
+  }, [location.pathname])
 
   useEffect(() => {
     if (!isMobileSearchOpen) return
@@ -192,18 +208,19 @@ const Layout = () => {
           </nav>
 
           <div className="ml-auto flex flex-1 items-center gap-2 md:hidden">
-            <form onSubmit={handleSearch} className="relative flex-1">
+            <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 id="mobile-search-input"
                 name="search"
                 type="search"
-                defaultValue={currentSearch}
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Rechercher..."
                 className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
                 aria-label="Rechercher"
               />
-            </form>
+            </div>
             <button
               type="button"
               onClick={handleAccountClick}
@@ -222,17 +239,18 @@ const Layout = () => {
 
           <div className="ml-auto hidden items-center gap-3 md:flex">
             <div className="relative w-52">
-              <form onSubmit={handleSearch} className="relative w-full">
+              <div className="relative w-full">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   name="search"
                   type="search"
-                  defaultValue={currentSearch}
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Rechercher..."
                   className="w-full rounded-full border-2 border-gray-200 bg-white py-2 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                   aria-label="Rechercher"
                 />
-              </form>
+              </div>
             </div>
             <button
               type="button"
@@ -271,8 +289,7 @@ const Layout = () => {
 
       {isMobileSearchOpen ? (
         <div className="fixed left-4 right-4 z-50 md:hidden bottom-[calc(72px+env(safe-area-inset-bottom))]">
-          <form
-            onSubmit={handleMobileSearchSubmit}
+          <div
             className="relative flex items-center rounded-2xl border border-gray-200 bg-white/90 px-3 py-2 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] backdrop-blur"
           >
             <Search className="h-4 w-4 text-gray-400" />
@@ -280,7 +297,8 @@ const Layout = () => {
               ref={mobileSearchInputRef}
               name="search"
               type="search"
-              defaultValue={currentSearch}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Rechercher..."
               className="ml-2 flex-1 bg-transparent text-sm font-medium text-gray-700 placeholder:text-gray-400 focus:outline-none"
               aria-label="Rechercher"
@@ -292,12 +310,12 @@ const Layout = () => {
             >
               Fermer
             </button>
-          </form>
+          </div>
         </div>
       ) : null}
 
       <nav
-        className={`koktek-bottom-nav fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 transition-opacity duration-200 will-change-opacity md:hidden ${
+        className={`koktek-bottom-nav fixed left-0 right-0 bottom-0 z-50 border-t border-gray-200 bg-white/95 transition-opacity duration-200 will-change-opacity md:hidden ${
           isAnyModalOpen
             ? 'hidden'
             : isScrolling
@@ -305,7 +323,7 @@ const Layout = () => {
               : 'opacity-100'
         }`}
       >
-        <div className="mx-auto grid max-w-6xl grid-cols-5 px-2 pb-[calc(14px+env(safe-area-inset-bottom))] pt-3">
+        <div className="mx-auto grid max-w-6xl grid-cols-5 px-2 pb-[calc(22px+env(safe-area-inset-bottom))] pt-3">
           <NavLink
             to="/"
             end
@@ -372,7 +390,7 @@ const Layout = () => {
         </div>
       </nav>
 
-      <main className="pt-14 pb-1 md:pb-0">
+      <main className="pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0">
         {isBuildToastVisible && (
           <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div
