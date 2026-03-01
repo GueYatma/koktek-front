@@ -147,8 +147,13 @@ const HomePage = () => {
 
     // Every 30 seconds we pick a new product from the entire catalog
     const pickNewHero = () => {
-      // Filter out products without a valid image, and ideally ones we haven't seen recently
-      const availableProducts = products.filter(p => resolveImageUrl(p.image_url ?? '', ''))
+      // Filter out products without a valid image or a valid slug
+      const availableProducts = products.filter(p => 
+        resolveImageUrl(p.image_url ?? '', '') && 
+        p.slug && 
+        p.slug.trim().length > 0 &&
+        p.status === 'published'
+      )
       if (availableProducts.length === 0) return
 
       let candidates = availableProducts.filter(p => !seenIds.includes(String(p.id)))
@@ -183,7 +188,7 @@ const HomePage = () => {
       pickNewHero()
     }
 
-    const interval = window.setInterval(pickNewHero, 8000) // Rotate slightly faster for dynamism (8s)
+    const interval = window.setInterval(pickNewHero, 60000) // Rotate every 60s
     return () => window.clearInterval(interval)
   }, [products, heroProduct])
 
@@ -213,8 +218,8 @@ const HomePage = () => {
             </div>
           </div>
           <div className="relative lg:justify-self-end mt-4 lg:mt-0">
-            {heroProduct ? (
-              <Link to={`/produit/${heroProduct.id}`} className="group block focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-4 rounded-[22px]">
+            {heroProduct?.slug ? (
+              <Link to={`/produit/${heroProduct.slug}`} className="group block focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-4 rounded-[22px]">
                 <div className="relative rounded-[22px] border border-white/70 bg-white/80 p-2.5 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.55)] lg:max-w-xs transition-transform duration-300 group-hover:-translate-y-1">
                   <div className="relative overflow-hidden rounded-[16px] bg-gray-100">
                     <img
