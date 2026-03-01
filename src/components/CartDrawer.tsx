@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Minus, Plus, X } from 'lucide-react'
+import { Minus, Plus, Trash2, X } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
@@ -118,9 +118,10 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                         <button
                           type="button"
                           onClick={() => removeItem(item.variant.id)}
-                          className="text-xs text-gray-400 transition hover:text-gray-900"
+                          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 active:scale-95"
                         >
-                          Retirer
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Retirer</span>
                         </button>
                       </div>
 
@@ -201,46 +202,50 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             </span>
           </div>
 
-          <div className="mt-4 flex justify-end">
-            <button
-              type="button"
-              onClick={clearCart}
-              disabled={items.length === 0}
-              className={`text-xs underline underline-offset-4 transition ${
-                items.length === 0
-                  ? 'cursor-not-allowed text-gray-300'
-                  : 'text-gray-400 hover:text-red-500'
+          <div className="mt-5 flex flex-col gap-2.5">
+            <Link
+              to="/checkout"
+              onClick={(event) => {
+                if (isCheckoutDisabled) {
+                  event.preventDefault()
+                  return
+                }
+                onClose()
+              }}
+              className={`relative z-10 flex w-full items-center justify-center rounded-xl px-4 py-3.5 text-sm font-semibold transition active:scale-95 ${
+                isCheckoutDisabled
+                  ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                  : 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow-md'
               }`}
+              aria-disabled={isCheckoutDisabled}
             >
-              Vider mon panier
-            </button>
+              Passer à la caisse
+            </Link>
+
+            <div className="flex gap-2.5">
+              <Link
+                to="/catalogue"
+                onClick={onClose}
+                className="group flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/60 px-2 py-3.5 text-[13px] font-semibold text-gray-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/80 hover:text-amber-900"
+              >
+                <span className="transition-transform duration-300 ease-out group-hover:-translate-x-1">←</span>
+                <span>Catalogue</span>
+              </Link>
+              <button
+                type="button"
+                onClick={clearCart}
+                disabled={items.length === 0}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3.5 text-[13px] font-semibold transition active:scale-95 ${
+                  items.length === 0
+                    ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300'
+                    : 'border-red-100 bg-red-50/60 text-red-600 shadow-sm hover:-translate-y-0.5 hover:border-red-200 hover:bg-red-50'
+                }`}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Vider le panier</span>
+              </button>
+            </div>
           </div>
-          <Link
-            to="/checkout"
-            onClick={(event) => {
-              if (isCheckoutDisabled) {
-                event.preventDefault()
-                return
-              }
-              onClose()
-            }}
-            className={`relative z-10 mt-3 flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-95 ${
-              isCheckoutDisabled
-                ? 'cursor-not-allowed bg-gray-200 text-gray-400'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-            }`}
-            aria-disabled={isCheckoutDisabled}
-          >
-            Passer à la caisse
-          </Link>
-          <Link
-            to="/catalogue"
-            onClick={onClose}
-            className="group mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200/80 bg-gray-50/60 px-4 py-3.5 text-sm font-semibold text-gray-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/80 hover:text-amber-900 hover:shadow-[0_8px_16px_-6px_rgba(245,158,11,0.15)]"
-          >
-            <span className="transition-transform duration-300 ease-out group-hover:-translate-x-1">←</span>
-            <span>Retour au catalogue</span>
-          </Link>
         </div>
       </aside>
     </div>
