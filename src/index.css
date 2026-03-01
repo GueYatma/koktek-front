@@ -157,6 +157,7 @@
   .animate-cartoon-bounce {
     animation: cartoon-bounce 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     will-change: transform, box-shadow, background-color, border-color, color;
+  }
   @keyframes cart-magic {
     0% { transform: scale(1) rotate(0deg); color: inherit; }
     20% { transform: scale(1.4) rotate(-15deg); color: #f59e0b; filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
