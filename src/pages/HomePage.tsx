@@ -3,6 +3,7 @@ import { BadgeCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useProducts } from '../hooks/useProducts'
 import { resolveImageUrl } from '../utils/image'
+import { formatPrice } from '../utils/format'
 import ProductCard from '../components/ProductCard'
 
 const BRAND_SHOWCASE = [
@@ -228,11 +229,16 @@ const HomePage = () => {
                           {heroCategory}
                         </div>
                       )}
-                      <p className="font-semibold leading-tight line-clamp-2">
+                      <p className="font-semibold leading-tight line-clamp-2 text-white/95">
                         {heroTitle}
                       </p>
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-amber-300 transition-colors group-hover:text-amber-200">
-                        VOIR LE PRODUIT <span className="transition-transform group-hover:translate-x-1">→</span>
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className="text-lg font-bold text-white">
+                          {heroProduct ? formatPrice(heroProduct.prix_calcule ?? heroProduct.retail_price ?? 0) : ''}
+                        </span>
+                        <div className="inline-flex items-center gap-1 text-[10px] font-medium tracking-wider text-white/70 transition-colors group-hover:text-white">
+                          VOIR LE PRODUIT <span className="transition-transform group-hover:translate-x-1">→</span>
+                        </div>
                       </div>
                     </div>
                   </div>
