@@ -554,19 +554,19 @@ const ProductPage = () => {
 
             <details className="group rounded-3xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600 shadow-sm sm:p-6">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
-                Inclus
+                Notre Promesse
                 <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
               </summary>
               <p className="mt-4">
-                Packaging premium, guide de pose et garantie Koktek 12 mois.
+                Produits testés et validés par l'équipe Koktek. Service client réactif et de proximité.
               </p>
             </details>
 
             {/* Bottom Return CTA */}
-            <div className="mt-8 flex pb-4 md:block md:pb-0">
+            <div className="mt-6 flex flex-col items-start pb-4 md:pb-0">
               <Link
                 to="/catalogue"
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/80 px-4 py-3.5 text-sm font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 active:scale-95 md:w-auto md:py-2.5 md:text-[13px]"
+                className="inline-flex w-auto items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/80 px-4 py-2.5 text-[13px] font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 active:scale-95"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Retour au catalogue
