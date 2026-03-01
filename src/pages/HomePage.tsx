@@ -65,8 +65,6 @@ const HERO_FALLBACKS = [
 
 const HomePage = () => {
   const { categories, products, loading } = useProducts()
-  const [heroTick, setHeroTick] = useState(0)
-  const [rotationTick, setRotationTick] = useState(0)
   const featuredCategories = categories
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>()
