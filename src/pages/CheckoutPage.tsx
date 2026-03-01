@@ -1068,7 +1068,10 @@ const CheckoutPage = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setIsCashConfirmOpen(true)}
+                        onClick={() => {
+                          window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+                          setIsCashConfirmOpen(true)
+                        }}
                         onMouseEnter={() => setCashHovered(true)}
                         onMouseLeave={() => setCashHovered(false)}
                         disabled={isPayingCash || isPayingOnline}
@@ -1270,15 +1273,15 @@ const CheckoutPage = () => {
 
       {isCashConfirmOpen ? (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8"
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-8"
           role="dialog"
           aria-modal="true"
         >
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setIsCashConfirmOpen(false)}
           />
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <h2 className="text-xl font-semibold text-gray-900">
               Confirmer le paiement en espèces ?
             </h2>
