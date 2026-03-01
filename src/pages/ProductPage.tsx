@@ -554,12 +554,17 @@ const ProductPage = () => {
 
             <details className="group rounded-3xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600 shadow-sm sm:p-6">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
-                Notre Promesse
+                Retour et remboursement
                 <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
               </summary>
-              <p className="mt-4">
-                Produits testés et validés par l'équipe Koktek. Service client réactif et de proximité.
-              </p>
+              <div className="mt-4 space-y-2 leading-relaxed">
+                <p>Vous disposez de 14 jours pour retourner votre article.</p>
+                <ul className="ml-1 list-inside list-disc space-y-1">
+                  <li>Retour possible directement à notre stand.</li>
+                  <li>Retour possible par voie postale à l'adresse indiquée dans nos Conditions Générales de Vente (adresse disponible dans les Mentions légales).</li>
+                </ul>
+                <p>Les remboursements suivent le même canal que le paiement initial (carte → carte, espèces → espèces).</p>
+              </div>
             </details>
 
             {/* Bottom Return CTA */}
