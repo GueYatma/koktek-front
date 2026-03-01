@@ -115,8 +115,9 @@ const Layout = () => {
       .replace(/[\u0300-\u036f]/g, "");
 
   const hasVariantMatchOnly = useMemo(() => {
-    if (!searchQuery.trim() || products.length === 0) return false;
-    const normalizedQuery = normalizeKey(searchQuery);
+    const query = searchQuery.trim();
+    if (query.length < 3 || products.length === 0) return false;
+    const normalizedQuery = normalizeKey(query);
     const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
     
     return products.some((product) => {
@@ -371,36 +372,39 @@ const Layout = () => {
 
       {isMobileSearchOpen ? (
         <div className="fixed left-6 right-6 z-50 md:hidden bottom-[calc(88px+env(safe-area-inset-bottom))]">
+          {hasVariantMatchOnly && (
+            <div className="absolute bottom-full left-0 right-0 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300 rounded-2xl bg-gray-100 p-4 text-xs text-gray-700 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] border border-gray-200">
+              <div className="absolute -bottom-2 left-6 h-4 w-4 rotate-45 border-b border-r border-gray-200 bg-gray-100"></div>
+              <span className="relative z-10 font-bold mb-1.5 flex items-center gap-1.5 text-gray-900">
+                <Search className="h-3 w-3" /> Info recherche
+              </span>
+              <p className="relative z-10 leading-relaxed text-gray-600">
+                Votre recherche correspond à des variantes de ces produits. Ouvrez un produit pour voir les modèles compatibles.
+              </p>
+            </div>
+          )}
           <div
-            className="relative flex items-center rounded-2xl border border-gray-200 bg-white/95 px-3 py-2.5 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] backdrop-blur"
+            className="relative flex items-center rounded-2xl border border-gray-300 bg-[#fafafa] px-4 py-3.5 shadow-[0_15px_40px_-5px_rgba(0,0,0,0.4)]"
           >
-            <Search className="h-4 w-4 text-gray-400" />
+            <Search className="h-[18px] w-[18px] text-gray-400" />
             <input
               ref={mobileSearchInputRef}
               name="search"
               type="search"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Rechercher..."
-              className="ml-2 flex-1 bg-transparent text-sm font-medium text-gray-700 placeholder:text-gray-400 focus:outline-none"
+              placeholder="Rechercher un produit..."
+              className="ml-3 flex-1 bg-transparent text-sm font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-medium focus:outline-none"
               aria-label="Rechercher"
             />
             <button
               type="button"
               onClick={() => setIsMobileSearchOpen(false)}
-              className="ml-2 rounded-full border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-600 shadow-sm transition hover:bg-gray-100 hover:text-gray-900 active:scale-95"
+              className="ml-2 flex flex-col items-center justify-center rounded-xl bg-gray-200/50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-600 transition active:scale-95"
             >
               Fermer
             </button>
           </div>
-          {hasVariantMatchOnly && (
-            <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-300 rounded-xl bg-blue-50/95 p-3.5 text-xs text-blue-900 shadow-xl backdrop-blur-md border border-blue-200/50">
-              <span className="font-bold mb-1 flex items-center gap-1.5"><Search className="h-3 w-3" /> Info recherche</span>
-              <p className="opacity-90">
-                Votre recherche correspond à des variantes de ces produits. Ouvrez un produit pour voir les modèles compatibles.
-              </p>
-            </div>
-          )}
         </div>
       ) : null}
 
