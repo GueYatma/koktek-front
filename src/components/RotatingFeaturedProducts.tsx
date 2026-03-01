@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo, memo } from 'react'
 import ProductCard from './ProductCard'
 import { resolveImageUrl } from '../utils/image'
-
-type Product = any // Using any to match the existing generic product type in useProducts
-type Category = any
+import type { Product, Category } from '../types'
 
 type RotatingFeaturedProductsProps = {
   products: Product[]
