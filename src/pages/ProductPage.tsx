@@ -287,10 +287,10 @@ const ProductPage = () => {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 sm:pt-12 lg:px-8">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-8 flex items-center justify-between">
         <Link
           to="/catalogue"
-          className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/80 px-4 py-2.5 text-[13px] font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 active:scale-95"
         >
           <ChevronLeft className="h-4 w-4" />
           Retour au catalogue
@@ -561,6 +561,17 @@ const ProductPage = () => {
                 Packaging premium, guide de pose et garantie Koktek 12 mois.
               </p>
             </details>
+
+            {/* Bottom Return CTA */}
+            <div className="mt-8 flex pb-4 md:block md:pb-0">
+              <Link
+                to="/catalogue"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/80 px-4 py-3.5 text-sm font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 active:scale-95 md:w-auto md:py-2.5 md:text-[13px]"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Retour au catalogue
+              </Link>
+            </div>
           </div>
         </div>
       </div>
