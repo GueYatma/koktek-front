@@ -6,6 +6,7 @@ import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
 import ProductCard from '../components/ProductCard'
 import CategoryCard from '../components/CategoryCard'
+import RotatingFeaturedProducts from '../components/RotatingFeaturedProducts'
 
 const BRAND_SHOWCASE = [
   {
@@ -125,13 +126,7 @@ const HomePage = () => {
     return map
   }, [products, categoryNameById])
 
-  const featuredProducts = useMemo(() => {
-    if (products.length === 0) return []
-    const windowSize = 8
-    const offset = (rotationTick * windowSize) % products.length
-    const looped = [...products, ...products]
-    return looped.slice(offset, offset + windowSize)
-  }, [products, rotationTick])
+
   // Setup full-catalog randomized Hero Product
   const [heroProduct, setHeroProduct] = useState<any | null>(null)
   
@@ -387,17 +382,12 @@ const HomePage = () => {
           {loading ? (
             <p className="text-sm text-gray-500">Chargement...</p>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-              {featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  categoryName={categoryNameById.get(
-                    String(product.category_id),
-                  )}
-                />
-              ))}
-            </div>
+            <RotatingFeaturedProducts 
+              products={products}
+              categories={featuredCategories}
+              categoryNameById={categoryNameById}
+              resolveCategoryName={resolveCategoryName}
+            />
           )}
         </div>
       </section>
