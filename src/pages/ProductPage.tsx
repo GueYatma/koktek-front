@@ -557,18 +557,32 @@ const ProductPage = () => {
                 Retour et remboursement
                 <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
               </summary>
-              <div className="mt-4 space-y-2 leading-relaxed">
-                <p>Vous disposez de 14 jours pour retourner votre article.</p>
-                <ul className="ml-1 list-inside list-disc space-y-1">
-                  <li>Retour possible directement à notre stand.</li>
-                  <li>Retour possible par voie postale à l'adresse indiquée dans nos Conditions Générales de Vente (adresse disponible dans les Mentions légales).</li>
-                </ul>
-                <p>Les remboursements suivent le même canal que le paiement initial (carte → carte, espèces → espèces).</p>
+              <div className="mt-4 space-y-3 leading-relaxed">
+                <p>
+                  Vous disposez de <strong className="font-semibold text-gray-800">14 jours à compter de la date de livraison</strong> pour retourner votre article.
+                </p>
+                <div>
+                  <p className="mb-1 font-medium text-gray-800">Pour être éligible au retour :</p>
+                  <ul className="ml-1 list-inside list-disc space-y-0.5">
+                    <li>L'article doit être <strong className="font-semibold text-gray-800">neuf</strong>, <strong className="font-semibold text-gray-800">non utilisé</strong> et <strong className="font-semibold text-gray-800">non dégradé</strong>.</li>
+                    <li>Il doit être renvoyé <strong className="font-semibold text-gray-800">dans son emballage d'origine</strong> avec toutes les informations de livraison présentes.</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-1 font-medium text-gray-800">Modes de retour :</p>
+                  <ul className="ml-1 list-inside list-disc space-y-0.5">
+                    <li>Retour possible directement à notre stand.</li>
+                    <li>Retour possible par voie postale à l'adresse indiquée dans nos Conditions Générales de Vente (adresse disponible dans les Mentions légales).</li>
+                  </ul>
+                </div>
+                <p>
+                  Les remboursements suivent le même canal que le paiement initial (carte → carte, espèces → espèces).
+                </p>
               </div>
             </details>
 
             {/* Bottom Return CTA */}
-            <div className="mt-6 flex flex-col items-start pb-4 md:pb-0">
+            <div className="mt-8 flex flex-col items-start pb-4 md:pb-0">
               <Link
                 to="/catalogue"
                 className="inline-flex w-auto items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/80 px-4 py-2.5 text-[13px] font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 active:scale-95"
