@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom'
 import { useProducts } from '../hooks/useProducts'
 import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
-import ProductCard from '../components/ProductCard'
-import CategoryCard from '../components/CategoryCard'
 import RotatingFeaturedProducts from '../components/RotatingFeaturedProducts'
 
 const BRAND_SHOWCASE = [

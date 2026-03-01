@@ -55,19 +55,10 @@ const RotatingFeaturedProducts = memo(({ products, categories, categoryNameById,
 
   // 2. State for interval tick
   const [rotationTick, setRotationTick] = useState(0)
-  
-  // Also track previous tick to allow crossfading
-  const [prevTick, setPrevTick] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setPrevTick(rotationTick)
       setRotationTick(prev => prev + 1)
-      setIsAnimating(true)
-      
-      // Stop animation after crossfade completes (1.5s)
-      setTimeout(() => setIsAnimating(false), 1500)
     }, 600000) // 10 minutes = 600000ms
 
     return () => clearInterval(intervalId)
@@ -103,7 +94,6 @@ const RotatingFeaturedProducts = memo(({ products, categories, categoryNameById,
   }
 
   const currentProducts = useMemo(() => getProductsForTick(rotationTick), [productsByCategory, rotationTick, categories])
-  const prevProducts = useMemo(() => getProductsForTick(prevTick), [productsByCategory, prevTick, categories])
   const nextProducts = useMemo(() => getProductsForTick(rotationTick + 1), [productsByCategory, rotationTick, categories])
 
   if (currentProducts.length === 0) return null
