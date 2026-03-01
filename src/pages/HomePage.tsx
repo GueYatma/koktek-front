@@ -130,31 +130,65 @@ const HomePage = () => {
     const looped = [...products, ...products]
     return looped.slice(offset, offset + windowSize)
   }, [products, rotationTick])
-  const heroCandidates = useMemo(() => {
-    const fromProducts = products
-      .map((product) => resolveImageUrl(product.image_url ?? '', ''))
-      .filter((url) => url.length > 0)
-    const unique = Array.from(new Set(fromProducts))
-    return unique.length > 0 ? unique : HERO_FALLBACKS
-  }, [products])
-
+  // Setup full-catalog randomized Hero Product
+  const [heroProduct, setHeroProduct] = useState<any | null>(null)
+  
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setHeroTick((prev) => prev + 1)
-    }, 30_000)
-    return () => window.clearInterval(interval)
-  }, [])
+    if (products.length === 0) return
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setRotationTick((prev) => prev + 1)
-    }, 300_000) // 5 minutes
-    return () => window.clearInterval(interval)
-  }, [])
+    const STORAGE_KEY = 'koktek:seen_hero_products'
+    let seenIds: string[] = []
+    try {
+      seenIds = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    } catch (e) {
+      // ignore
+    }
 
-  const heroIndex =
-    heroCandidates.length > 0 ? heroTick % heroCandidates.length : 0
-  const heroImage = heroCandidates[heroIndex] ?? HERO_FALLBACKS[0]
+    // Every 30 seconds we pick a new product from the entire catalog
+    const pickNewHero = () => {
+      // Filter out products without a valid image, and ideally ones we haven't seen recently
+      const availableProducts = products.filter(p => resolveImageUrl(p.image_url ?? '', ''))
+      if (availableProducts.length === 0) return
+
+      let candidates = availableProducts.filter(p => !seenIds.includes(String(p.id)))
+      
+      // If we've seen everything (or most things), reset the pool but keep the very last one
+      if (candidates.length < 10 && availableProducts.length > 20) {
+        const lastSeen = seenIds[seenIds.length - 1]
+        seenIds = lastSeen ? [lastSeen] : []
+        candidates = availableProducts.filter(p => String(p.id) !== lastSeen)
+      }
+
+      if (candidates.length === 0) candidates = availableProducts
+
+      // Pick random
+      const randomIndex = Math.floor(Math.random() * candidates.length)
+      const selected = candidates[randomIndex]
+      
+      setHeroProduct(selected)
+
+      // Update history (keep last 50)
+      seenIds.push(String(selected.id))
+      if (seenIds.length > 50) seenIds.shift()
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seenIds))
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    // Pick immediately if we don't have one
+    if (!heroProduct) {
+      pickNewHero()
+    }
+
+    const interval = window.setInterval(pickNewHero, 8000) // Rotate slightly faster for dynamism (8s)
+    return () => window.clearInterval(interval)
+  }, [products, heroProduct])
+
+  const heroImage = heroProduct ? resolveImageUrl(heroProduct.image_url ?? '', '') : HERO_FALLBACKS[0]
+  const heroTitle = heroProduct?.title || 'Collection Koktek'
+  const heroCategory = heroProduct ? resolveCategoryName(heroProduct) : ''
 
   return (
     <div>
@@ -177,17 +211,38 @@ const HomePage = () => {
               </p>
             </div>
           </div>
-          <div className="relative lg:justify-self-end">
-            <div className="rounded-[22px] border border-white/70 bg-white/80 p-2.5 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.55)] lg:max-w-xs">
-              <div className="relative overflow-hidden rounded-[22px] bg-gray-200">
-                <img
-                  src={heroImage}
-                  alt="Collection Koktek"
-                  className="aspect-[4/5] w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+          <div className="relative lg:justify-self-end mt-4 lg:mt-0">
+            {heroProduct ? (
+              <Link to={`/produit/${heroProduct.id}`} className="group block focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-4 rounded-[22px]">
+                <div className="relative rounded-[22px] border border-white/70 bg-white/80 p-2.5 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.55)] lg:max-w-xs transition-transform duration-300 group-hover:-translate-y-1">
+                  <div className="relative overflow-hidden rounded-[16px] bg-gray-100">
+                    <img
+                      key={heroImage} // Force re-render on image change for crossfade
+                      src={heroImage}
+                      alt={heroTitle}
+                      className="aspect-[4/5] w-full object-cover animate-in fade-in duration-700"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12 text-white">
+                      {heroCategory && (
+                        <div className="mb-1.5 inline-block rounded-md bg-white/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">
+                          {heroCategory}
+                        </div>
+                      )}
+                      <p className="font-semibold leading-tight line-clamp-2">
+                        {heroTitle}
+                      </p>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-amber-300 transition-colors group-hover:text-amber-200">
+                        VOIR LE PRODUIT <span className="transition-transform group-hover:translate-x-1">→</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ) : (
+              <div className="rounded-[22px] border border-white/70 bg-white/80 p-2.5 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.55)] lg:max-w-xs">
+                <div className="relative overflow-hidden rounded-[16px] bg-gray-200 aspect-[4/5] w-full animate-pulse" />
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
