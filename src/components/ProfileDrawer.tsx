@@ -111,21 +111,19 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[60] ${
-        open ? 'pointer-events-auto' : 'pointer-events-none'
+      className={`fixed inset-0 z-[60] transition-[visibility,opacity] duration-300 ease-out ${
+        open ? 'visible opacity-100' : 'invisible opacity-0'
       }`}
       aria-hidden={!open}
     >
       <div
-        className={`absolute inset-0 backdrop-blur-sm bg-black/50 transition-opacity ${
-          open ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={handleClose}
       />
       <aside
         role="dialog"
         aria-modal="true"
-        className={`fixed top-[10%] bottom-[10%] left-4 right-4 flex h-auto max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300 md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
+        className={`fixed top-[10%] bottom-[10%] left-4 right-4 flex h-auto max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-[transform,opacity] duration-300 ease-out will-change-[transform,opacity] md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
           open ? 'translate-y-0 opacity-100 md:translate-x-0 md:translate-y-0' : 'translate-y-8 opacity-0 md:translate-x-full md:translate-y-0 md:opacity-100'
         }`}
         onClick={(event) => event.stopPropagation()}
@@ -149,7 +147,7 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex-1 overflow-y-auto overscroll-y-contain px-4 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
@@ -337,6 +335,8 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
                                 <img
                                   src={resolveImageUrl(order.imageUrl)}
                                   alt={order.productName}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="h-16 w-16 rounded-xl object-contain bg-gray-50"
                                 />
                               ) : null}
