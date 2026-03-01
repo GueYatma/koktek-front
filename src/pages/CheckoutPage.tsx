@@ -239,6 +239,11 @@ const CheckoutPage = () => {
           order_id: orderId,
           order_number: orderNumber ?? orderId,
           receipt_email: customerSnapshot?.email || delivery.email.trim(),
+          metadata: {
+            order_id: orderId,
+            order_number: orderNumber ?? orderId,
+            customer_email: customerSnapshot?.email || delivery.email.trim(),
+          },
         }),
       })
 
@@ -1094,8 +1099,72 @@ const CheckoutPage = () => {
                         orderNumber={orderNumber ?? orderId!}
                         customerEmail={customerSnapshot?.email || ''}
                         webhookUrl=""
-                        onSuccess={() => {
+                        onSuccess={async () => {
                           setConfirmedMethod('card')
+
+                          // Mirror the cash flow: mark order as paid in Directus
+                          if (orderId) {
+                            try {
+                              await markOrderPaid(orderId, {
+                                status: 'paid',
+                                payment_status: 'paid',
+                              })
+                            } catch (e) {
+                              console.error('Erreur mise à jour commande Stripe', e)
+                            }
+
+                            // Notify n8n webhook (background, non-blocking)
+                            if (N8N_WEBHOOK_URL) {
+                              void fetch(N8N_WEBHOOK_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  order_id: orderId,
+                                  order_number: orderNumber ?? orderId,
+                                  total_amount: total,
+                                  shipping_amount: shippingTotal,
+                                  payment_method: 'card',
+                                  backoffice_url: `${window.location.origin}/admin?validate_order=${orderNumber ?? orderId}`,
+                                  customer: {
+                                    name: ticketCustomerName,
+                                    email: customerSnapshot?.email || delivery.email.trim(),
+                                    phone: customerSnapshot?.phone || delivery.phone.trim(),
+                                  },
+                                  items: items.map((item) => ({
+                                    product_title: item.product.title,
+                                    variant_name: item.variant.option1_name,
+                                    variant_value: resolveVariantValue(item.variant),
+                                    quantity: item.quantity,
+                                    unit_price: item.product.prix_calcule ?? item.product.retail_price,
+                                    image: resolveImageUrl(item.product.image_url)
+                                  })),
+                                }),
+                              }).catch((webhookError) => {
+                                console.error('Erreur webhook n8n (Stripe)', webhookError)
+                              })
+                            }
+
+                            // Save order to local email history
+                            const email = customerSnapshot?.email || delivery.email.trim()
+                            if (email) {
+                              const mainItem = items[0]
+                              saveOrderForEmail(email, {
+                                id: orderId,
+                                orderNumber: orderNumber ?? orderId,
+                                total,
+                                productName: mainItem ? mainItem.product.title : 'Commande Koktek',
+                                variantName: mainItem?.variant.option1_name ?? null,
+                                variantValue: resolveVariantValue(mainItem?.variant ?? null) || null,
+                                imageUrl: mainItem ? resolveImageUrl(mainItem.product.image_url) : null,
+                                sku: mainItem?.variant.sku ?? null,
+                                status: 'paid',
+                                payment_status: 'paid',
+                                customerName: ticketCustomerName || null,
+                                createdAt: new Date().toISOString(),
+                              })
+                            }
+                          }
+
                           setCheckoutStep('success')
                         }}
                         onCancel={() => {
