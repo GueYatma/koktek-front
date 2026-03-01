@@ -175,7 +175,28 @@ const Layout = () => {
   }, []);
 
   const handleMobileSearchClick = () => {
-    setIsMobileSearchOpen(true)
+    // Force scroll to top instantly to see the search results, avoiding footer jump
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    setIsMobileSearchOpen(true);
+    // Give enough time for the render, then focus
+    setTimeout(() => {
+      if (mobileSearchInputRef.current) {
+        mobileSearchInputRef.current.focus({ preventScroll: true });
+      }
+    }, 100);
+  }
+
+  const handleCloseSearch = () => {
+    setIsMobileSearchOpen(false);
+    setSearchQuery('');
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    
+    // Completely clear the search param if we are currently searching
+    if (searchParams.has('search')) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('search');
+      setSearchParams(newParams, { replace: true });
+    }
   }
 
   useEffect(() => {
@@ -215,7 +236,11 @@ const Layout = () => {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     }, 50)
     
-    setIsMobileSearchOpen(false)
+    // Cancel search and hide mobile search on route changes when clicking away
+    if (isMobileSearchOpen) {
+      handleCloseSearch()
+    }
+    
     return () => clearTimeout(timer)
   }, [location.pathname])
 
@@ -399,7 +424,7 @@ const Layout = () => {
             />
             <button
               type="button"
-              onClick={() => setIsMobileSearchOpen(false)}
+              onClick={handleCloseSearch}
               className="ml-2 flex flex-col items-center justify-center rounded-xl bg-gray-200/50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-600 transition active:scale-95"
             >
               Fermer
