@@ -228,6 +228,7 @@ const CheckoutPage = () => {
     setError(null)
 
     try {
+      console.log('[Stripe] Génération PaymentIntent — orderId envoyé:', orderId)
       const response = await fetch(N8N_STRIPE_INTENT_URL, {
         method: 'POST',
         headers: {
@@ -292,6 +293,7 @@ const CheckoutPage = () => {
             order_number: orderNumber ?? orderId,
             total_amount: total,
             shipping_amount: shippingTotal,
+            payment_method: 'cash',
             backoffice_url: `${window.location.origin}/admin?validate_order=${orderNumber ?? orderId}`,
             customer: {
               name: ticketCustomerName,
@@ -502,7 +504,6 @@ const CheckoutPage = () => {
 
       const logisticName = items.find(i => i.shippingOption?.name)?.shippingOption?.name ?? 'Standard'
 
-      // Étape 4: création de la commande (sans relations imbriquées).
       const order = await createOrder({
         cart_id: resolvedCartId,
         customer_id: customerId,
@@ -517,6 +518,13 @@ const CheckoutPage = () => {
         logistic_name: logisticName,
         item_count: itemCount,
       })
+
+      // Guard: vérifier que Directus a bien renvoyé un UUID valide
+      if (!order?.id) {
+        console.error('createOrder a retourné un objet sans id:', order)
+        throw new Error('La création de commande a échoué : aucun identifiant retourné par le serveur.')
+      }
+      console.log('[Checkout] Commande créée dans Directus — order.id:', order.id, '— order_number:', order.order_number)
 
       // Étape 5: création des lignes de commande.
       await createOrderItems(
@@ -1111,37 +1119,6 @@ const CheckoutPage = () => {
                               })
                             } catch (e) {
                               console.error('Erreur mise à jour commande Stripe', e)
-                            }
-
-                            // Notify n8n webhook (background, non-blocking)
-                            if (N8N_WEBHOOK_URL) {
-                              void fetch(N8N_WEBHOOK_URL, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  order_id: orderId,
-                                  order_number: orderNumber ?? orderId,
-                                  total_amount: total,
-                                  shipping_amount: shippingTotal,
-                                  payment_method: 'card',
-                                  backoffice_url: `${window.location.origin}/admin?validate_order=${orderNumber ?? orderId}`,
-                                  customer: {
-                                    name: ticketCustomerName,
-                                    email: customerSnapshot?.email || delivery.email.trim(),
-                                    phone: customerSnapshot?.phone || delivery.phone.trim(),
-                                  },
-                                  items: items.map((item) => ({
-                                    product_title: item.product.title,
-                                    variant_name: item.variant.option1_name,
-                                    variant_value: resolveVariantValue(item.variant),
-                                    quantity: item.quantity,
-                                    unit_price: item.product.prix_calcule ?? item.product.retail_price,
-                                    image: resolveImageUrl(item.product.image_url)
-                                  })),
-                                }),
-                              }).catch((webhookError) => {
-                                console.error('Erreur webhook n8n (Stripe)', webhookError)
-                              })
                             }
 
                             // Save order to local email history

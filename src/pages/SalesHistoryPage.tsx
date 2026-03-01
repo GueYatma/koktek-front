@@ -10,11 +10,14 @@ import OrderDetailsModal from '../components/OrderDetailsModal'
 
 const formatDateTime = (value?: string) => {
   if (!value) return '—'
-  const date = new Date(value)
+  // Si la chaîne Directus n'a pas de 'Z', on force l'interprétation UTC
+  const normalized = value.endsWith('Z') || value.includes('+') ? value : value + 'Z'
+  const date = new Date(normalized)
   if (Number.isNaN(date.getTime())) return '—'
   return new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'medium',
     timeStyle: 'short',
+    timeZone: 'Europe/Paris',
   }).format(date)
 }
 
