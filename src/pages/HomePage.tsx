@@ -5,6 +5,7 @@ import { useProducts } from '../hooks/useProducts'
 import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
 import ProductCard from '../components/ProductCard'
+import CategoryCard from '../components/CategoryCard'
 
 const BRAND_SHOWCASE = [
   {
@@ -276,35 +277,17 @@ const HomePage = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {featuredCategories.map((category, idx) => {
+          {featuredCategories.map((category) => {
             const categoryKey = normalizeCategoryKey(category.name)
             const categoryImages = productImagesByCategory.get(categoryKey) ?? []
-            const categoryImage =
-              categoryImages.length > 0
-                ? categoryImages[(rotationTick + idx) % categoryImages.length]
-                : heroImage
+            
             return (
-              <Link
+              <CategoryCard
                 key={category.id}
-                to={`/catalogue?category=${encodeURIComponent(category.name)}`}
-                className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="h-36 overflow-hidden bg-gray-100">
-                  <img
-                    src={categoryImage}
-                    alt={category.name}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-4">
-                  <p className="text-sm font-semibold text-gray-900">
-                    {category.name}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Sélection curée Koktek
-                  </p>
-                </div>
-              </Link>
+                categoryName={category.name}
+                images={categoryImages}
+                fallbackImage={heroImage}
+              />
             )
           })}
           {!loading && featuredCategories.length === 0 && (
