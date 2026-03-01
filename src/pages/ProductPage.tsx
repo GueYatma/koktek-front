@@ -565,34 +565,37 @@ const ProductPage = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 md:hidden">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white/95 px-3 py-3 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.55)] backdrop-blur">
-            <div className="flex-1">
-              <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+      <div className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] left-0 right-0 z-40 md:hidden px-4 pointer-events-none">
+        <div className="mx-auto max-w-6xl pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedVariant) {
+                addItem(product, selectedVariant, 1, shippingOptions[selectedShippingIndex])
+              }
+            }}
+            disabled={!selectedVariant}
+            className={`flex w-full items-center justify-between gap-3 rounded-2xl px-5 py-3.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all active:scale-95 ${
+              selectedVariant
+                ? 'bg-gray-900/95 border border-gray-700 text-white'
+                : 'cursor-not-allowed bg-gray-200/90 border border-gray-300 text-gray-500'
+            }`}
+          >
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-400 mb-0.5">
+                Ajouter au panier
+              </span>
+              <span className="text-sm font-bold truncate max-w-[200px]">
                 {selectedVariantLabel}
-              </p>
-              <p className="text-base font-semibold text-gray-900">
-                {formatPrice(displayPrice)}
-              </p>
+              </span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedVariant) {
-                  addItem(product, selectedVariant, 1, shippingOptions[selectedShippingIndex])
-                }
-              }}
-              disabled={!selectedVariant}
-              className={`rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-95 ${
-                selectedVariant
-                  ? 'bg-black text-white hover:bg-gray-900'
-                  : 'cursor-not-allowed bg-gray-200 text-gray-400'
-              }`}
-            >
-              Ajouter au panier
-            </button>
-          </div>
+            <div className="flex items-center gap-3">
+              <span className="h-8 w-px bg-gray-700"></span>
+              <span className="text-lg font-bold tracking-tight">
+                {formatPrice(displayPrice)}
+              </span>
+            </div>
+          </button>
         </div>
       </div>
     </div>

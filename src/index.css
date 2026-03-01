@@ -157,5 +157,15 @@
   .animate-cartoon-bounce {
     animation: cartoon-bounce 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     will-change: transform, box-shadow, background-color, border-color, color;
+  @keyframes cart-magic {
+    0% { transform: scale(1) rotate(0deg); color: inherit; }
+    20% { transform: scale(1.4) rotate(-15deg); color: #f59e0b; filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+    40% { transform: scale(1.4) rotate(15deg); color: #f59e0b; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8)); }
+    60% { transform: scale(1.4) rotate(360deg); color: #f59e0b; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8)); }
+    80% { transform: scale(1.1) rotate(375deg); color: #fbbf24; filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4)); }
+    100% { transform: scale(1) rotate(360deg); color: inherit; filter: none; }
+  }
+  .animate-cart-magic {
+    animation: cart-magic 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 }

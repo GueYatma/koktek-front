@@ -58,6 +58,39 @@ const Layout = () => {
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
   const isAnyModalOpen = isCartOpen || isContactOpen || isAuthOpen || isProfileOpen
 
+  const prevItemCount = useRef(itemCount)
+  const cartAnimTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cartAutoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isCartAnimating, setIsCartAnimating] = useState(false)
+
+  // Track item additions for the cart animation
+  useEffect(() => {
+    if (itemCount > prevItemCount.current) {
+      if (cartAnimTimeoutRef.current) clearTimeout(cartAnimTimeoutRef.current)
+      if (cartAutoCloseTimeoutRef.current) clearTimeout(cartAutoCloseTimeoutRef.current)
+      
+      setIsCartAnimating(true)
+      
+      cartAnimTimeoutRef.current = setTimeout(() => {
+        setIsCartAnimating(false)
+        setIsCartOpen(true)
+        
+        // Auto close after 2.5 seconds to let the user see the cart contents
+        cartAutoCloseTimeoutRef.current = setTimeout(() => {
+          setIsCartOpen(false)
+        }, 2500)
+      }, 800)
+    }
+    prevItemCount.current = itemCount
+  }, [itemCount])
+
+  useEffect(() => {
+    return () => {
+      if (cartAnimTimeoutRef.current) clearTimeout(cartAnimTimeoutRef.current)
+      if (cartAutoCloseTimeoutRef.current) clearTimeout(cartAutoCloseTimeoutRef.current)
+    }
+  }, [])
+
   const handleAccountClick = () => {
     if (hasUser) {
       openProfile()
@@ -435,7 +468,7 @@ const Layout = () => {
             aria-label="Panier"
           >
             <span className="relative">
-              <ShoppingBag className="h-5 w-5" />
+              <ShoppingBag className={`h-5 w-5 ${isCartAnimating ? 'animate-cart-magic z-50' : ''}`} />
               {itemCount > 0 ? (
                 <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-semibold text-white">
                   {itemCount}
