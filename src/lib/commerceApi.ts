@@ -216,9 +216,6 @@ const requestDirectus = async <T>(
 ): Promise<T> => {
   const url = buildUrl(path, options.params)
   const payload = options.body
-  if ((options.method ?? 'GET') === 'POST') {
-    console.log('PAYLOAD ENVOYÉ:', payload)
-  }
   const response = await fetch(url, {
     method: options.method ?? 'GET',
     headers: buildHeaders(),

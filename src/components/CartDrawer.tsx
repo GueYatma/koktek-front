@@ -44,6 +44,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer le panier"
             className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
           >
             <X className="h-5 w-5" />

@@ -229,7 +229,6 @@ const CheckoutPage = () => {
     setError(null)
 
     try {
-      console.log('[Stripe] Génération PaymentIntent — orderId envoyé:', orderId)
       const response = await fetch(N8N_STRIPE_INTENT_URL, {
         method: 'POST',
         headers: {
@@ -525,7 +524,6 @@ const CheckoutPage = () => {
         console.error('createOrder a retourné un objet sans id:', order)
         throw new Error('La création de commande a échoué : aucun identifiant retourné par le serveur.')
       }
-      console.log('[Checkout] Commande créée dans Directus — order.id:', order.id, '— order_number:', order.order_number)
 
       // Étape 5: création des lignes de commande.
       await createOrderItems(

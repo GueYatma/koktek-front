@@ -528,8 +528,6 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
           items: itemsPayload,
         };
 
-        console.log("Webhook N8N payload (cash_received):", webhookPayload);
-
         const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
           headers: {
@@ -552,7 +550,6 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
 
       // 3. Déclenchement Logistique : CJ Dropshipping Webhook
       try {
-        console.log("Déclenchement logistique CJ Dropshipping (order_id: " + order.id + ")");
         const cjResponse = await fetch(N8N_CJ_WEBHOOK_URL, {
           method: "POST",
           headers: {
