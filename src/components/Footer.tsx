@@ -60,12 +60,12 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
                <div className="group relative aspect-auto sm:aspect-[85/55] w-full max-w-[32rem] lg:max-w-[34rem] mx-auto rounded-3xl border border-gray-200/50 bg-white shadow-[0_24px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden transition-transform hover:-translate-y-1.5 lg:hover:-translate-y-2">
                  
                  {/* Top Sub-background line */}
-                 <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-orange-400 to-orange-600 opacity-60 z-10" />
+                 <div className="absolute inset-x-0 top-0 h-1.5 bg-gray-200 z-10" />
 
                  {/* WALLET TRICK: Vertical Band on the Right */}
                  <div className="absolute right-0 top-0 bottom-0 w-10 sm:w-12 bg-[#fafafa] border-l border-gray-100 flex items-center justify-center z-20 overflow-hidden">
-                    <div className="absolute whitespace-nowrap rotate-90 flex items-center gap-2.5 sm:gap-3 text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-800 uppercase origin-center">
-                       <span className="font-nunito font-black text-[13px] sm:text-[15px] tracking-tighter text-gray-950">KOKTEK</span>
+                    <div className="absolute whitespace-nowrap rotate-90 flex items-center gap-2 sm:gap-2.5 text-[8.5px] sm:text-[9.5px] font-bold tracking-wider text-gray-800 uppercase origin-center px-4">
+                       <span className="font-nunito font-black text-[12px] sm:text-[14px] tracking-tight text-gray-950">KOKTEK</span>
                        <span className="font-nunito">— COMMANDEZ EN LIGNE — PAYEZ EN ESPÈCES</span>
                     </div>
                  </div>
@@ -96,9 +96,20 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
                      </div>
                    </div>
 
-                   {/* Slogan Area */}
-                   <div className="mt-5 sm:mt-8">
-                     <div className="font-nunito flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-2.5">
+                   {/* Slogan & Website Area */}
+                   <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:gap-5">
+                     
+                     {/* 1. koktek.com badge (moved up & enlarged) */}
+                     <div className="w-full flex items-center justify-center">
+                       <div className="inline-flex items-center rounded-xl bg-gray-50 px-4 py-1.5 sm:py-2 border border-gray-100 shadow-sm">
+                         <span className="font-nunito text-[14px] sm:text-[16px] font-bold tracking-wide text-gray-900 lowercase">
+                           koktek.com
+                         </span>
+                       </div>
+                     </div>
+
+                     {/* 2. 3 Bullets Slogan (moved down) */}
+                     <div className="font-nunito flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-2.5 px-0.5 sm:px-1">
                        <div className="flex items-center gap-2">
                          <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
                          <span className="text-[12px] sm:text-[13px] font-bold text-gray-800">Commandez en ligne</span>
@@ -114,16 +125,8 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
                      </div>
                    </div>
 
-                   {/* STAR Area: koktek.com badge + Contacts + Promo */}
-                   <div className="mt-auto pt-6 flex flex-col w-full text-center">
-                     
-                     <div className="w-full flex items-center justify-center mb-4">
-                       <div className="inline-flex items-center rounded-lg bg-gray-50 px-3.5 py-1.5 border border-gray-100 shadow-sm">
-                         <span className="font-nunito text-[12px] sm:text-[14px] font-bold tracking-wide text-gray-800 lowercase">
-                           koktek.com
-                         </span>
-                       </div>
-                     </div>
+                   {/* Contacts + Promo Area */}
+                   <div className="mt-auto pt-5 sm:pt-6 flex flex-col w-full text-center">
                      
                      {/* Orange Separator 1 */}
                      <div className="h-[2px] w-full bg-orange-500 mx-auto mb-3 opacity-80 rounded-full" />
