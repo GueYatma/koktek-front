@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import Layout from './components/Layout'
+import ScrollToTop from './components/ScrollToTop'
 
 // Lazy-loaded pages – each gets its own chunk, loaded only on first visit.
 // Heavy deps (recharts, jspdf, stripe, dompurify…) stay out of the
@@ -27,6 +28,7 @@ const App = () => {
   return (
     <CartProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense>
           <Routes>
             <Route element={<Layout />}>

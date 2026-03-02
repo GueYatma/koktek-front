@@ -205,7 +205,7 @@ const CheckoutPage = () => {
   }, [paymentView, confirmedMethod])
 
   const paymentButtonBase =
-    'flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm transition-all duration-300 ease-out transform focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:border-amber-200 hover:bg-amber-50/80'
+    'w-full rounded-2xl bg-indigo-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg outline-none transition-all duration-200 hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60'
 
   const resolveCountryCode = (value: string) => {
     const normalized = value.trim()
@@ -1060,7 +1060,7 @@ const CheckoutPage = () => {
                     <p className="mt-2 text-sm text-gray-600">
                       Choisissez maintenant votre mode de paiement pour finaliser la commande.
                     </p>
-                    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <div className="mt-6 flex flex-col gap-4">
                       <button
                         type="button"
                         onClick={handlePaymentOnline}
