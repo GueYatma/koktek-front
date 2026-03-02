@@ -193,18 +193,20 @@ const HomePage = () => {
     <div>
       <section className="relative overflow-hidden bg-[#f6f7fb]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.12),_transparent_55%)]" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 pt-6 pb-8 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:py-8">
-          <div className="space-y-2 text-center lg:text-left">
-            <div className="mx-auto inline-flex w-full max-w-[320px] flex-wrap items-center justify-center gap-1.5 rounded-lg border border-gray-800 bg-gray-900/85 px-3 py-1.5 text-[12.5px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.7)] animate-soft-float">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 pt-8 pb-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:py-16">
+          <div className="flex flex-col items-center justify-center text-center lg:items-start lg:text-left lg:py-6">
+            <div className="mb-6 lg:mb-8 mx-auto lg:mx-0 inline-flex w-full max-w-[320px] flex-wrap items-center justify-center lg:justify-start gap-1.5 rounded-lg border border-gray-800 bg-gray-900/85 px-3 py-1.5 text-[12.5px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.7)] animate-soft-float">
               <BadgeCheck className="h-4 w-4 text-white shrink-0" />
               <span className="whitespace-nowrap">COMMANDEZ EN LIGNE</span>
               <span className="whitespace-nowrap">ET PAYEZ EN ESPÈCES</span>
             </div>
-            <h1 className="text-[28px] font-semibold leading-[1.12] text-gray-900 sm:text-[32px] sm:leading-[1.14]">
-              Tous vos accessoires de smartphone au même endroit.
+            
+            <h1 className="mb-6 lg:mb-8 max-w-2xl text-[26px] font-bold leading-[1.2] tracking-tight text-gray-900 sm:text-3xl lg:text-5xl lg:leading-[1.15]">
+              Coques chargeur protection écran écouteur et autres accessoires smartphone au meilleur prix
             </h1>
-            <div className="rounded-2xl border border-gray-300 bg-gray-50/95 px-4 py-3 text-base text-gray-800 shadow-sm sm:px-5 sm:py-3.5 sm:text-lg">
-              <p className="text-sm font-medium leading-snug text-gray-800 sm:text-base">
+            
+            <div className="max-w-xl rounded-2xl border border-gray-300 bg-gray-50/95 px-5 py-4 shadow-sm sm:px-6 sm:py-5">
+              <p className="text-sm font-medium leading-relaxed text-gray-800 sm:text-base">
                 Coques, chargeurs, vitres de protection, supports téléphone, écouteurs Bluetooth et bien d’autres.
                 Une sélection claire, un catalogue riche et un service de proximité, de qualité et de confiance.
               </p>
