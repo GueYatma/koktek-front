@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
+import BackButton from '../components/BackButton'
 
 const AdminLayout = () => {
   const baseLinkClass =
@@ -11,6 +12,7 @@ const AdminLayout = () => {
     <div className="min-h-screen bg-[#f4f5f7] text-gray-900 flex flex-col">
       <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-sm">
         <div className="flex items-center gap-4">
+          <BackButton fallback="/" className="min-h-[36px] px-2 py-1.5 border-none shadow-none bg-transparent hover:bg-gray-100 hidden sm:flex" />
           <a href="https://koktek.com" className="flex items-center gap-2">
             <span className="text-xl font-black tracking-widest text-gray-900">KOKTEK</span>
           </a>

@@ -7,6 +7,7 @@ import { useProducts } from '../hooks/useProducts'
 import type { ShippingOption, Variant } from '../types'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
+import BackButton from '../components/BackButton'
 
 type VariantWithImage = Variant & {
   image_url?: string
@@ -288,13 +289,7 @@ const ProductPage = () => {
   return (
     <div className="mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 sm:pt-12 lg:px-8">
       <div className="mb-8 flex items-center justify-between">
-        <Link
-          to="/catalogue"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/80 px-4 py-2.5 text-[13px] font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 active:scale-95"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Retour au catalogue
-        </Link>
+        <BackButton fallback="/catalogue" label="Retour au catalogue" />
       </div>
 
       <div className="mb-6 space-y-2 md:hidden">

@@ -11,6 +11,7 @@ import { resolveImageUrl } from '../utils/image'
 import { saveOrderForEmail } from '../utils/customerOrders'
 import { resolveVariantValue } from '../utils/variant'
 import OrderTicketModal from '../components/OrderTicketModal'
+import BackButton from '../components/BackButton'
 import {
   addCartItem,
   createCart,
@@ -603,13 +604,16 @@ const CheckoutPage = () => {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <div className="mb-10">
-        <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-          Paiement
-        </p>
-        <h1 className="text-3xl font-semibold text-gray-900">
-          Finaliser la commande
-        </h1>
+      <div className="mb-10 flex items-start gap-4">
+        <BackButton fallback="/catalogue" className="mt-1 shrink-0" />
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+            Paiement
+          </p>
+          <h1 className="text-3xl font-semibold text-gray-900">
+            Finaliser la commande
+          </h1>
+        </div>
       </div>
 
       {checkoutStep !== 'success' ? (

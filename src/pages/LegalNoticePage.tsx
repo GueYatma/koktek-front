@@ -1,10 +1,17 @@
+import BackButton from '../components/BackButton'
+
 const LegalNoticePage = () => {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <p className="text-xs uppercase tracking-[0.3em] text-gray-500">KOKTEK</p>
-      <h1 className="mt-3 text-3xl font-semibold text-gray-900">
-        Mentions légales
-      </h1>
+      <div className="mb-8 flex items-start gap-4">
+        <BackButton fallback="/" className="mt-1 shrink-0" />
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-500">KOKTEK</p>
+          <h1 className="mt-3 text-3xl font-semibold text-gray-900">
+            Mentions légales
+          </h1>
+        </div>
+      </div>
       <div className="mt-8 space-y-4 text-base leading-relaxed text-gray-700">
         <p>
           Le présent site web est édité par Fonkaz (YG), immatriculée au Registre
