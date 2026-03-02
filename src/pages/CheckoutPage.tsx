@@ -274,6 +274,7 @@ const CheckoutPage = () => {
       await markOrderPaid(orderId, {
         status: 'pending_cash',
         payment_status: 'pending_cash',
+        payment_method: 'Espèces',
       })
 
       // Étape 2: afficher le message de succès immédiatement.
@@ -1118,6 +1119,7 @@ const CheckoutPage = () => {
                               await markOrderPaid(orderId, {
                                 status: 'paid',
                                 payment_status: 'paid',
+                                payment_method: 'Carte Bancaire',
                               })
                             } catch (e) {
                               console.error('Erreur mise à jour commande Stripe', e)

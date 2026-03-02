@@ -57,36 +57,36 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
             <div className="pt-6 sm:pt-8 w-full">
                
                {/* SINGLE CARD (RECTO) */}
-               <div className="group relative aspect-auto sm:aspect-[85/55] w-full max-w-[32rem] lg:max-w-[34rem] mx-auto rounded-3xl border border-gray-200/50 bg-white shadow-[0_24px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden transition-transform hover:-translate-y-1.5 lg:hover:-translate-y-2">
-                 
-                 {/* Top Sub-background line */}
-                 <div className="absolute inset-x-0 top-0 h-1.5 bg-gray-200 z-10" />
+               <div className="group relative aspect-auto sm:aspect-[85/55] w-full max-w-[32rem] lg:max-w-[34rem] mx-auto rounded-[20px] sm:rounded-3xl border-[1.5px] border-[#1f2937] bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden transition-transform hover:-translate-y-1.5 lg:hover:-translate-y-2">
 
-                 {/* WALLET TRICK: Vertical Band on the Right */}
-                 <div className="absolute right-0 top-0 bottom-0 w-10 sm:w-12 bg-[#fafafa] border-l border-gray-100 flex items-center justify-center z-20 overflow-hidden">
-                    <div className="absolute whitespace-nowrap rotate-90 flex items-center gap-2 sm:gap-2.5 text-[8.5px] sm:text-[9.5px] font-bold tracking-wider text-gray-800 uppercase origin-center px-4">
-                       <span className="font-nunito font-black text-[12px] sm:text-[14px] tracking-tight text-gray-950">KOKTEK</span>
+                 {/* WALLET TRICK: Vertical Band on the Right (SAFE MARGINS PRINT) */}
+                 <div className="absolute right-0 top-0 bottom-0 w-10 sm:w-12 bg-[#fafafa] border-l border-gray-100 flex items-center justify-center z-10 overflow-hidden">
+                    <div className="absolute whitespace-nowrap rotate-90 flex items-center gap-2 text-[7.5px] sm:text-[8.5px] font-bold tracking-widest text-gray-800 uppercase origin-center px-6">
+                       <span className="font-nunito font-bold text-[10.5px] sm:text-[12px] tracking-tight text-slate-900">KOKTEK</span>
                        <span className="font-nunito">— COMMANDEZ EN LIGNE — PAYEZ EN ESPÈCES</span>
                     </div>
                  </div>
 
                  {/* MAIN CARD CONTENT */}
-                 <div className="flex-grow flex flex-col p-5 sm:p-8 pr-12 sm:pr-16 relative z-10 w-full h-full">
+                 <div className="flex-grow flex flex-col p-5 sm:p-8 pr-12 sm:pr-16 relative z-20 w-full h-full">
                    
                    {/* Header Area */}
                    <div className="flex justify-between items-start w-full">
                      <div className="flex flex-col items-start pt-1">
-                       <h4 className="font-nunito text-[48px] sm:text-[60px] leading-[0.85] font-black tracking-tighter text-gray-950 uppercase drop-shadow-sm">
+                       {/* LOGO KOKTEK -12%, color #0f172a, font-bold */}
+                       <h4 className="font-nunito text-[38px] sm:text-[46px] leading-[0.85] font-bold tracking-tight text-[#0f172a] uppercase drop-shadow-sm">
                          KOKTEK
                        </h4>
-                       <div className="mt-2 sm:mt-2.5 inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 border border-gray-100 shadow-sm">
-                         <span className="font-nunito text-[9px] sm:text-[10px] font-bold tracking-[0.15em] text-gray-500 uppercase">
+                       {/* BADGE ACCESSOIRES : style hérité de koktek.com pour cohérence parfaite */}
+                       <div className="mt-2 inline-flex items-center rounded-xl bg-gray-200 px-2.5 py-1 border border-gray-300 shadow-md">
+                         <span className="font-nunito text-[8.5px] sm:text-[9.5px] font-extrabold tracking-[0.12em] text-gray-900 uppercase drop-shadow-sm">
                            Accessoires smartphone
                          </span>
                        </div>
                      </div>
                      
-                     <div className="shrink-0 bg-white p-2 rounded-xl border border-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.06)] relative z-10">
+                     {/* QR Code */}
+                     <div className="shrink-0 bg-white p-2 rounded-xl border-[2px] border-[#111] shadow-md relative z-10 mr-1 sm:mr-1.5">
                        <img 
                          src="https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=https%3A%2F%2Fkoktek.com%2Fcatalogue" 
                          alt="Catalogue KOKTEK" 
@@ -96,65 +96,69 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
                      </div>
                    </div>
 
-                   {/* Slogan & Website Area */}
-                   <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:gap-5">
+                   {/* --- BOTTOM GROUP (Slogan + Contacts) LIFTED BY 3MM (pb-3 sm:pb-4 = 12-16px) --- */}
+                   <div className="mt-auto flex flex-col w-full pb-3 sm:pb-4">
                      
-                     {/* 1. koktek.com badge (moved up & enlarged) */}
-                     <div className="w-full flex items-center justify-center">
-                       <div className="inline-flex items-center rounded-xl bg-gray-50 px-4 py-1.5 sm:py-2 border border-gray-100 shadow-sm">
-                         <span className="font-nunito text-[14px] sm:text-[16px] font-bold tracking-wide text-gray-900 lowercase">
-                           koktek.com
-                         </span>
+                     {/* Slogan & Website Area (aéré en bas avec mb-4 pour la respiration au-dessus de la ligne orange) */}
+                     <div className="flex flex-col gap-4 sm:gap-5 mb-4 sm:mb-5">
+                       
+                       {/* 1. koktek.com badge */}
+                       <div className="w-full flex items-center justify-center">
+                         <div className="inline-flex items-center rounded-xl bg-gray-200 px-6 py-2 sm:py-2.5 border border-gray-300 shadow-md">
+                           <span className="font-nunito text-[18px] sm:text-[20px] font-bold tracking-wide text-gray-900 lowercase drop-shadow-sm">
+                             koktek.com
+                           </span>
+                         </div>
+                       </div>
+
+                       {/* 2. 3 Bullets Slogan */}
+                       <div className="font-nunito flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-2.5 px-0.5 sm:px-1 mt-1 sm:mt-2">
+                         <div className="flex items-center gap-2">
+                           <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                           <span className="text-[10px] sm:text-[11.5px] font-bold text-gray-800">Commandez en ligne</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                           <span className="text-[10px] sm:text-[11.5px] font-bold text-gray-800">Payez en espèces</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                           <span className="text-[10px] sm:text-[11.5px] font-bold text-gray-800">Retours faciles</span>
+                         </div>
                        </div>
                      </div>
 
-                     {/* 2. 3 Bullets Slogan (moved down) */}
-                     <div className="font-nunito flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-2.5 px-0.5 sm:px-1">
-                       <div className="flex items-center gap-2">
-                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                         <span className="text-[12px] sm:text-[13px] font-bold text-gray-800">Commandez en ligne</span>
+                     {/* Contacts + Promo Area (statique en bas) */}
+                     <div className="flex flex-col w-full text-center">
+                       
+                       {/* Orange Separator 1 */}
+                       <div className="h-[1.5px] w-full bg-orange-500 mx-auto mb-3 opacity-80 rounded-full" />
+
+                       {/* Contacts Row */}
+                       <div className="font-nunito flex flex-wrap items-center justify-between text-[10px] sm:text-[11.5px] font-semibold text-gray-700 w-full px-1 mb-3">
+                          <div className="flex items-center gap-1.5 font-bold text-gray-900 tracking-wide">
+                             koktek.com
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-gray-400" /> <span>07 58 77 52 91</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <MessageCircle className="w-3.5 h-3.5 text-green-500" /> WhatsApp
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Send className="w-3.5 h-3.5 text-blue-500" /> Telegram
+                          </div>
                        </div>
-                       <div className="flex items-center gap-2">
-                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                         <span className="text-[12px] sm:text-[13px] font-bold text-gray-800">Payez en espèces</span>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                         <span className="text-[12px] sm:text-[13px] font-bold text-gray-800">Retours faciles</span>
-                       </div>
+
+                       {/* Orange Separator 2 */}
+                       <div className="h-[1.5px] w-full bg-orange-500 mx-auto mb-3 opacity-80 rounded-full" />
+                       
+                       {/* Promo Phrase (Majuscule, nowrap 1 ligne) */}
+                       <p className="font-nunito text-[10.5px] sm:text-[11.5px] font-medium text-gray-700 tracking-wide mb-1 whitespace-nowrap overflow-hidden px-1">
+                         Demandez votre code promo sur koktek.com via le formulaire de contact.
+                       </p>
+
                      </div>
-                   </div>
-
-                   {/* Contacts + Promo Area */}
-                   <div className="mt-auto pt-5 sm:pt-6 flex flex-col w-full text-center">
-                     
-                     {/* Orange Separator 1 */}
-                     <div className="h-[2px] w-full bg-orange-500 mx-auto mb-3 opacity-80 rounded-full" />
-
-                     {/* Contacts Row */}
-                     <div className="font-nunito flex flex-wrap items-center justify-between text-[10px] sm:text-[11.5px] font-semibold text-gray-700 w-full px-1 mb-3">
-                        <div className="flex items-center gap-1.5 font-bold text-gray-900 tracking-wide">
-                           koktek.com
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5 text-gray-400" /> <span>07 58 77 52 91</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <MessageCircle className="w-3.5 h-3.5 text-green-500" /> WhatsApp
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Send className="w-3.5 h-3.5 text-blue-500" /> Telegram
-                        </div>
-                     </div>
-
-                     {/* Orange Separator 2 */}
-                     <div className="h-[2px] w-full bg-orange-500 mx-auto mb-3 opacity-80 rounded-full" />
-                     
-                     {/* Promo Phrase */}
-                     <p className="font-nunito text-[10px] sm:text-[11px] font-semibold text-gray-600 lowercase tracking-wide mb-1">
-                       demandez votre code promo sur koktek.com via le formulaire de contact.
-                     </p>
-
                    </div>
 
                  </div>

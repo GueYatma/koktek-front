@@ -259,11 +259,8 @@ const SalesHistoryPage = () => {
                         </span>
                       </td>
                       <td className="py-4 pl-4 text-center" onClick={(e) => e.stopPropagation()}>
-                        {!isCash ? (
-                          <span className="text-xs text-gray-400">
-                            {paymentStatus === 'paid' ? 'Payé via Stripe' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
-                          </span>
-                        ) : paymentStatus === 'pending_cash' ? (
+                        {isCash ? (
+                          paymentStatus === 'pending_cash' ? (
                           <button
                             onClick={() => setSearchParams({ validate_order: order.order_number || order.order_id })}
                             className="rounded-xl px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
@@ -273,6 +270,15 @@ const SalesHistoryPage = () => {
                         ) : (
                           <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
                             Versement effectué
+                          </span>
+                        )
+                        ) : order.methode_paiement === 'Carte Bancaire' ? (
+                          <span className="text-xs text-gray-400">
+                            {paymentStatus === 'paid' ? 'Payé via Stripe' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">
+                            {paymentStatus === 'paid' ? 'Payé' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'En attente'}
                           </span>
                         )}
                       </td>

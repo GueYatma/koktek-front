@@ -55,6 +55,7 @@ export type OrderRecord = {
   customer_id?: string | CustomerRecord | null
   status?: string
   payment_status?: string | null
+  payment_method?: string | null
   currency?: string
   total?: number | null
   total_price?: number | null
@@ -353,6 +354,7 @@ export const createOrder = async (input: {
   order_number?: string | null
   status?: string
   payment_status?: string | null
+  payment_method?: string | null
   currency?: string
   subtotal?: number | null
   total?: number | null
@@ -385,6 +387,7 @@ export const createOrder = async (input: {
     shipping_address: input.shipping_address ?? undefined,
     logistic_name: input.logistic_name ?? undefined,
     item_count: toNumberValue(input.item_count ?? 0, 0),
+    payment_method: input.payment_method ?? undefined,
   })
   
   return createOne<OrderRecord>('orders', payload)
@@ -610,12 +613,17 @@ export const markOrderPaid = async (
   input: {
     status?: string
     payment_status?: string
+    payment_method?: string
   },
 ): Promise<OrderRecord> => {
-  return updateOne<OrderRecord>('orders', orderId, {
+  const payload: Record<string, unknown> = {
     status: input.status ?? 'paid',
     payment_status: input.payment_status ?? 'paid',
-  })
+  }
+  if (input.payment_method) {
+    payload.payment_method = input.payment_method
+  }
+  return updateOne<OrderRecord>('orders', orderId, payload)
 }
 
 export const createCustomer = async (input: {
