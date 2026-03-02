@@ -552,27 +552,42 @@ const ProductPage = () => {
                 Retour et remboursement
                 <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
               </summary>
-              <div className="mt-4 space-y-3 leading-relaxed">
-                <p>
-                  Vous disposez de <strong className="font-semibold text-gray-800">14 jours à compter de la date de livraison</strong> pour retourner votre article.
+              <div className="mt-4 space-y-4 leading-relaxed">
+                <p className="font-medium text-gray-800">
+                  Vous disposez de 14 jours à compter de la date de livraison pour demander un retour.
                 </p>
+                
                 <div>
-                  <p className="mb-1 font-medium text-gray-800">Pour être éligible au retour :</p>
-                  <ul className="ml-1 list-inside list-disc space-y-0.5">
-                    <li>L'article doit être <strong className="font-semibold text-gray-800">neuf</strong>, <strong className="font-semibold text-gray-800">non utilisé</strong> et <strong className="font-semibold text-gray-800">non dégradé</strong>.</li>
-                    <li>Il doit être renvoyé <strong className="font-semibold text-gray-800">dans son emballage d'origine</strong> avec toutes les informations de livraison présentes.</li>
+                  <p className="mb-2 font-semibold text-gray-900">Pour être éligible au retour :</p>
+                  <ul className="space-y-1.5 pl-2">
+                    <li className="flex items-start gap-2">
+                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
+                      L'article doit être neuf, non utilisé et non dégradé.
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
+                      Il doit être renvoyé dans son emballage d'origine avec toutes les informations de livraison présentes.
+                    </li>
                   </ul>
                 </div>
+
                 <div>
-                  <p className="mb-1 font-medium text-gray-800">Modes de retour :</p>
-                  <ul className="ml-1 list-inside list-disc space-y-0.5">
-                    <li>Retour possible directement à notre stand.</li>
-                    <li>Retour possible par voie postale à l'adresse indiquée dans nos Conditions Générales de Vente (adresse disponible dans les Mentions légales).</li>
+                  <p className="mb-2 font-semibold text-gray-900">Modes de retour :</p>
+                  <ul className="space-y-1.5 pl-2">
+                    <li className="flex items-start gap-2">
+                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
+                      Retour possible directement à notre stand.
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
+                      Retour possible par voie postale à l'adresse indiquée dans nos Conditions Générales de Vente (adresse disponible dans les Mentions légales).
+                    </li>
                   </ul>
                 </div>
-                <p>
+
+                <div className="rounded-xl bg-gray-100 p-3 italic text-gray-700">
                   Les remboursements suivent le même canal que le paiement initial (carte → carte, espèces → espèces).
-                </p>
+                </div>
               </div>
             </details>
 

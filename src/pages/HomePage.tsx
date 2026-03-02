@@ -202,14 +202,18 @@ const HomePage = () => {
             </div>
             
             <h1 className="mb-5 lg:mb-6 w-full max-w-[600px] xl:max-w-[640px] text-balance text-[26px] font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-4xl lg:text-[44px] xl:text-5xl">
-              Coques chargeur protection écran écouteur et autres accessoires smartphone au meilleur prix
+              Coques, chargeurs, protections écran et accessoires smartphone au meilleur prix
             </h1>
             
-            <div className="max-w-xl rounded-2xl border border-gray-300 bg-gray-50/95 px-5 py-4 shadow-sm sm:px-6 sm:py-5">
+            <div className="mb-4 max-w-xl rounded-2xl border border-gray-300 bg-gray-50/95 px-5 py-4 shadow-sm sm:px-6 sm:py-5 text-left">
               <p className="text-sm font-medium leading-relaxed text-gray-800 sm:text-base">
-                Coques, chargeurs, vitres de protection, supports téléphone, écouteurs Bluetooth et bien d’autres.
-                Une sélection claire, un catalogue riche et un service de proximité, de qualité et de confiance.
+                Commandez en ligne en toute confiance. Payez par carte bancaire ou choisissez le paiement en espèces au stand si vous préférez. Retours simples au stand ou par courrier.
               </p>
+              <ul className="mt-3.5 space-y-2 text-[13px] sm:text-sm font-medium text-gray-700">
+                <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />Paiement sécurisé par carte</li>
+                <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />Option paiement espèces au stand</li>
+                <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />Retours faciles : stand ou courrier</li>
+              </ul>
             </div>
           </div>
           <div className="relative lg:justify-self-end mt-4 lg:mt-0">
@@ -249,6 +253,37 @@ const HomePage = () => {
                 <div className="relative overflow-hidden rounded-[16px] bg-gray-200 aspect-[4/5] w-full animate-pulse" />
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-12 border-b border-gray-100">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-3xl bg-gray-50/80 p-6 md:p-8 border border-gray-200/60 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
+            <div className="md:w-1/3">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Pourquoi faire confiance à KOKTEK ?</h2>
+              <Link to="/cgv" className="mt-3 inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                Voir nos CGV & Retours <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+              </Link>
+            </div>
+            <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 shrink-0 rounded-full bg-indigo-100 p-1.5"><BadgeCheck className="h-4 w-4 text-indigo-600" /></div>
+                <p className="text-sm font-medium text-gray-800">Un vrai vendeur derrière votre commande</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 shrink-0 rounded-full bg-indigo-100 p-1.5"><BadgeCheck className="h-4 w-4 text-indigo-600" /></div>
+                <p className="text-sm font-medium text-gray-800">Paiement par carte ou en espèces au stand</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 shrink-0 rounded-full bg-indigo-100 p-1.5"><BadgeCheck className="h-4 w-4 text-indigo-600" /></div>
+                <p className="text-sm font-medium text-gray-800">Retours simples et transparents</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 shrink-0 rounded-full bg-indigo-100 p-1.5"><BadgeCheck className="h-4 w-4 text-indigo-600" /></div>
+                <p className="text-sm font-medium text-gray-800">Remboursement selon le mode de paiement</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

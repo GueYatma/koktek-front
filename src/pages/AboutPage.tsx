@@ -19,10 +19,8 @@ const AboutPage = () => {
           meilleures protections pour votre smartphone au meilleur prix.
         </p>
         <p>
-          Plus qu'une simple boutique en ligne, nous sommes avant tout un
-          commerce de proximité ! Vous pouvez nous retrouver toutes les semaines
-          sur nos stands présents sur les marchés de Marseille, Martigues,
-          Marignane, Salon-de-Provence, Aubagne, Gardanne, et bien d'autres.
+          Plus qu'une simple boutique en ligne, nous sommes un commerce de proximité :
+          retrouvez-nous régulièrement sur nos stands sur les marchés de la région (selon nos emplacements).
           Notre équipe se fera un plaisir de vous conseiller en direct.
         </p>
       </div>
