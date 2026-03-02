@@ -193,15 +193,15 @@ const HomePage = () => {
     <div>
       <section className="relative overflow-hidden bg-[#f6f7fb]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.12),_transparent_55%)]" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 pt-8 pb-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:py-16">
-          <div className="flex flex-col items-center justify-center text-center lg:items-start lg:text-left lg:py-10">
-            <div className="mb-6 lg:mb-8 mx-auto lg:mx-0 inline-flex w-full max-w-[320px] flex-wrap items-center justify-center lg:justify-start gap-1.5 rounded-lg border border-gray-800 bg-gray-900/85 px-3 py-1.5 text-[12.5px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.7)] animate-soft-float">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 pt-8 pb-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:py-10">
+          <div className="flex flex-col items-center justify-center text-center lg:items-start lg:text-left">
+            <div className="mb-5 lg:mb-6 mx-auto lg:mx-0 inline-flex w-full max-w-[320px] flex-wrap items-center justify-center lg:justify-start gap-1.5 rounded-lg border border-gray-800 bg-gray-900/85 px-3 py-1.5 text-[12.5px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.7)] animate-soft-float">
               <BadgeCheck className="h-4 w-4 text-white shrink-0" />
               <span className="whitespace-nowrap">COMMANDEZ EN LIGNE</span>
               <span className="whitespace-nowrap">ET PAYEZ EN ESPÈCES</span>
             </div>
             
-            <h1 className="mb-6 lg:mb-8 w-full max-w-full lg:max-w-[620px] xl:max-w-[680px] text-[26px] font-bold leading-tight tracking-tight text-gray-900 sm:text-4xl lg:text-5xl lg:leading-[1.1]">
+            <h1 className="mb-5 lg:mb-6 w-full max-w-[600px] xl:max-w-[640px] text-balance text-[26px] font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-4xl lg:text-[44px] xl:text-5xl">
               Coques chargeur protection écran écouteur et autres accessoires smartphone au meilleur prix
             </h1>
             
