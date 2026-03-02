@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Undo2, X } from "lucide-react";
 import ProductCard from "../components/ProductCard";
+import PriceRangeSlider from "../components/PriceRangeSlider";
 import { useProducts } from "../hooks/useProducts";
 import type { Category } from "../types";
 
@@ -20,7 +21,7 @@ const normalizeKey = (value: string) =>
 const CatalogPage = () => {
   const { products: allProducts, categories: rawCategories, loading } = useProducts();
 
-  // État du filtre
+  // États du filtre
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [searchParams] = useSearchParams();
@@ -29,6 +30,30 @@ const CatalogPage = () => {
   const actionButtonClass =
     "inline-flex h-9 w-[92px] items-center justify-center whitespace-nowrap rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm transition hover:border-gray-900 hover:text-gray-900";
 
+  // Calcul des bornes de prix maximales et minimales de l'inventaire complet
+  const { minBound, maxBound } = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) return { minBound: 0, maxBound: 1000 };
+    const prices = allProducts.map(p => p.retail_price || 0);
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    return {
+      minBound: Math.floor(minP),
+      maxBound: maxP > 0 ? Math.ceil(maxP) : 1000,
+    };
+  }, [allProducts]);
+
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [hasInitRange, setHasInitRange] = useState(false);
+
+  // Initialisation du curseur de prix au chargement des produits
+  useEffect(() => {
+    if (!hasInitRange && allProducts.length > 0) {
+      setPriceRange([minBound, maxBound]);
+      setHasInitRange(true);
+    }
+  }, [allProducts, minBound, maxBound, hasInitRange]);
+
+  // Bloquer le scroll derrière le modal
   useEffect(() => {
     if (typeof document === "undefined") return;
     const html = document.documentElement;
@@ -126,7 +151,7 @@ const CatalogPage = () => {
     } else if (!brandParam) {
       setSelectedCategory("all");
     }
-  }, [searchParams, resolveCategorySelection, allCategories]); // Added allCategories to dependencies
+  }, [searchParams, resolveCategorySelection, allCategories]);
 
   const categoryNameById = useMemo(
     () =>
@@ -172,7 +197,13 @@ const CatalogPage = () => {
     const normalizedQuery = searchQuery ? normalizeKey(searchQuery) : "";
 
     const result = allProducts.filter((product) => {
-      // 1. Check Category
+      // 1. Check Prix (fourchette de filtrage entre min et max slider)
+      const rPrice = product.retail_price || 0;
+      if (rPrice < priceRange[0] || rPrice > priceRange[1]) {
+        return false;
+      }
+
+      // 2. Check Category
       let matchesCategory = true;
       if (selectedCategory !== "all") {
         const catLabel = categoryNameById.get(selectedCategory);
@@ -191,7 +222,7 @@ const CatalogPage = () => {
         }
       }
 
-      // 2. Check Brand
+      // 3. Check Brand
       let matchesBrand = true;
       if (selectedBrand !== "all") {
         const fallbackBrand = product.brand || GENERIC_BRAND;
@@ -203,7 +234,7 @@ const CatalogPage = () => {
         matchesBrand = normalizedProductBrand === selectedBrand;
       }
 
-      // 3. Check Search — each token must appear in (title + variant texts)
+      // 4. Check Search — each token must appear in (title + variant texts)
       let matchesSearch = true;
       if (normalizedQuery) {
         const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -223,7 +254,7 @@ const CatalogPage = () => {
       const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
       return dateB - dateA;
     });
-  }, [allProducts, selectedCategory, selectedBrand, categoryNameById, searchParams]);
+  }, [allProducts, selectedCategory, selectedBrand, categoryNameById, searchParams, priceRange]);
 
 
 
@@ -259,21 +290,36 @@ const CatalogPage = () => {
       </div>
 
       {/* Desktop sticky action bar */}
-      <div className="sticky top-[72px] z-30 hidden md:block px-4 sm:px-6">
-        <div className="flex items-center justify-between gap-3 rounded-full border border-gray-800 bg-[#1c1c1c]/95 px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-md transition-all">
+      <div className="sticky top-[64px] z-30 hidden md:block px-4 sm:px-6">
+        <div className="flex items-center justify-between gap-4 rounded-full border border-zinc-700/50 bg-[#333333]/90 px-3 py-2 shadow-lg backdrop-blur-md transition-all">
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-gray-700 bg-[#2a2a2a] px-4 text-xs font-semibold text-gray-200 shadow-sm transition hover:bg-gray-700 hover:text-white"
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-zinc-600 bg-zinc-700 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-zinc-600 hover:text-white"
           >
             <Undo2 className="h-3.5 w-3.5" />
             <span>Retour à l’accueil</span>
           </button>
           
+          <div className="flex flex-1 items-center justify-center max-w-md mx-auto">
+             <div className="flex w-full items-center gap-3">
+               <span className="text-[11px] font-bold text-gray-400 w-8 text-right">{priceRange[0]} €</span>
+               <div className="relative flex-1 group">
+                 <PriceRangeSlider 
+                   min={minBound} 
+                   max={maxBound > minBound ? maxBound : minBound + 1} 
+                   value={priceRange} 
+                   onChange={setPriceRange} 
+                 />
+               </div>
+               <span className="text-[11px] font-bold text-white w-10 text-left">{priceRange[1]} €</span>
+             </div>
+          </div>
+
           <button
             type="button"
             onClick={() => setIsFilterOpen(true)}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-white px-5 text-xs font-bold text-gray-900 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-5 text-xs font-bold text-gray-900 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
           >
             Catégorie
           </button>
