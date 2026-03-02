@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { X } from "lucide-react";
+import { Undo2, X } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
 import type { Category } from "../types";
@@ -171,7 +171,7 @@ const CatalogPage = () => {
     const searchQuery = searchParams.get("search");
     const normalizedQuery = searchQuery ? normalizeKey(searchQuery) : "";
 
-    return allProducts.filter((product) => {
+    const result = allProducts.filter((product) => {
       // 1. Check Category
       let matchesCategory = true;
       if (selectedCategory !== "all") {
@@ -217,13 +217,20 @@ const CatalogPage = () => {
 
       return matchesCategory && matchesBrand && matchesSearch;
     });
+
+    return result.sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [allProducts, selectedCategory, selectedBrand, categoryNameById, searchParams]);
 
 
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6 sm:pb-28 md:pt-6">
-      <div className="md:hidden">
+    <div className="mx-auto max-w-6xl pb-24 pt-4 sm:pb-28 md:pt-4">
+      {/* Mobile action bar */}
+      <div className="md:hidden px-4 sm:px-6">
         <div className="fixed left-0 right-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-30 border-b border-gray-200 bg-gray-50/95 shadow-sm backdrop-blur">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5">
@@ -251,21 +258,30 @@ const CatalogPage = () => {
         </div>
       </div>
 
-      <div className="hidden md:flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
-          Accessoires premium
-        </h1>
-        <button
-          type="button"
-          onClick={() => setIsFilterOpen(true)}
-          className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-900 hover:text-gray-900 hover:shadow-md"
-        >
-          Catégorie
-        </button>
+      {/* Desktop sticky action bar */}
+      <div className="sticky top-[72px] z-30 hidden md:block px-4 sm:px-6">
+        <div className="flex items-center justify-between gap-3 rounded-full border border-gray-800 bg-[#1c1c1c]/95 px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-md transition-all">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-gray-700 bg-[#2a2a2a] px-4 text-xs font-semibold text-gray-200 shadow-sm transition hover:bg-gray-700 hover:text-white"
+          >
+            <Undo2 className="h-3.5 w-3.5" />
+            <span>Retour à l’accueil</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen(true)}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-white px-5 text-xs font-bold text-gray-900 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
+          >
+            Catégorie
+          </button>
+        </div>
       </div>
 
       {/* --- GRILLE --- */}
-      <div className="mt-6">
+      <div className="mt-6 px-4 sm:px-6">
         {loading ? (
           <p className="text-center text-sm text-gray-500">Chargement...</p>
         ) : filteredProducts.length === 0 ? (

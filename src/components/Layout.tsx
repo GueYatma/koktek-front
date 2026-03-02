@@ -290,7 +290,7 @@ const Layout = () => {
             KOKTEK
           </Link>
 
-          <nav className="hidden items-center gap-7 text-sm font-semibold text-gray-700 md:flex">
+          <nav className="hidden items-center gap-2 md:flex">
             {[
               { to: '/', label: 'Accueil', end: true },
               { to: '/catalogue', label: 'Catalogue' },
@@ -300,7 +300,11 @@ const Layout = () => {
                 to={link.to}
                 end={link.end}
                 className={({ isActive }) =>
-                  `transition ${isActive ? 'text-gray-900' : 'hover:text-gray-900'}`
+                  `rounded-full px-5 py-2 text-sm font-bold transition-all ${
+                    isActive
+                      ? 'bg-gray-900 text-white shadow-md'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-100/80 hover:text-gray-900'
+                  }`
                 }
               >
                 {link.label}
@@ -309,7 +313,7 @@ const Layout = () => {
             <button
               type="button"
               onClick={openContact}
-              className="whitespace-nowrap transition hover:text-gray-900"
+              className="rounded-full bg-transparent px-5 py-2 text-sm font-bold text-gray-600 transition-all hover:bg-gray-100/80 hover:text-gray-900"
             >
               Contact
             </button>

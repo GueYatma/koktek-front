@@ -40,6 +40,7 @@ export type Product = {
   image_url: string;
   brand: string;
   images?: string[];
+  created_at?: string;
 };
 
 export type Variant = {

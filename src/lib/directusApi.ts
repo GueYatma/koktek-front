@@ -305,6 +305,9 @@ const mapProduct = (
     row.shipping_options ?? row.shippingOptions ?? row.shipping;
   const shippingOptions = normalizeShippingOptions(shippingOptionsRaw);
 
+  const createdAtRaw = row.date_created ?? row.created_at ?? row.createdAt;
+  const createdAt = typeof createdAtRaw === "string" ? createdAtRaw : undefined;
+
   // Calculer prix_calcule du produit : prendre le min des prix calculés des variantes
   const variantPrixCalcules = productVariants
     .map((v) => v.prix_calcule)
@@ -342,6 +345,7 @@ const mapProduct = (
     image_url: imageUrl,
     images,
     brand: brand.length > 0 ? brand : "Générique",
+    created_at: createdAt,
     expert_stars:
       typeof expertStarsRaw === "number" ||
       typeof expertStarsRaw === "string"
