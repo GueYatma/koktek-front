@@ -703,6 +703,7 @@ export type AdminOrderDashboardRecord = {
   frais_urssaf: string | number
   benefice_net_estime: string | number
   cj_order_id?: string | null
+  tracking_number?: string | null
   delai_livraison_estime?: string | null
   nombre_articles: string | number
   resume_articles?: string | null

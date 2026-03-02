@@ -88,8 +88,8 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
                      {/* QR Code */}
                      <div className="shrink-0 bg-white p-2 rounded-xl border-[2px] border-[#111] shadow-md relative z-10 mr-1 sm:mr-1.5">
                        <img 
-                         src="https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=https%3A%2F%2Fkoktek.com%2Fcatalogue" 
-                         alt="Catalogue KOKTEK" 
+                         src="https://api.qrserver.com/v1/create-qr-code/?size=256x256&ecc=H&data=https%3A%2F%2Fkoktek.com%2F" 
+                         alt="koktek.com" 
                          className="w-16 h-16 sm:w-20 sm:h-20"
                          crossOrigin="anonymous"
                        />

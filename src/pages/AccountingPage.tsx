@@ -10,6 +10,8 @@ import { Landmark, PiggyBank, ShoppingBag, TrendingUp } from 'lucide-react'
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -18,6 +20,7 @@ import {
 } from 'recharts'
 
 type Grouping = 'day' | 'week' | 'month'
+type PeriodPreset = '7d' | '30d' | 'current_month' | 'current_year'
 
 const parseAmount = (value: unknown): number => {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0
@@ -73,8 +76,32 @@ const AccountingPage = () => {
   const [orders, setOrders] = useState<AdminOrderDashboardRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [grouping, setGrouping] = useState<Grouping>('month')
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('30d')
   const [paymentFilter, setPaymentFilter] = useState<'paid' | 'all'>('all')
+
+  const getStartDate = (preset: PeriodPreset): Date => {
+    const now = new Date()
+    switch (preset) {
+      case '7d':
+        now.setDate(now.getDate() - 7)
+        return now
+      case '30d':
+        now.setDate(now.getDate() - 30)
+        return now
+      case 'current_month':
+        return new Date(now.getFullYear(), now.getMonth(), 1)
+      case 'current_year':
+        return new Date(now.getFullYear(), 0, 1)
+      default:
+        now.setDate(now.getDate() - 30)
+        return now
+    }
+  }
+
+  const getPresetGrouping = (preset: PeriodPreset): Grouping => {
+    if (preset === 'current_year') return 'month'
+    return 'day'
+  }
 
   const [searchParams, setSearchParams] = useSearchParams()
   const validateOrderId = searchParams.get('validate_order')
@@ -125,11 +152,17 @@ const AccountingPage = () => {
       }
     >()
 
+    const startDate = getStartDate(periodPreset)
+    const activeGrouping = getPresetGrouping(periodPreset)
+
     orders.forEach((order) => {
+      const orderDate = new Date(order.date_commande)
+      if (orderDate < startDate) return
+
       const paymentStatus = (order.status_paiement || '').toLowerCase()
       if (paymentFilter !== 'all' && !paymentStatus.includes(paymentFilter)) return
 
-      const periodKey = formatPeriodKey(order.date_commande, grouping)
+      const periodKey = formatPeriodKey(order.date_commande, activeGrouping)
       if (!periodKey) return
 
       const revenue = parseAmount(order.total_paye_client)
@@ -168,7 +201,7 @@ const AccountingPage = () => {
     return Array.from(bucket.entries())
       .map(([key, entry]) => ({
         key,
-        label: formatPeriodLabel(key, grouping),
+        label: formatPeriodLabel(key, activeGrouping),
         revenue: entry.revenue,
         subtotal: entry.subtotal,
         cost: entry.cost,
@@ -179,8 +212,8 @@ const AccountingPage = () => {
         items: entry.items,
         marginRate: entry.revenue > 0 ? entry.margin / entry.revenue : 0,
       }))
-      .sort((a, b) => b.key.localeCompare(a.key))
-  }, [orders, grouping, paymentFilter])
+      .sort((a, b) => a.key.localeCompare(b.key))
+  }, [orders, periodPreset, paymentFilter])
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -214,13 +247,14 @@ const AccountingPage = () => {
         </div>
         <div className="flex flex-wrap gap-3">
           <select
-            value={grouping}
-            onChange={(event) => setGrouping(event.target.value as Grouping)}
+            value={periodPreset}
+            onChange={(event) => setPeriodPreset(event.target.value as PeriodPreset)}
             className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm"
           >
-            <option value="day">Par jour</option>
-            <option value="week">Par semaine</option>
-            <option value="month">Par mois</option>
+            <option value="7d">7 derniers jours</option>
+            <option value="30d">30 derniers jours</option>
+            <option value="current_month">Mois en cours</option>
+            <option value="current_year">Année en cours</option>
           </select>
           <select
             value={paymentFilter}
@@ -311,53 +345,160 @@ const AccountingPage = () => {
               Chiffre d&apos;affaires &amp; bénéfice net
             </h3>
           </div>
-          <div className="text-xs text-gray-500">
-            {grouping === 'day'
-              ? 'Vue journalière'
-              : grouping === 'week'
-                ? 'Vue hebdomadaire'
-                : 'Vue mensuelle'}
+          <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-slate-900"></span>
+              Chiffre d&apos;Affaires
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-emerald-500"></span>
+              Bénéfice Net
+            </div>
           </div>
         </div>
-        <div className="mt-6 h-56">
+        <div className="mt-6 h-64">
           {rows.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[...rows].reverse()}>
+              <AreaChart data={rows} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="caGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0f172a" stopOpacity={0.25} />
                     <stop offset="95%" stopColor="#0f172a" stopOpacity={0} />
                   </linearGradient>
+                  
+                  {/* Gradient for Margin > 0 */}
                   <linearGradient id="marginGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  formatter={((value: number, name: string) => {
-                    const formattedValue = formatPrice(value);
-                    const formattedName = name === 'revenue' ? 'CA' : 'Bénéfice net';
-                    return [formattedValue, formattedName];
-                  }) as any}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={false} 
+                  tickLine={false} 
+                  dy={10} 
+                  minTickGap={20}
                 />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tickFormatter={(val) => `€${val}`}
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const revPayload = payload.find(p => p.dataKey === 'revenue');
+                      const marPayload = payload.find(p => p.dataKey === 'margin');
+                      const marginValue = marPayload?.value as number;
+                      const isLoss = marginValue < 0;
+                      
+                      return (
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-lg">
+                          <p className="mb-2 font-semibold text-gray-900">{label}</p>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-slate-700">
+                              Chiffre d&apos;Affaires : <span className="font-bold text-slate-900">{formatPrice(revPayload?.value as number)}</span>
+                            </p>
+                            <p className={`text-sm font-medium ${isLoss ? 'text-rose-600' : 'text-emerald-600'}`}>
+                              Bénéfice : <span className="font-bold">{formatPrice(marginValue)}</span>
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                {/* 
+                  To support dynamic stroke color based on value, AreaChart limits stroke to one color. 
+                  In Recharts, to perfectly match a split color on the line, we use gradient on stroke too if min < 0, 
+                  but here we rely on the custom Tooltip + showing the area to signal loss.
+                */}
                 <Area
                   type="monotone"
                   dataKey="revenue"
                   stroke="#0f172a"
                   strokeWidth={2}
                   fill="url(#caGradient)"
+                  activeDot={{ r: 6, fill: '#0f172a', strokeWidth: 0 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="margin"
-                  stroke="#10B981"
+                  stroke="#10b981"
                   strokeWidth={2}
                   fill="url(#marginGradient)"
+                  activeDot={(props: any) => {
+                    const { cx, cy, payload } = props;
+                    const isLoss = payload.margin < 0;
+                    return (
+                      <circle cx={cx} cy={cy} r={6} fill={isLoss ? '#e11d48' : '#10b981'} stroke="none" />
+                    );
+                  }}
                 />
               </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-gray-500">Aucune donnée à afficher.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+              Activité
+            </p>
+            <h3 className="mt-2 text-lg font-semibold text-gray-900">
+              Volume des ventes
+            </h3>
+          </div>
+        </div>
+        <div className="mt-6 h-48">
+          {rows.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={rows} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={false} 
+                  tickLine={false} 
+                  dy={10} 
+                  minTickGap={20}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={false} 
+                  tickLine={false} 
+                />
+                <Tooltip
+                  cursor={{ fill: '#f1f5f9' }}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-lg">
+                          <p className="mb-1 text-sm text-gray-500">{label}</p>
+                          <p className="font-semibold text-indigo-600">
+                            {payload[0].value} articles vendus
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar 
+                  dataKey="items" 
+                  fill="#6366f1" 
+                  radius={[4, 4, 0, 0]} 
+                  maxBarSize={40}
+                />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <p className="text-sm text-gray-500">Aucune donnée à afficher.</p>
@@ -407,13 +548,13 @@ const AccountingPage = () => {
                     <td className="py-4 pr-4 text-right">
                       {formatPrice(row.urssaf)}
                     </td>
-                    <td className="py-4 pr-4 text-right font-semibold text-gray-900">
+                    <td className={`py-4 pr-4 text-right font-semibold ${row.margin < 0 ? 'text-rose-600' : 'text-gray-900'}`}>
                       {formatPrice(row.margin)}
                     </td>
                     <td className="py-4 pr-4 text-right">
                       {row.items}
                     </td>
-                    <td className="py-4 pr-4 text-right">
+                    <td className={`py-4 pr-4 text-right ${row.marginRate < 0 ? 'text-rose-600 font-bold' : ''}`}>
                       {(row.marginRate * 100).toFixed(1)}%
                     </td>
                   </tr>

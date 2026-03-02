@@ -21,8 +21,28 @@ const formatDateTime = (value?: string) => {
   }).format(date)
 }
 
-const normalizeStatus = (value?: string | null) =>
-  value?.replace(/_/g, ' ') ?? '—'
+const DELIVERY_STATUS_FR: Record<string, string> = {
+  pending: 'En préparation',
+  shipped: 'Expédié',
+  in_transit: 'En transit',
+  delivered: 'Livré',
+}
+
+const PAYMENT_STATUS_FR: Record<string, string> = {
+  paid: 'Payé',
+  pending_cash: 'En attente (Espèces)',
+  pending_payment: 'En attente de paiement',
+}
+
+const normalizeDeliveryStatus = (value?: string | null) => {
+  if (!value) return '—'
+  return DELIVERY_STATUS_FR[value.toLowerCase()] || value.replace(/_/g, ' ')
+}
+
+const normalizePaymentStatus = (value?: string | null) => {
+  if (!value) return '—'
+  return PAYMENT_STATUS_FR[value.toLowerCase()] || value.replace(/_/g, ' ')
+}
 
 const toNumberValue = (value: unknown): number => {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0
@@ -152,9 +172,9 @@ const SalesHistoryPage = () => {
             className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm"
           >
             <option value="all">Paiement: Tous</option>
-            <option value="paid">paid</option>
-            <option value="pending_cash">pending_cash</option>
-            <option value="pending_payment">pending_payment</option>
+            <option value="paid">Payé</option>
+            <option value="pending_cash">En attente (Espèces)</option>
+            <option value="pending_payment">En attente de paiement</option>
           </select>
           <select
             value={deliveryFilter}
@@ -162,10 +182,10 @@ const SalesHistoryPage = () => {
             className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm"
           >
             <option value="all">Livraison: Toutes</option>
-            <option value="pending">pending</option>
-            <option value="shipped">shipped</option>
-            <option value="in_transit">in_transit</option>
-            <option value="delivered">delivered</option>
+            <option value="pending">En préparation</option>
+            <option value="shipped">Expédié</option>
+            <option value="in_transit">En transit</option>
+            <option value="delivered">Livré</option>
           </select>
         </div>
       </header>
@@ -176,20 +196,21 @@ const SalesHistoryPage = () => {
         ) : error ? (
           <p className="text-sm text-rose-600">{error}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-[0.2em] text-gray-400">
-                  <th className="py-3 pr-4">Client</th>
-                  <th className="py-3 pr-4">Commande</th>
-                  <th className="py-3 pr-4">Date</th>
-                  <th className="py-3 pr-4 text-right">Montant</th>
-                  <th className="py-3 pr-4 text-center">Articles</th>
-                  <th className="py-3 pr-4 text-right">Bénéfice net</th>
-                  <th className="py-3 pr-4 text-center">Méthode</th>
-                  <th className="py-3 pr-4 text-center">Paiement</th>
-                  <th className="py-3 pr-4 text-center">Livraison</th>
-                  <th className="py-3 pl-4 text-center">Action</th>
+          <div className="overflow-x-auto w-full xl:overflow-visible">
+            <table className="w-full text-xs md:text-sm text-left">
+              <thead className="text-white font-bold tracking-wider text-xs uppercase">
+                <tr className="text-left">
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 pl-4 pr-2 rounded-tl-xl">Client</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2">Commande</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2">Date</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2 text-right">Montant</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2 text-center">Articles</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2 text-right">Bénéfice net</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2 text-center">Méthode</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2 text-center">Paiement</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2 text-center">Livraison</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 px-2 text-center">Suivi</th>
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 pl-2 pr-4 text-center rounded-tr-xl">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -217,58 +238,63 @@ const SalesHistoryPage = () => {
                       onClick={() => setSearchParams({ view_order: order.order_id })}
                       className="text-gray-700 hover:bg-gray-50 cursor-pointer transition"
                     >
-                      <td className="py-4 pr-4 font-medium text-gray-900 whitespace-nowrap">
+                      <td className="py-4 pl-4 pr-2 font-medium text-gray-900 min-w-[120px]">
                         {customerName}
                       </td>
-                      <td className="py-4 pr-4 font-semibold text-gray-900 whitespace-nowrap">
+                      <td className="py-4 px-2 font-semibold text-gray-900 break-words">
                         {order.order_number || order.order_id}
                       </td>
-                      <td className="py-4 pr-4 whitespace-nowrap">{formatDateTime(order.date_commande)}</td>
-                      <td className="py-4 pr-4 text-right font-semibold text-gray-900 whitespace-nowrap">
+                      <td className="py-4 px-2 min-w-[100px]">{formatDateTime(order.date_commande)}</td>
+                      <td className="py-4 px-2 text-right font-semibold text-gray-900">
                         {formatPrice(Number(total))}
                       </td>
-                      <td className="py-4 pr-4 text-center whitespace-nowrap text-sm font-semibold text-gray-700">
+                      <td className="py-4 px-2 text-center font-semibold text-gray-700">
                         {itemsCount || 0}
                       </td>
-                      <td className="py-4 pr-4 text-right whitespace-nowrap">
-                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${profitTone}`}>
+                      <td className="py-4 px-2 text-right">
+                        <span className={`inline-flex items-center rounded-full border px-2 md:px-3 py-1 text-xs font-semibold ${profitTone}`}>
                           {formatPrice(netProfit)}
                         </span>
                       </td>
-                      <td className="py-4 pr-4 text-center">
-                        <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                      <td className="py-4 px-2 text-center">
+                        <span className="text-xs font-semibold text-gray-600 block min-w-[80px]">
                           {paymentMethodLabel}
                         </span>
                       </td>
-                      <td className="py-4 pr-4 text-center whitespace-nowrap">
+                      <td className="py-4 px-2 text-center">
                         <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${resolvePaymentTone(
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold text-center leading-tight ${resolvePaymentTone(
                             paymentStatus,
                           )}`}
                         >
-                          {normalizeStatus(paymentStatus)}
+                          {normalizePaymentStatus(paymentStatus)}
                         </span>
                       </td>
-                      <td className="py-4 pr-4 text-center whitespace-nowrap">
+                      <td className="py-4 px-2 text-center">
                         <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${resolveDeliveryTone(
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold text-center leading-tight ${resolveDeliveryTone(
                             deliveryStatus,
                           )}`}
                         >
-                          {normalizeStatus(deliveryStatus)}
+                          {normalizeDeliveryStatus(deliveryStatus)}
                         </span>
                       </td>
-                      <td className="py-4 pl-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-4 px-2 text-center">
+                        <span className="text-xs font-medium text-gray-500 break-all min-w-[90px] block">
+                          {order.tracking_number || '-'}
+                        </span>
+                      </td>
+                      <td className="py-4 pl-2 pr-4 text-center min-w-[120px]" onClick={(e) => e.stopPropagation()}>
                         {isCash ? (
                           paymentStatus === 'pending_cash' ? (
                           <button
                             onClick={() => setSearchParams({ validate_order: order.order_number || order.order_id })}
-                            className="rounded-xl px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
+                            className="rounded-xl px-2 md:px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
                           >
                             Valider Espèces
                           </button>
                         ) : (
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2 md:px-3 py-1 text-xs font-semibold text-emerald-700">
                             Versement effectué
                           </span>
                         )
