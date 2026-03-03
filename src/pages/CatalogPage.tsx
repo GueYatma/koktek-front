@@ -33,7 +33,7 @@ const CatalogPage = () => {
   // Calcul des bornes de prix maximales et minimales de l'inventaire complet
   const { minBound, maxBound } = useMemo(() => {
     if (!allProducts || allProducts.length === 0) return { minBound: 0, maxBound: 1000 };
-    const prices = allProducts.map(p => p.retail_price || 0);
+    const prices = allProducts.map(p => p.prix_calcule ?? p.retail_price ?? 0);
     const minP = Math.min(...prices);
     const maxP = Math.max(...prices);
     return {
@@ -198,7 +198,8 @@ const CatalogPage = () => {
 
     const result = allProducts.filter((product) => {
       // 1. Check Prix (fourchette de filtrage entre min et max slider)
-      const rPrice = product.retail_price || 0;
+      // On se base sur le prix final affiché (prix_calcule en priorité s'il existe)
+      const rPrice = product.prix_calcule ?? product.retail_price ?? 0;
       if (rPrice < priceRange[0] || rPrice > priceRange[1]) {
         return false;
       }
@@ -302,9 +303,9 @@ const CatalogPage = () => {
           </button>
           
           <div className="flex flex-1 items-center justify-center w-full px-2 sm:px-6">
-             <div className="flex w-full items-center gap-3">
+             <div className="flex w-full items-center gap-2">
                <span className="text-[11px] font-bold text-gray-400 w-8 text-right shrink-0">{priceRange[0]} €</span>
-               <div className="relative flex-1 group">
+               <div className="relative flex-1 group pl-1.5 pr-1.5">
                  <PriceRangeSlider 
                    min={minBound} 
                    max={maxBound > minBound ? maxBound : minBound + 1} 
@@ -313,6 +314,16 @@ const CatalogPage = () => {
                  />
                </div>
                <span className="text-[11px] font-bold text-white w-10 text-left shrink-0">{priceRange[1]} €</span>
+               {/* RESET BUTTON */}
+               {(priceRange[0] > minBound || priceRange[1] < maxBound) && (
+                 <button
+                   onClick={() => setPriceRange([minBound, maxBound > minBound ? maxBound : minBound + 1])}
+                   className="text-gray-400 hover:text-white transition p-1 rounded-full bg-zinc-700/50 hover:bg-zinc-600 ml-1 flex-shrink-0"
+                   title="Réinitialiser les prix"
+                 >
+                   <X className="w-3.5 h-3.5" />
+                 </button>
+               )}
              </div>
           </div>
 
