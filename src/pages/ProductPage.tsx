@@ -293,17 +293,17 @@ const ProductPage = () => {
       </div>
 
       <div className="mb-6 space-y-2 md:hidden">
-        <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+        <p className="text-xs uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400">
           Collection Koktek
         </p>
-        <h1 className="text-2xl font-semibold text-gray-900">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
           {product.title}
         </h1>
       </div>
 
       <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
         <div className="order-1 md:sticky md:top-24 md:self-start">
-          <div ref={mainImageRef} className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
+          <div ref={mainImageRef} className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white dark:bg-gray-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
             <img
               src={displayImage}
               alt={product.title}
@@ -339,13 +339,13 @@ const ProductPage = () => {
 
         <div className="order-2 flex flex-col gap-8">
           <div className="order-1 hidden space-y-4 md:block">
-            <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+            <p className="text-xs uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400">
               Collection Koktek
             </p>
-            <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sm:text-3xl md:text-4xl">
               {product.title}
             </h1>
-            <p className="text-xl font-semibold text-gray-900 sm:text-2xl md:text-3xl">
+            <p className="text-xl font-semibold text-gray-900 dark:text-gray-200 sm:text-2xl md:text-3xl">
               {formatPrice(displayPrice)}
             </p>
           </div>
@@ -359,12 +359,12 @@ const ProductPage = () => {
             />
           </div>
 
-          <div className="order-2 md:order-3 space-y-4 rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6" id="variant-selector">
+          <div className="order-2 md:order-3 space-y-4 rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm sm:p-6" id="variant-selector">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
                 Modèle
               </p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">
+              <p className="mt-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {selectedVariant?.option1_value || 'Standard'}
               </p>
             </div>
@@ -383,8 +383,8 @@ const ProductPage = () => {
                       aria-label={`Sélectionner le modèle ${label}`}
                       className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                         isSelected
-                          ? 'border-black bg-black text-white'
-                          : 'border-gray-300 bg-white text-gray-900 hover:border-black hover:bg-black hover:text-white'
+                          ? 'border-black bg-black text-white dark:border-gray-200 dark:bg-gray-200 dark:text-gray-900'
+                          : 'border-gray-300 bg-white text-gray-900 hover:border-black hover:bg-black hover:text-white dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-gray-100'
                       }`}
                     >
                       {label}
@@ -403,7 +403,7 @@ const ProductPage = () => {
                     if (next) handleVariantSelect(next)
                   }}
                   aria-label="Choisir un modèle"
-                  className="h-12 w-full appearance-none rounded-2xl border-2 border-gray-200 bg-white px-4 pr-10 text-sm font-semibold text-gray-900 transition focus:border-black focus:outline-none"
+                  className="h-12 w-full appearance-none rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 px-4 pr-10 text-sm font-semibold text-gray-900 dark:text-gray-100 transition focus:border-black dark:focus:border-gray-400 focus:outline-none"
                 >
                   {variants.map((variant) => {
                     const label = variant.option1_value || variant.sku
@@ -423,7 +423,7 @@ const ProductPage = () => {
             )}
 
             <div className="md:hidden mt-6 border-t border-gray-100 pt-5">
-              <p className="text-3xl font-bold text-gray-900">{formatPrice(displayPrice)}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(displayPrice)}</p>
             </div>
 
             <div className="space-y-3 mt-5">
@@ -452,8 +452,8 @@ const ProductPage = () => {
 
           <div className="order-4 space-y-3">
             {(expertReview || expertStarsRaw) && (
-              <details className="group rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
+              <details className="group rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm sm:p-6">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900 dark:text-gray-100">
                   Avis de l&apos;expert
                   <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
                 </summary>
@@ -485,8 +485,8 @@ const ProductPage = () => {
             )}
 
             {shippingOptions.length > 0 && (
-              <details className="group rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
+              <details className="group rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm sm:p-6">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900 dark:text-gray-100">
                   Options de livraison
                   <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
                 </summary>
@@ -505,8 +505,8 @@ const ProductPage = () => {
                           onClick={() => setSelectedShippingIndex(index)}
                           className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
                             isSelected
-                              ? 'border-gray-900 bg-gray-900 text-white shadow-lg'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400'
+                              ? 'border-gray-900 bg-gray-900 text-white shadow-lg dark:border-gray-200 dark:bg-gray-200 dark:text-gray-900'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           <div className="flex items-start gap-3">
@@ -547,8 +547,8 @@ const ProductPage = () => {
               </details>
             )}
 
-            <details className="group rounded-3xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600 shadow-sm sm:p-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900">
+            <details className="group rounded-3xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-5 text-sm text-gray-600 dark:text-gray-300 shadow-sm sm:p-6">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Retour et remboursement
                 <ChevronDown className="h-4 w-4 text-gray-500 transition group-open:rotate-180" />
               </summary>

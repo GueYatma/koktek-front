@@ -371,13 +371,13 @@ const CatalogPage = () => {
             className="absolute inset-0 bg-black/20"
             onClick={() => setIsFilterOpen(false)}
           />
-          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white dark:bg-gray-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">
                   Catégories
                 </p>
-                <h2 className="text-base font-semibold text-gray-900">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                   Choisir une catégorie
                 </h2>
               </div>
@@ -402,8 +402,8 @@ const CatalogPage = () => {
                     }}
                     className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                       selectedCategory === "all"
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                        ? "border-gray-900 bg-gray-900 text-white dark:border-gray-200 dark:bg-gray-200 dark:text-gray-900"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
                     }`}
                   >
                     Toutes
@@ -420,8 +420,8 @@ const CatalogPage = () => {
                         }}
                         className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                           isActive
-                            ? "border-gray-900 bg-gray-900 text-white"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                            ? "border-gray-900 bg-gray-900 text-white dark:border-gray-200 dark:bg-gray-200 dark:text-gray-900"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
                         }`}
                       >
                         {category.name}

@@ -11,7 +11,7 @@ type ProductCardProps = {
 const ProductCard = ({ product, categoryName }: ProductCardProps) => {
   const finalPrice = product.prix_calcule ?? product.retail_price
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition md:hover:border-gray-300">
+    <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition md:hover:border-gray-300 dark:md:hover:border-gray-500">
       <Link to={`/produit/${product.slug}`} className="block">
         <img
           src={resolveImageUrl(product.image_url)}
@@ -23,23 +23,23 @@ const ProductCard = ({ product, categoryName }: ProductCardProps) => {
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-3">
         {categoryName && (
-          <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">
             {categoryName}
           </p>
         )}
         <Link
           to={`/produit/${product.slug}`}
-          className="font-display text-xs font-medium text-gray-800 line-clamp-2 sm:text-sm"
+          className="font-display text-xs font-medium text-gray-800 dark:text-gray-200 line-clamp-2 sm:text-sm"
         >
           {product.title}
         </Link>
         <div className="mt-auto flex items-center justify-between">
-          <p className="font-display text-sm font-semibold text-gray-900">
+          <p className="font-display text-sm font-semibold text-gray-900 dark:text-gray-100">
             {formatPrice(finalPrice)}
           </p>
           <Link
             to={`/produit/${product.slug}`}
-            className="rounded-full border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-700 transition hover:border-gray-900 hover:text-gray-900"
+            className="rounded-full border border-gray-200 dark:border-gray-600 px-3 py-1 text-[11px] font-semibold text-gray-700 dark:text-gray-300 transition hover:border-gray-900 hover:text-gray-900 dark:hover:border-gray-300 dark:hover:text-white"
           >
             Choisir
           </Link>

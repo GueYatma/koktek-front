@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Home, LayoutGrid, MessageCircle, Search, ShoppingBag, User } from 'lucide-react'
+import { Home, LayoutGrid, MessageCircle, Moon, Search, ShoppingBag, Sun, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useUI } from '../context/UIContext'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { useProducts } from '../hooks/useProducts'
 import CartDrawer from './CartDrawer'
 import ContactDrawer from './ContactDrawer'
@@ -53,6 +54,7 @@ const Layout = () => {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const hasUser = Boolean(user)
+  const { theme, toggleTheme } = useTheme()
   const [isScrolling, setIsScrolling] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
@@ -276,9 +278,9 @@ const Layout = () => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-black dark:bg-gray-950 dark:text-gray-100">
+    <div className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-gray-100">
       <header
-        className={`fixed top-0 left-0 right-0 z-40 border-b border-gray-100 bg-[#fbfbfb]/98 shadow-[0_2px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-300 will-change-opacity dark:border-gray-800 dark:bg-gray-900/95 ${
+        className={`fixed top-0 left-0 right-0 z-40 border-b border-gray-100 bg-[#fbfbfb]/98 shadow-[0_2px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-300 will-change-opacity dark:border-gray-800 dark:bg-gray-900/98 ${
           isScrolling ? 'opacity-90 shadow-[0_4px_25px_rgba(0,0,0,0.06)]' : 'opacity-100'
         }`}
       >
@@ -367,7 +369,7 @@ const Layout = () => {
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="relative inline-flex items-center gap-2 rounded-full border-2 border-gray-200 px-3 py-2 text-sm font-semibold text-gray-800 transition hover:border-gray-900 hover:text-gray-900"
+              className="relative inline-flex items-center gap-2 rounded-full border-2 border-gray-200 px-3 py-2 text-sm font-semibold text-gray-800 transition hover:border-gray-900 hover:text-gray-900 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-400"
               aria-label="Ouvrir le panier"
             >
               <ShoppingBag className="h-4 w-4" />
@@ -383,17 +385,26 @@ const Layout = () => {
               onClick={handleAccountClick}
               className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-semibold transition ${
                 hasUser
-                  ? 'border-gray-900 bg-gray-900 text-white hover:bg-black'
-                  : 'border-gray-200 bg-white text-gray-800 hover:border-gray-900 hover:text-gray-900'
+                  ? 'border-gray-900 bg-gray-900 text-white hover:bg-black dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
+                  : 'border-gray-200 bg-white text-gray-800 hover:border-gray-900 hover:text-gray-900 dark:border-gray-700 dark:bg-transparent dark:text-gray-200 dark:hover:border-gray-400'
               }`}
             >
               <div className="relative">
                 <User className="h-4 w-4" />
                 {hasUser ? (
-                  <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-green-500 ring-2 ring-gray-900" />
+                  <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full bg-green-500 ring-2 ring-gray-900 dark:ring-gray-100" />
                 ) : null}
               </div>
               <span>{hasUser ? 'Mon Espace' : 'Connexion'}</span>
+            </button>
+            {/* Bouton dark mode toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-gray-200 bg-white text-gray-600 transition hover:border-gray-900 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-400 dark:hover:text-white"
+              aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
           </div>
         </div>
@@ -513,7 +524,7 @@ const Layout = () => {
         </div>
       </nav>
 
-      <main className="min-h-screen pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0 bg-white dark:bg-gray-950">
+      <main className="min-h-screen pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0 bg-white dark:bg-gray-900">
         {isBuildToastVisible && (
           <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div

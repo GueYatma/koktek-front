@@ -28,24 +28,24 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
       <aside
         role="dialog"
         aria-modal="true"
-        className={`fixed top-[10%] bottom-[10%] left-4 right-4 flex h-auto max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-[transform,opacity] duration-300 ease-out will-change-[transform,opacity] md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
+        className={`fixed top-[10%] bottom-[10%] left-4 right-4 flex h-auto max-h-[80vh] w-auto flex-col overflow-hidden rounded-3xl bg-white dark:bg-gray-900 shadow-2xl transition-[transform,opacity] duration-300 ease-out will-change-[transform,opacity] md:bottom-auto md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:max-w-md md:rounded-none ${
           open ? 'translate-y-0 opacity-100 md:translate-x-0 md:translate-y-0' : 'translate-y-8 opacity-0 md:translate-x-full md:translate-y-0 md:opacity-100'
         }`}
         onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
               Votre panier
             </p>
-            <h2 className="text-xl font-semibold text-gray-900">Sélection</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Sélection</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fermer le panier"
-            className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+            className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -54,8 +54,8 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         {/* Items */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {items.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-6 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Votre panier est vide pour le moment.
               </p>
               <Link
@@ -80,7 +80,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                 return (
                   <div
                     key={item.variant.id}
-                    className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-4"
+                    className="flex gap-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
                   >
                     <img
                       src={resolveImageUrl(item.product.image_url)}
@@ -91,12 +91,12 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                       {/* Title row */}
                       <div className="flex items-start justify-between">
                         <div className="space-y-0.5">
-                          <p className="text-sm font-semibold text-gray-900">
-                            {item.product.title}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {item.variant.option1_name} : {variantValue || '—'}
-                          </p>
+                           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                             {item.product.title}
+                           </p>
+                           <p className="text-xs text-gray-500 dark:text-gray-400">
+                             {item.variant.option1_name} : {variantValue || '—'}
+                           </p>
                           {/* Weight */}
                           {weightGrams != null && weightGrams > 0 && (
                             <p className="text-xs text-gray-400">
@@ -119,7 +119,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                         <button
                           type="button"
                           onClick={() => removeItem(item.variant.id)}
-                          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 active:scale-95"
+                          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 px-2.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 active:scale-95"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           <span>Retirer</span>
@@ -134,7 +134,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                             onClick={() =>
                               updateQuantity(item.variant.id, item.quantity - 1)
                             }
-                            className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
+                            className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-100 dark:hover:text-gray-100"
                           >
                             <Minus className="h-4 w-4" />
                           </button>
@@ -146,7 +146,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                             onClick={() =>
                               updateQuantity(item.variant.id, item.quantity + 1)
                             }
-                            className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
+                            className="rounded-full border border-gray-200 p-1 text-gray-500 transition hover:border-gray-900 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-100 dark:hover:text-gray-100"
                           >
                             <Plus className="h-4 w-4" />
                           </button>
@@ -158,7 +158,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                               {formatPrice(unitPrice)} × {item.quantity}
                             </p>
                           )}
-                          <span className="text-sm font-bold text-gray-900">
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                             {formatPrice(lineTotal)}
                           </span>
                         </div>
@@ -172,31 +172,31 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         </div>
 
         {/* Summary */}
-        <div className="border-t border-gray-200 px-5 pt-4 pb-4">
+          <div className="border-t border-gray-200 dark:border-gray-700 px-5 pt-4 pb-4">
           {/* Sous-total articles */}
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
             <span>Sous-total articles</span>
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
               {formatPrice(subtotal)}
             </span>
           </div>
 
           {/* Frais de livraison */}
-          <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
             <span>Frais de livraison</span>
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
               {shippingTotal > 0 ? formatPrice(shippingTotal) : items.length === 0 ? '—' : 'Inclus'}
             </span>
           </div>
 
           {/* TVA */}
-          <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
             <span>TVA</span>
-            <span className="font-semibold text-gray-900">0 %</span>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">0 %</span>
           </div>
 
           {/* Total */}
-          <div className="flex items-center justify-between text-base font-bold text-gray-900 mt-4 border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between text-base font-bold text-gray-900 dark:text-gray-100 mt-4 border-t border-gray-100 dark:border-gray-700 pt-3">
             <span>Total estimé</span>
             <span className="text-lg">
               {formatPrice(total)}
