@@ -31,14 +31,16 @@ jobs:
           VITE_N8N_STRIPE_INTENT_URL: ${{ secrets.VITE_N8N_STRIPE_INTENT_URL }}
           VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
         run: |
-          echo "VITE_API_URL=${VITE_API_URL}" >> .env.production
-          echo "VITE_API_TOKEN=${VITE_API_TOKEN}" >> .env.production
-          echo "VITE_PROJECT_NAME=${VITE_PROJECT_NAME}" >> .env.production
-          echo "VITE_DIRECTUS_URL=${VITE_DIRECTUS_URL}" >> .env.production
-          echo "VITE_DIRECTUS_TOKEN=${VITE_DIRECTUS_TOKEN}" >> .env.production
-          echo "VITE_N8N_WEBHOOK_URL=${VITE_N8N_WEBHOOK_URL}" >> .env.production
-          echo "VITE_N8N_STRIPE_INTENT_URL=${VITE_N8N_STRIPE_INTENT_URL}" >> .env.production
-          echo "VITE_STRIPE_PUBLIC_KEY=${VITE_STRIPE_PUBLIC_KEY}" >> .env.production
+          cat <<EOF > .env.production
+          VITE_API_URL=$VITE_API_URL
+          VITE_API_TOKEN=$VITE_API_TOKEN
+          VITE_PROJECT_NAME=$VITE_PROJECT_NAME
+          VITE_DIRECTUS_URL=$VITE_DIRECTUS_URL
+          VITE_DIRECTUS_TOKEN=$VITE_DIRECTUS_TOKEN
+          VITE_N8N_WEBHOOK_URL=$VITE_N8N_WEBHOOK_URL
+          VITE_N8N_STRIPE_INTENT_URL=$VITE_N8N_STRIPE_INTENT_URL
+          VITE_STRIPE_PUBLIC_KEY=$VITE_STRIPE_PUBLIC_KEY
+          EOF
           npm install
           npm run build
 
