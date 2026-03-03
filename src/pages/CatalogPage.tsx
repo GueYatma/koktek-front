@@ -318,10 +318,10 @@ const CatalogPage = () => {
                {(priceRange[0] > minBound || priceRange[1] < maxBound) && (
                  <button
                    onClick={() => setPriceRange([minBound, maxBound > minBound ? maxBound : minBound + 1])}
-                   className="text-gray-400 hover:text-white transition p-1 rounded-full bg-zinc-700/50 hover:bg-zinc-600 ml-1 flex-shrink-0"
+                   className="flex items-center justify-center p-1.5 ml-1 flex-shrink-0 rounded-full bg-gray-50 text-red-600 shadow-sm transition-all hover:bg-red-50 hover:text-red-700 hover:shadow"
                    title="Réinitialiser les prix"
                  >
-                   <X className="w-3.5 h-3.5" />
+                   <X className="w-3.5 h-3.5" strokeWidth={3} />
                  </button>
                )}
              </div>
