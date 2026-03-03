@@ -1,5 +1,5 @@
 {
-  "name": "[koktek-CJ] Enrichissement des Produits - Prix - Livraison - Avis",
+  "name": "[koktek-CJ] Enrichissement des Produits - Livraison - Avis (Finale - 3 mars)",
   "nodes": [
     {
       "parameters": {
@@ -14,25 +14,25 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        0,
-        0
+        -528,
+        -96
       ],
-      "id": "83434cb4-0141-4105-b9e4-3fe350c917c9",
+      "id": "1527591e-2e8c-4e8b-b0ed-d391f4f322fd",
       "name": "Toutes les heures"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * FROM koktek.products \nWHERE status = 'published' \nAND shipping_options IS NULL \nAND id IN (SELECT product_id FROM koktek.product_variants)\nLIMIT 100;",
+        "query": "SELECT p.* FROM koktek.products p\nWHERE p.status = 'published'\nAND EXISTS (\n    SELECT 1 \n    FROM koktek.product_variants v \n    WHERE v.product_id = p.id \n    AND (v.shipping_price IS NULL OR v.shipping_price = 0)\n)\nLIMIT 100;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        240,
-        0
+        -288,
+        -96
       ],
-      "id": "3dd71c08-642f-4050-975e-75e9a08c0963",
+      "id": "1edc7ed1-ef3a-47aa-9bd9-8b14be42a75a",
       "name": "[PG] Chercher 10 produits à enrichir",
       "credentials": {
         "postgres": {
@@ -48,10 +48,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        464,
-        0
+        -64,
+        -96
       ],
-      "id": "e005265e-8c04-4f15-ad05-81c8f89fada1",
+      "id": "25a14aba-5f99-4f9b-9e9d-0452aa42bc26",
       "name": "[LOOP] Produit par Produit"
     },
     {
@@ -75,23 +75,23 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        896,
-        16
+        592,
+        -96
       ],
-      "id": "88d1142c-f98f-4cab-8ac5-193cd19f0ee9",
+      "id": "50f67d6a-42a4-41fb-9fa0-53ba0d2d6298",
       "name": "[CJ] Calculer Frais de Port"
     },
     {
       "parameters": {
-        "jsCode": "const shippingMethods = $json.data || [];\nconst validMethods = shippingMethods.filter(s => s.logisticPrice <= 9);\nconst safeMethods = validMethods.length > 0 ? validMethods : shippingMethods;\n\n// 1. Tri et Top 3 \nconst sortedByPrice = [...safeMethods].sort((a, b) => a.logisticPrice - b.logisticPrice);\nconst sortedByTime = [...safeMethods].sort((a, b) => {\n  const timeA = parseInt((a.logisticAging || \"99\").split('-').pop());\n  const timeB = parseInt((b.logisticAging || \"99\").split('-').pop());\n  return timeA - timeB;\n});\n\nconst top3 = [\n  sortedByPrice[0],\n  sortedByTime[0],\n  sortedByPrice[Math.floor(sortedByPrice.length / 2)]\n].filter(Boolean);\n\n// Sécurité : on filtre avec Boolean pour enlever les \"undefined\" si le tableau initial était vide\nconst uniqueTop3 = Array.from(new Set(top3.map(a => a.logisticName)))\n  .map(name => top3.find(a => a.logisticName === name))\n  .filter(Boolean); \n\n\n// ==========================================\n// 2. LE MOTEUR COMPTABLE (Calcul à l'envers)\n// ==========================================\nconst basePrice = parseFloat($node[\"[LOOP] Produit par Produit\"].json.base_price) || 0;\n\n// A. Les coûts fixes (TVA Import 20%)\nconst tvaImport = basePrice * 0.20;\n\n// B. Le transport moyen\n// L'ASTUCE INTELLIGENTE EST ICI : On met 5.00€ par défaut pour sauver le calcul\nlet medianShipping = 5.00; \nif (uniqueTop3.length > 0) {\n  medianShipping = uniqueTop3[Math.floor(uniqueTop3.length / 2)].logisticPrice;\n}\n\n// C. Ton objectif de Marge Nette (Dans ta poche)\nlet targetNetMargin = basePrice * 1.20;\nif (targetNetMargin < 4.00) {\n   targetNetMargin = 4.00; \n}\n\n// D. L'Équation URSSAF\nconst urssafRate = 0.123;\nconst costsAndMargin = basePrice + tvaImport + medianShipping + targetNetMargin;\nconst totalCustomerPays = costsAndMargin / (1 - urssafRate);\n\n// L'URSSAF réelle en euros\nconst urssafFee = totalCustomerPays * urssafRate;\n\n// E. Le Prix Produit (Ce qu'on affiche sur le site React)\nconst retailPriceSite = totalCustomerPays - medianShipping;\n\nreturn {\n  retail_price: retailPriceSite.toFixed(2),\n  margin: targetNetMargin.toFixed(2),\n  urssaf_fee: urssafFee.toFixed(2),\n  vat_amount: tvaImport.toFixed(2),\n  \n  // S'il n'y a pas de livraison, ça renverra juste un objet { list: [] } proprement\n  shipping_options: { \n    list: uniqueTop3.map(s => ({\n      name: s.logisticName,\n      price: s.logisticPrice,\n      days: s.logisticAging + 'j'\n    }))\n  }\n};"
+        "jsCode": "const shippingMethods = $json.data || [];\nconst validMethods = shippingMethods.filter(s => s.logisticPrice <= 9);\nconst safeMethods = validMethods.length > 0 ? validMethods : shippingMethods;\n\n// 1. Tri et Top 3\nconst sortedByPrice = [...safeMethods].sort((a, b) => a.logisticPrice - b.logisticPrice);\nconst sortedByTime = [...safeMethods].sort((a, b) => {\n  const timeA = parseInt((a.logisticAging || \"99\").split('-').pop());\n  const timeB = parseInt((b.logisticAging || \"99\").split('-').pop());\n  return timeA - timeB;\n});\n\nconst top3 = [\n  sortedByPrice[0],\n  sortedByTime[0],\n  sortedByPrice[Math.floor(sortedByPrice.length / 2)]\n].filter(Boolean);\n\nconst uniqueTop3 = Array.from(new Set(top3.map(a => a.logisticName)))\n  .map(name => top3.find(a => a.logisticName === name));\n\n// 2. EXTRACTION DU PRIX DE LIVRAISON (Médiane)\nconst medianShipping = uniqueTop3[Math.floor(uniqueTop3.length / 2)]?.logisticPrice || 0;\n\n// 3. Simulation du prix (UNIQUEMENT POUR L'IA, ne sera pas sauvegardé)\nconst basePrice = parseFloat($node[\"[LOOP] Produit par Produit\"].json.base_price) || 0;\nconst marge = (basePrice + medianShipping) < 10 ? 2 : 4;\nconst simulatedRetailPrice = ((basePrice + medianShipping + marge) / 0.877).toFixed(2);\n\nreturn {\n  shipping_price_median: medianShipping,\n  retail_price: simulatedRetailPrice, // L'IA lira ça pour son avis\n  shipping_options: { \n    list: uniqueTop3.map(s => ({\n      name: s.logisticName,\n      price: s.logisticPrice,\n      days: s.logisticAging + 'j'\n    }))\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        16
+        784,
+        -96
       ],
-      "id": "9a8c7679-2a9e-44c2-ba15-03b2bb5ab727",
+      "id": "d0f14380-9aa0-40fc-893c-a1d4e7308d71",
       "name": "[CODE] - Calculateur de Marge & Top 3 Transporteurs"
     },
     {
@@ -99,30 +99,33 @@
         "promptType": "define",
         "text": "=# DONNEES DU PRODUIT A EVALUER ET A JUSTIFIER\n- Titre : {{ $node[\"[LOOP] Produit par Produit\"].json.title }}\n- Prix de vente : {{ $node[\"[CODE] - Calculateur de Marge & Top 3 Transporteurs\"].json.retail_price }} EUR\n- Description technique : {{ $node[\"[LOOP] Produit par Produit\"].json.description }}\n- Image principale (A analyser) : {{ $node[\"[LOOP] Produit par Produit\"].json.image }}\n\n# OPTIONS DE LIVRAISON (Vers la France)\n{{ JSON.stringify($node[\"[CODE] - Calculateur de Marge & Top 3 Transporteurs\"].json.shipping_options) }}\n\n# CONSIGNE\nRegarde l'image via le lien fourni, analyse le prix, les delais de livraison et la description.\nGenere le score, les etoiles, et redige ton verdict en \"Je\" pour justifier tes points forts et tes points faibles selon les regles etablies.\nRAPPEL FINAL : Renvoie UNIQUEMENT un objet JSON valide, sans aucune balise markdown ni texte autour.",
         "options": {
-          "systemMessage": "# ROLE\nTu es le Testeur Expert du Laboratoire KOKTEK. Tu t'adresses directement au client (\"vous\") en utilisant le \"Je\" pour donner ton avis personnel.\nTon role n'est PAS de decrire le produit (le client a deja lu la fiche technique). Ton role exclusif est de JUSTIFIER la note que tu as attribuee en analysant tous les criteres lies au PRODUIT LUI-MEME.\n\n# CRITERES D'ANALYSE\nTu dois croiser toutes ces donnees pour calculer ta note :\n1. Le visuel (Image) : Est-ce que le design fait premium, original, ou tres basique ?\n2. Le prix de vente : Le tarif est-il justifie par rapport a l'aspect et aux caracteristiques de l'accessoire ?\n3. Les specificites techniques (Description).\n\n# REGLES DE NOTATION\n1. expert_score : Donne une note de 3.0 a 5.0 (par pas de 0.5). Sois juste et realiste sur la qualite intrinseque du produit.\n2. expert_stars : Convertis obligatoirement cette note en etoiles visuelles.\n   (3.0 = \"⭐⭐⭐\", 3.5 = \"⭐⭐⭐✫\", 4.0 = \"⭐⭐⭐⭐\", 4.5 = \"⭐⭐⭐⭐✫\", 5.0 = \"⭐⭐⭐⭐⭐\")\n\n# REDACTION DU VERDICT (expert_review)\nRedige un avis honnete, direct et vendeur (3 a 4 phrases maximum).\n1. ANNONCE LA NOTE : Commence par declarer ta note et justifie-la globalement. (Ex: \"J'ai attribue 3.5 etoiles a ce modele car...\")\n2. JUSTIFIE LE POSITIF : Explique ce qui t'a plu et pour qui ce produit est fait (Ex: \"Visuellement, le materiau est tres original pour ce prix...\").\n3. JUSTIFIE LE NEGATIF : Explique pourquoi tu n'as pas mis 5/5. Sois honnete sur un point faible LIE AU PRODUIT UNIQUEMENT (Ex: \"Cependant, j'ai retire un point car ce design tres epais ajoutera un peu de volume a votre telephone.\"). \n4. INTERDICTIONS ABSOLUES : Ne repete JAMAIS le titre du produit. Ne fais pas un simple resume. Ne mentionne SOUS AUCUN PRETEXTE les delais, les frais ou les options de livraison.\n\n1. expert_score : Donne une note de 3.0 à 5.0. Sois généreux ! La moyenne de notre catalogue premium se situe autour de 4.0 et 4.5. Ne donne des notes de 3.0 ou 3.5 que si le produit a un défaut majeur évident.\n\n# FORMAT DE SORTIE (JSON STRICT UNIQUEMENT)\n{\n  \"expert_score\": number,\n  \"expert_stars\": \"string\",\n  \"expert_review\": \"string\"\n}"
+          "systemMessage": "# ROLE\nTu es le Testeur Expert du Laboratoire KOKTEK. Tu t'adresses directement au client (\"vous\") en utilisant le \"Je\" pour donner ton avis personnel. Ton rôle est de JUSTIFIER la note que tu as attribuée en analysant le visuel, le rapport qualité/prix et les specs.\n\n# STYLE ET VARIETE (TRES IMPORTANT)\nTu dois absolument VARIER ton vocabulaire et ton approche d'un produit à l'autre. Ne commence pas toujours tes phrases de la même façon. Parfois sois très enthousiaste, parfois sois plus technique, parfois concentre-toi sur le design. Ne sois pas répétitif !\n\n# REGLES DE NOTATION (STRICT)\n1. expert_score : \n   - REGLE ABSOLUE : Si le \"Prix de vente\" fourni dans les données est SUPERIEUR OU EGAL à 10.00 EUR, tu DOIS OBLIGATOIREMENT donner la note de 5.0. Aucune exception !\n   - Si le prix est inférieur à 10.00 EUR, donne une note entre 4.0 et 4.5.\n2. expert_stars : Convertis la note (\"⭐⭐⭐⭐\" pour 4.0, \"⭐⭐⭐⭐⭐\" pour 5.0).\n\n# REDACTION DU VERDICT (expert_review)\nRédige un avis honnête, direct et vendeur (3 à 4 phrases maximum).\n1. LE RESSENTI GLOBAL : Donne ton avis général et la note. (Ex: \"Ce modèle mérite un 5/5 sans hésiter...\", ou \"Un solide 4 étoiles pour cette protection...\").\n2. CE QUI FAIT LA DIFFERENCE : Mets en avant ce qui rend ce produit intéressant (design, matériau, rapport qualité/prix). \n3. LA NUANCE (OPTIONNELLE) : SI tu as mis moins de 5 étoiles, explique rapidement pourquoi (ex: un peu épais, design très classique). SI tu as mis 5 étoiles, termine sur une recommandation forte !\n4. INTERDICTIONS : Ne répète JAMAIS le titre exact du produit. Ne parle jamais de livraison, de frais de port ou de délais.\n\n# FORMAT DE SORTIE (JSON STRICT UNIQUEMENT)\n{\n  \"expert_score\": number,\n  \"expert_stars\": \"string\",\n  \"expert_review\": \"string\"\n}"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1312,
-        16
+        992,
+        -96
       ],
-      "id": "7a883059-27b3-4efb-9cc3-ba47874bb8f4",
+      "id": "0ebdb9aa-bdc4-4eac-b45f-8367364b1d09",
       "name": "[AI] - Expert Notation & Review"
     },
     {
       "parameters": {
-        "model": "anthropic/claude-3.5-sonnet",
-        "options": {}
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "maxTokens": 1000,
+          "temperature": 0.9
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
-        1312,
-        256
+        992,
+        160
       ],
-      "id": "48756e6b-0edf-48a8-9117-f7bb3e1b8934",
+      "id": "4cf1111a-3e1b-42b2-99a2-5a3543daf916",
       "name": "OpenRouter Chat Model",
       "credentials": {
         "openRouterApi": {
@@ -140,11 +143,12 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        688,
-        16
+        160,
+        -80
       ],
-      "id": "b8780e47-7fd5-47aa-9ca4-c29bf1905568",
+      "id": "45a42042-10ea-4990-b718-2412526ad887",
       "name": "[PG] Récupérer 1 VID",
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "53WcsVWA57w3XMFC",
@@ -171,14 +175,9 @@
           "mappingMode": "defineBelow",
           "value": {
             "expert_score": "={{ $json.expert_score }}",
-            "retail_price": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.retail_price }}",
             "id": "={{ $node[\"[LOOP] Produit par Produit\"].json.id }}",
             "shipping_options": "={{ $node[\"[CODE] - Calculateur de Marge & Top 3 Transporteurs\"].json.shipping_options }}",
-            "expert_review": "={{ $json.expert_review }}",
-            "margin": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.margin }}",
-            "urssaf_fee": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.urssaf_fee }}",
-            "vat_amount": "={{ $('[CODE] - Calculateur de Marge & Top 3 Transporteurs').item.json.vat_amount }}",
-            "country_origin": "DE"
+            "expert_review": "={{ $json.expert_review }}"
           },
           "matchingColumns": [
             "id"
@@ -388,7 +387,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "number",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": true
             },
             {
               "id": "country_origin",
@@ -397,7 +397,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": true
             },
             {
               "id": "margin",
@@ -407,7 +408,7 @@
               "display": true,
               "type": "number",
               "canBeUsedToMatch": true,
-              "removed": false
+              "removed": true
             },
             {
               "id": "urssaf_fee",
@@ -417,7 +418,7 @@
               "display": true,
               "type": "number",
               "canBeUsedToMatch": true,
-              "removed": false
+              "removed": true
             },
             {
               "id": "vat_amount",
@@ -427,7 +428,7 @@
               "display": true,
               "type": "number",
               "canBeUsedToMatch": true,
-              "removed": false
+              "removed": true
             }
           ],
           "attemptToConvertTypes": false,
@@ -438,10 +439,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        1920,
-        16
+        1600,
+        -96
       ],
-      "id": "b6e2c037-ed20-4bc7-83df-7d49db05393b",
+      "id": "4342c536-9d16-44c5-be9b-7bc430b9a397",
       "name": "mise ajour",
       "credentials": {
         "postgres": {
@@ -457,11 +458,66 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1696,
-        16
+        1376,
+        -96
       ],
-      "id": "6e472a21-e228-48fd-963a-5aca4eecf5a4",
+      "id": "811a7cb2-7933-4dc3-9ff9-3a4859105756",
       "name": "[CODE] - Nettoyer Reponse IA"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE koktek.product_variants\nSET shipping_price = {{ $node[\"[CODE] - Calculateur de Marge & Top 3 Transporteurs\"].json.shipping_price_median }}\nWHERE product_id = '{{ $node[\"[LOOP] Produit par Produit\"].json.id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1808,
+        -96
+      ],
+      "id": "e5de5b18-0ab4-4d55-bf90-755cb36e561b",
+      "name": "[PG] Update Variants Shipping",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f27d8d89-9e3d-42b4-99e6-d3df48398346",
+              "leftValue": "cj_vid",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        368,
+        -80
+      ],
+      "id": "eb7f8b4e-afc7-4617-adfe-c80236864b09",
+      "name": "If"
     }
   ],
   "pinData": {},
@@ -548,7 +604,7 @@
       "main": [
         [
           {
-            "node": "[CJ] Calculer Frais de Port",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -570,6 +626,35 @@
       "main": [
         [
           {
+            "node": "[PG] Update Variants Shipping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[PG] Update Variants Shipping": {
+      "main": [
+        [
+          {
+            "node": "[LOOP] Produit par Produit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "[CJ] Calculer Frais de Port",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "[LOOP] Produit par Produit",
             "type": "main",
             "index": 0
@@ -584,10 +669,11 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "b7993144-e993-48d7-b42a-eecea5367928",
+  "versionId": "6a4ba527-6be1-4614-a723-b347fd3802f3",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
   },
-  "id": "FeL1F4bj292Pn28P",
+  "id": "mwZU98ckI9NzUseM",
   "tags": []
 }

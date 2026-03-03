@@ -1,5 +1,5 @@
 {
-  "name": "[koktek_Stripe] - 01 - Payment Intent Generator",
+  "name": "[koktek_Stripe] - 01 - Payment Intent Generator (Finale - 3 mars)",
   "nodes": [
     {
       "parameters": {
@@ -11,16 +11,21 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [250, 300],
-      "webhookId": "stripe-intent-koktek"
+      "position": [
+        -320,
+        -272
+      ],
+      "webhookId": "stripe-intent-koktek",
+      "id": "8bf671fb-252a-44e1-b2b2-43e2c6f0cd50"
     },
     {
       "parameters": {
-        "authentication": "headerAuth",
-        "requestMethod": "POST",
+        "method": "POST",
         "url": "https://api.stripe.com/v1/payment_intents",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
-        "specifyBody": "keypair",
+        "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
             {
@@ -45,22 +50,25 @@
             }
           ]
         },
-        "options": {
-          "bodyContentType": "form-urlencoded"
-        }
+        "options": {}
       },
       "name": "Stripe API - Create Intent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [450, 300],
+      "position": [
+        -48,
+        -272
+      ],
+      "id": "e2ccc0a2-33c4-453d-855a-67f9d7d1284e",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "STRIPE_API_CREDENTIALS",
-          "name": "Au moment d'importer ce noeud, ajoute ta clé secrète Stripe ici (sk_live_...) sous le nom 'Authorization' et valeur 'Bearer sk_live_...'"
+          "id": "PBCkyiHibr02yVRN",
+          "name": "kok-stripe-live"
         }
       }
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
@@ -74,6 +82,16 @@
       ]
     }
   },
-  "active": false,
-  "settings": {}
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "deaba8e5-3f23-4d86-9069-bfc6ed83f4fb",
+  "meta": {
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "5DsjaYM6fCwQdvSM",
+  "tags": []
 }

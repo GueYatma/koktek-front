@@ -1,5 +1,5 @@
 {
-  "name": "[koktek_CJ] - 01 - IA - Importation de produits UPDATED (Catalog & Country) JoeSmart2",
+  "name": "[koktek_CJ] - 01 - IA - Importation de produits (Catalog & Country) (Finale - 3 mars)",
   "nodes": [
     {
       "parameters": {
@@ -9,10 +9,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
-        976,
-        208
+        1216,
+        1360
       ],
-      "id": "b5d685b9-e96f-4eba-bb9e-670dfbfb170c",
+      "id": "df451601-ca9b-470a-8f04-64d496cfee62",
       "name": "OpenRouter Chat Model",
       "retryOnFail": false,
       "maxTries": 5,
@@ -53,7 +53,7 @@
           "parameters": [
             {
               "name": "CJ-Access-Token",
-              "value": "API@CJ5184655@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjk0MCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnl1V3Q3blIzZlZvRW82dTVOdG42Z2xiMjB2WTN6TVY4ay9SSHd6RThsNnFqL3g5b3ZnTTdzRnp2M3dyeHlTRVg3eENvU210Tkcycy9wekp5QXBlNFczMjUzYlFWK2ovUHBqbDRjTFJpVnFWM1dPRVRMVlhpME05SmRmakwrdmVEcWw4Q2NMOXJXU2dLZDNRTEIrUDc3SHhRcTFjKzV3ZThQMFhPVEQ5ZS9ZZit0ZVlDemcyUXhsMDYvVmhVNXFrcVRvL2JOd2lnMTFXVi9DaVdGVllkWUQ1cXhsbkVIQVlRQ1RvMDBQTUNIL0lvU0Jjc1hLaHVNOWhwa1p1MFlDWkZwRm90WDM3MmV2VEFuYjNySHFyOWdoYz0iLCJpYXQiOjE3NzE4ODY3NTh9.V-JX1jqJ_4iyONm-vPFYOaYAuuMPOvj1BDDvY40sNOI"
+              "value": "API@CJ5158994@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjY5OCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnlvMHMyT0M5MFhSTTJKU0hvcU8wZnlDVE5yVERld2JNN0NpSE92SlIxTnpsd1NBUDJoc0IrRGtOTm5nYVhaTWY0T29wNU5LV0kwTVZQWDZrQVkrYmNnUDRxazRTQ01TcUdMdHlMVlU2MHE3MnFRcXdWTWk1a005Z0ErcGN1R0VhODVUd2JoZzVPUDRPUlg1YlRTS1BuaVhIYjh1alFiVGRnbk8yTVYvUWhPSGtKRHZlZlRBZVNjNDdvMFUvYVBxVVRYSTlsK0tuY0hFYzcxZzg4bi80Ynd5RTMxVEwxU3JoaVJacEFvNHVkVi9PUyt6ZW1wNkpWS0RobHBzWEcxMkplNytBZVVtN0NUcCtoMzNHMnNlVU1wcz0iLCJpYXQiOjE3NzEwOTE4OTF9.MVX1SPGVbScWWJRw3Vu4Vx1Y8zNr8npAG3_FyzrEqCg"
             }
           ]
         },
@@ -62,10 +62,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        336,
-        -400
+        704,
+        752
       ],
-      "id": "1e1c40bd-454e-4898-904d-4b41d384b294",
+      "id": "1e2f07b3-eb39-431d-b5a3-e3dcc495bef7",
       "name": "[CJ] 02 - API - Fetch Products (CJ)",
       "alwaysOutputData": true,
       "retryOnFail": true,
@@ -79,10 +79,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1152,
-        -416
+        1392,
+        736
       ],
-      "id": "1f9fbb46-049b-4e81-b43a-69213e037fd7",
+      "id": "9e4cef4e-0c47-44f4-8b83-1a9e458c750b",
       "name": "[CJ] 03 - MAP - Split CJ List to Items"
     },
     {
@@ -92,10 +92,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -64,
-        -48
+        176,
+        1104
       ],
-      "id": "b5642e4b-fdd5-40e4-83e7-e1bc690b54ed",
+      "id": "066f1168-1b85-4143-80c3-5f1d98a4aefc",
       "name": "[CJ] 04 - LOOP - Split In Batches (1 by 1)"
     },
     {
@@ -110,10 +110,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        976,
-        -48
+        1216,
+        1104
       ],
-      "id": "83357e3d-e552-4cb4-bace-b34be697c8ce",
+      "id": "c6941f97-2eae-43d1-87bd-21020c3ba204",
       "name": "[CJ] 05 - AI - Filter (Videur)",
       "retryOnFail": true,
       "waitBetweenTries": 5000
@@ -125,10 +125,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1296,
-        -48
+        1536,
+        1104
       ],
-      "id": "1cf2b17a-9e2c-49a3-adba-beae61032a2f",
+      "id": "777a72f0-617c-4031-90d8-77bbab3bec11",
       "name": "[CJ] 06 - MAP - Parse Videur Output"
     },
     {
@@ -159,41 +159,41 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1552,
-        -48
+        1792,
+        1104
       ],
-      "id": "8afd0d4f-e4a5-4e36-bd94-996354694dad",
+      "id": "f2c5b368-5e45-4135-b0df-3f2d72c762d5",
       "name": "[CJ] 07 - IF - Relevant?"
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=# INSTRUCTIONS\n1. Juge la qualite visuelle (Rejette si cheap).\n2. Si accepte, definis la Categorie et la Marque.\n3. Redige une description concise (1 seul paragraphe court) suivie d'une Fiche Technique (liste HTML).\n4. Nettoie et traduis les variantes en CONSERVANT OBLIGATOIREMENT la couleur et le modele. Supprime la partie redondante.\n\n# DONNEES TECHNIQUES (CJ)\n- PID : {{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.pid }}\n- Titre Original (EN) : {{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.productNameEn }}\n- Description (HTML brut CJ) : {{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.description }}\n\n# IMAGES DISPONIBLES\n{{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.productImageSet }}\n\n# VARIANTES A NETTOYER ET TRADUIRE\n{{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.variants }}",
+        "text": "=# INSTRUCTIONS\n1. Juge la qualite visuelle (Rejette si cheap).\n2. Si accepte, definis la Categorie et la Marque.\n3. Redige une description concise (1 seul paragraphe court) suivie d'une Fiche Technique (liste HTML).\n4. Nettoie et traduis les variantes en CONSERVANT OBLIGATOIREMENT la couleur et le modele. Supprime la partie redondante.\n\n# DONNEES TECHNIQUES (CJ)\n- PID : {{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.pid }}\n- Titre Original (EN) : {{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.productNameEn }}\n- Description (HTML brut CJ) : {{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.description }}\n\n# IMAGES DISPONIBLES\n{{ $node[\"[CJ]_Get_Enrich_Product_Details\"].json.data.productImageSet }}\n\n# VARIANTES A NETTOYER ET TRADUIRE\n{{ $json.data.variants[0].variantKey }}",
         "options": {
-          "systemMessage": "# ROLE\nTu es l'Expert Merchandiser, Copywriter et Directeur Artistique de KOKTEK, une boutique premium d'accessoires pour smartphones. Ton style de redaction est celui d'un Journaliste Tech passionne.\n\n# MISSION 1 : CONTROLE QUALITE VISUEL (ELIMINATOIRE)\nAnalyse la ou les photos du produit. Ta boutique est PREMIUM.\n- REJETTE (should_publish: false) si : la photo fait amateur, montre le produit dans un emballage plastique cheap, a des filigranes chinois enormes, ou fait \"bas de gamme\".\n- ACCEPTE (should_publish: true) si la photo est propre, bien detouree ou mise en scene de facon esthetique.\n\n# MISSION 2 : CLASSIFICATION STRICTE\n1. CATEGORIE : Choisis UNE SEULE categorie parmi : coques-protections, charge-energie, audio-son, supports-fixations, decoration-goodies, autres.\n2. MARQUE :\n   - REGLE D'OR : Si la categorie est coques-protections, tu DOIS OBLIGATOIREMENT renseigner la marque compatible (Ex: Apple, Samsung, Xiaomi, Google Pixel). Si impossible a determiner -> REJETTE le produit.\n   - Pour les accessoires universels (cables, chargeurs), la marque doit etre Autres.\n\n# MISSION 3 : REDACTION CONCISE ET EFFICACE\nLe champ \"description\" DOIT etre structure en DEUX parties distinctes et concises :\n1. PARTIE MARKETING : Redige UN SEUL paragraphe court et percutant. Rentre direct dans le vif du sujet. Ne commence JAMAIS par des formules toutes faites comme \"Le mot de l'expert\", \"Decouvrez\", ou \"Notre avis\".\n2. PARTIE TECHNIQUE : Sous le pitch marketing, ajoute une liste a puces HTML (<ul><li>) avec les caracteristiques brutes essentielles (Matiere, poids, compatibilite, particularites).\n\n# MISSION 4 : NETTOYAGE DES VARIANTES (CRITIQUE)\nLes noms originaux sont des suites de mots-cles redondantes. Tu dois les nettoyer en respectant cette REGLE ABSOLUE :\n- Tu DOIS IMPERATIVEMENT conserver la COULEUR (ou le motif) ET le MODELE compatible.\n- IDENTIFIE la partie du texte qui se repete sur toutes les variantes (le blabla SEO ou le nom global du produit) et SUPPRIME-LA.\n- TRADUIS en francais elegant.\n- FORMAT ATTENDU : \"Couleur/Motif - Modele\" (Exemple : \"Bleu Nuit - iPhone 15 Pro Max\"). Ne supprime jamais la couleur.\n\n# FORMAT DE SORTIE (JSON STRICT UNIQUEMENT)\n{\n  \"should_publish\": boolean,\n  \"quality_notes\": \"Explication du rejet ou de l'acceptation.\",\n  \"category_slug\": \"string\",\n  \"product\": {\n    \"title\": \"Titre propre et court en FR\",\n    \"slug\": \"titre-propre-et-court\",\n    \"description\": \"<p>Un seul paragraphe marketing percutant qui va droit au but.</p><h2>Fiche Technique</h2><ul><li>Point 1</li><li>Point 2</li></ul>\",\n    \"brand\": \"Marque obligatoire\",\n    \"tags\": [\"tag1\", \"tag2\", \"tag3\"],\n    \"images\": [\"url1\", \"url2\"]\n  },\n  \"variant_translations\": {\n    \"Nom Original Horrible Et Long 1\": \"Couleur - Modele 1\",\n    \"Nom Original Horrible Et Long 2\": \"Couleur - Modele 2\"\n  }\n}",
+          "systemMessage": "# ROLE\nTu es l'Expert Merchandiser, Copywriter et Directeur Artistique de KOKTEK, une boutique premium d'accessoires pour smartphones. Ton style de redaction est celui d'un Journaliste Tech passionne.\n\n# MISSION 1 : CONTROLE QUALITE VISUEL (ELIMINATOIRE)\nAnalyse la ou les photos du produit. Ta boutique est PREMIUM.\n- REJETTE (should_publish: false) si : la photo fait amateur, montre le produit dans un emballage plastique cheap, a des filigranes enormes, ou fait \"bas de gamme\".\n- ACCEPTE (should_publish: true) si la photo est propre, bien detouree ou mise en scene de facon esthetique.\n\n# MISSION 2 : CLASSIFICATION STRICTE\n1. CATEGORIE : Choisis UNE SEULE categorie parmi : coques-protections, charge-energie, audio-son, supports-fixations, decoration-goodies, autres.\n2. MARQUE :\n   - REGLE D'OR : Si la categorie est coques-protections, tu DOIS OBLIGATOIREMENT renseigner la marque compatible (Ex: Apple, Samsung, Xiaomi, Google Pixel). Si impossible a determiner -> REJETTE le produit.\n   - Pour les accessoires universels (cables, chargeurs), la marque doit etre Autres.\n\n# MISSION 3 : REDACTION DU TITRE ET DE LA DESCRIPTION (CRITIQUE)\n1. TITRE (TITLE) : Le titre original du fournisseur est pollue. \n   - SUPPRIME OBLIGATOIREMENT tous les numeros de serie, SKUs, codes entre parentheses (ex: 1881911431198568450), et termes SEO poubelles (ex: Wholesale, Hot sale, Dropshipping, 2024, New).\n   - Le titre final doit etre ultra-propre, concis, et digne d'une boutique premium (Exemple : \"Tracker Bluetooth GPS - Apple Find My\" ou \"Coque Silicone MagSafe\").\n2. DESCRIPTION - PARTIE MARKETING : Redige UN SEUL paragraphe court et percutant. Rentre direct dans le vif du sujet. Ne commence JAMAIS par des formules toutes faites comme \"Le mot de l'expert\", \"Decouvrez\", ou \"Notre avis\".\n3. DESCRIPTION - PARTIE TECHNIQUE : Sous le pitch marketing, ajoute une liste a puces HTML (<ul><li>) avec les caracteristiques brutes essentielles (Matiere, poids, compatibilite, particularites).\n\n# FORMAT DE SORTIE (JSON STRICT UNIQUEMENT)\nTu ne dois répondre QUE par un objet JSON valide. Aucune phrase d'introduction, aucune excuse si tu n'y arrives pas. Échappe bien tes guillemets dans le HTML.\n{\n  \"should_publish\": boolean,\n  \"quality_notes\": \"Explication du rejet ou de l'acceptation.\",\n  \"category_slug\": \"string\",\n  \"product\": {\n    \"title\": \"Titre ultra-propre et premium en FR\",\n    \"slug\": \"titre-ultra-propre\",\n    \"description\": \"<p>Un paragraphe marketing percutant.</p><h2>Fiche Technique</h2><ul><li>Point 1</li><li>Point 2</li></ul>\",\n    \"brand\": \"Marque obligatoire\",\n    \"tags\": [\"tag1\", \"tag2\"],\n    \"images\": [\"url1\", \"url2\"]\n  }\n}",
           "passthroughBinaryImages": true
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        2080,
-        -64
+        2320,
+        1088
       ],
-      "id": "31ede143-0859-4e47-b274-7a6ea2c3fdff",
+      "id": "8b7979fd-b69f-42a3-9339-ffddc803d116",
       "name": "[CJ] 09 - AI - Enhance (Expert)"
     },
     {
       "parameters": {
-        "jsCode": "// 1. Récupération de la réponse IA\nconst raw = $json.output;\nlet cleanRaw = raw.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\nconst start = cleanRaw.indexOf(\"{\");\nconst end = cleanRaw.lastIndexOf(\"}\");\nif (start === -1) throw new Error(\"No JSON found\");\nconst aiData = JSON.parse(cleanRaw.slice(start, end + 1));\n\n// 2. Récupération des données SOURCE FIABLES (CJ Details)\nconst detailNode = $node[\"[CJ]_Get_Enrich_Product_Details\"];\nif (!detailNode || !detailNode.json || !detailNode.json.data) {\n    throw new Error(\"Source CJ Details introuvable !\");\n}\nconst cjData = detailNode.json.data;\nconst cjVariants = cjData.variants || [];\n\n// 3. MAPPING DES CATÉGORIES\nconst categoryMap = {\n    'coques-protections': 1, 'charge-energie': 2, 'audio-son': 3,\n    'supports-fixations': 4, 'decoration-goodies': 5, 'autres': 6\n};\n\n// 4. CONSTRUCTION INTELLIGENTE DES VARIANTES (On connecte l'IA !)\nconst aiTranslations = aiData.variant_translations || {};\n\nconst cleanVariants = cjVariants.map(v => {\n    const originalName = v.variantNameEn || v.variantName || \"\";\n    \n    // On va chercher la belle traduction (Couleur - Modèle) faite par l'IA\n    let cleanName = aiTranslations[originalName] || originalName;\n    \n    // Nettoyage de secours si l'IA a oublié de traduire cette variante\n    if (cleanName === originalName) {\n        cleanName = cleanName.replace(/Apple/ig, \"\").replace(/Phone Case/ig, \"\").trim();\n    }\n    \n    return {\n        vid: String(v.vid),\n        sku: String(v.variantSku),\n        name: cleanName,\n        price: parseFloat(v.variantSellPrice)\n    };\n});\n\n// 5. OBJET FINAL (Blindé contre les crashs)\nconst merged = {\n    should_publish: aiData.should_publish || false,\n    pid: String(cjData.pid),\n    \n    // L'astuce ?. empêche le crash. Si l'IA n'a rien généré, on utilise le titre original CJ.\n    title: (aiData.product?.title || cjData.productNameEn || \"Produit Rejeté\") + \" (\" + String(cjData.pid) + \")\",\n    slug: (aiData.product?.slug || \"produit-rejete\") + \"-\" + String(cjData.pid),\n    description: aiData.product?.description || \"Aucune description.\",\n    brand: aiData.product?.brand || \"Autres\",\n    tags: aiData.product?.tags || [],\n    \n    images: cjData.productImageSet || [],\n    variants: cleanVariants, // Maintenant, les couleurs sont protégées !\n    \n    nc_category_id: categoryMap[aiData.category_slug] || 6,\n    base_price: cjData.sellPrice,\n    ai_quality_notes: aiData.quality_notes || \"Aucune note\"\n};\n\nreturn { json: merged };"
+        "jsCode": "// 1. Récupération de la réponse IA\nconst raw = $json.output || \"\";\nlet cleanRaw = raw.replace(/```json/gi, \"\").replace(/```/g, \"\").trim();\nconst start = cleanRaw.indexOf(\"{\");\nconst end = cleanRaw.lastIndexOf(\"}\");\n\nif (start === -1) throw new Error(\"No JSON found in AI output\");\n\nlet stringToParse = cleanRaw.slice(start, end + 1);\nlet aiData = {};\n\ntry {\n    // TENTATIVE 1 : Le JSON est parfait, on le lit normalement.\n    aiData = JSON.parse(stringToParse);\n} catch (e1) {\n    try {\n        // TENTATIVE 2 : Le Nettoyeur. On répare les erreurs IA courantes.\n        // On enlève les virgules traînantes (ex: \"tags\": [\"a\",],)\n        let fixedString = stringToParse.replace(/,\\s*([\\]}])/g, '$1');\n        // On échappe les retours à la ligne qui cassent les chaînes de caractères\n        fixedString = fixedString.replace(/\\n/g, \"\\\\n\").replace(/\\r/g, \"\\\\r\");\n        \n        aiData = JSON.parse(fixedString);\n    } catch (e2) {\n        // TENTATIVE 3 : Le Mode Hache (Regex). On sauve le produit coûte que coûte !\n        // Si la structure JSON est morte, on va chercher les infos avec des pinces.\n        const extract = (regex, defaultVal) => {\n            const match = stringToParse.match(regex);\n            return match ? match[1] : defaultVal;\n        };\n\n        aiData = {\n            // Si on trouve \"should_publish\": true, on publie. Sinon, par sécurité on met true pour ne pas perdre le produit.\n            should_publish: /\"should_publish\"\\s*:\\s*true/i.test(stringToParse),\n            category_slug: extract(/\"category_slug\"\\s*:\\s*\"([^\"]+)\"/, \"autres\"),\n            product: {\n                title: extract(/\"title\"\\s*:\\s*\"([^\"]+)\"/, \"Titre à revoir\"),\n                slug: extract(/\"slug\"\\s*:\\s*\"([^\"]+)\"/, \"produit-a-verifier\"),\n                // On arrache la description en prenant tout ce qui est entre \"description\": \" et le champ suivant \"brand\"\n                description: extract(/\"description\"\\s*:\\s*\"([\\s\\S]*?)\"\\s*,\\s*\"brand\"/, \"Description générée mais mal formatée. À vérifier en base.\"),\n                brand: extract(/\"brand\"\\s*:\\s*\"([^\"]+)\"/, \"Générique\"),\n                tags: []\n            },\n            variant_translations: {} // On sacrifie juste les traductions de couleurs pour sauver l'essentiel\n        };\n    }\n}\n\n// 2. Récupération des données SOURCE FIABLES (CJ Details)\nconst detailNode = $node[\"[CJ]_Get_Enrich_Product_Details\"];\nif (!detailNode || !detailNode.json || !detailNode.json.data) {\n    throw new Error(\"Source CJ Details introuvable !\");\n}\nconst cjData = detailNode.json.data;\nconst cjVariants = cjData.variants || [];\n\n// 3. MAPPING DES CATÉGORIES\nconst categoryMap = {\n    'coques-protections': 1, 'charge-energie': 2, 'audio-son': 3,\n    'supports-fixations': 4, 'decoration-goodies': 5, 'autres': 6\n};\n\n// 4. CONSTRUCTION INTELLIGENTE DES VARIANTES\nconst aiTranslations = aiData.variant_translations || {};\n\nconst cleanVariants = cjVariants.map(v => {\n    const originalName = v.variantNameEn || v.variantName || \"\";\n    let cleanName = aiTranslations[originalName] || originalName;\n    \n    if (cleanName === originalName) {\n        cleanName = cleanName.replace(/Apple/ig, \"\").replace(/Phone Case/ig, \"\").trim();\n    }\n    \n    return {\n        vid: String(v.vid),\n        sku: String(v.variantSku),\n        name: cleanName,\n        price: parseFloat(v.variantSellPrice)\n    };\n});\n\n// 5. OBJET FINAL (Sauvé et prêt à l'export)\nconst merged = {\n    should_publish: aiData.should_publish !== undefined ? aiData.should_publish : true,\n    pid: String(cjData.pid),\n    \n    title: (aiData.product?.title || cjData.productNameEn || \"Produit\") + \" (\" + String(cjData.pid) + \")\",\n    slug: (aiData.product?.slug || \"produit\") + \"-\" + String(cjData.pid),\n    description: aiData.product?.description || \"Aucune description.\",\n    brand: aiData.product?.brand || \"Autres\",\n    tags: aiData.product?.tags || [],\n    \n    images: cjData.productImageSet || [],\n    variants: cleanVariants,\n    \n    nc_category_id: categoryMap[aiData.category_slug] || 6,\n    base_price: cjData.sellPrice,\n    ai_quality_notes: aiData.quality_notes || \"Sauvetage automatique : l'IA a fait une erreur de syntaxe.\"\n};\n\nreturn { json: merged };"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2416,
-        -64
+        2656,
+        1088
       ],
-      "id": "b197abeb-2143-4060-8116-8afba74f7bba",
+      "id": "12517892-9c65-4430-bf91-9e35342472b6",
       "name": "[CJ] 10 - MAP - Parse Expert Output"
     },
     {
@@ -224,10 +224,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2656,
-        -64
+        2896,
+        1088
       ],
-      "id": "06463204-d085-4a57-8a55-8ee6b82ffddf",
+      "id": "b48a575c-ae75-4d25-a6ee-e47fd175d585",
       "name": "[CJ] 11 - IF - Should Publish?"
     },
     {
@@ -237,10 +237,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1264,
-        272
+        1504,
+        1424
       ],
-      "id": "e17487bf-4211-453c-981d-118dc1d7a441",
+      "id": "1746831a-f0d2-49ba-8fb1-cf1b506af0e0",
       "name": "[CJ] 12 - MAP - Build Product (Published Payload)"
     },
     {
@@ -248,10 +248,10 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        -192,
-        -608
+        176,
+        512
       ],
-      "id": "2cc50beb-be4a-40a0-8a54-4ee4ddc678fa",
+      "id": "180e8788-6a74-4e22-99e9-59ede2066204",
       "name": "[CJ] 15 - END - Done"
     },
     {
@@ -282,10 +282,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        352,
-        -32
+        592,
+        1120
       ],
-      "id": "85e2e9ea-c321-4fd7-83fb-4ca3c57d5ff2",
+      "id": "0756cb14-14be-43b6-a1c6-a7607128ebbf",
       "name": "Déjà en base ?",
       "alwaysOutputData": false
     },
@@ -294,7 +294,8 @@
         "rule": {
           "interval": [
             {
-              "field": "hours"
+              "field": "hours",
+              "hoursInterval": 2
             }
           ]
         }
@@ -302,24 +303,26 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        -832,
-        -416
+        880,
+        496
       ],
-      "id": "3a2d37f4-f463-420e-9887-d50de0a84c93",
+      "id": "adaa5c2e-a553-45af-95f4-09233b964c38",
       "name": "Schedule Trigger"
     },
     {
       "parameters": {
         "model": "openai/gpt-4o",
-        "options": {}
+        "options": {
+          "temperature": 0.7
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
-        2080,
-        144
+        2320,
+        1296
       ],
-      "id": "e9f3db56-f229-46b2-adcb-defbf0f39e4e",
+      "id": "e0e9762f-3b50-4745-96b7-081ba53981f0",
       "name": "OpenRouter Chat Model1",
       "credentials": {
         "openRouterApi": {
@@ -335,10 +338,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1664,
-        272
+        1904,
+        1424
       ],
-      "id": "99e3eb4f-236a-4eb5-a775-a89b977b06be",
+      "id": "000e8e45-a458-43d0-8d45-9a249dfc0bc7",
       "name": "[CJ] 13A - MAP - Prepare Variants"
     },
     {
@@ -370,10 +373,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        144,
-        -32
+        384,
+        1120
       ],
-      "id": "b96bfbd6-1b23-4276-9132-d4d0b31da137",
+      "id": "243ad66e-3e18-4b10-8488-9ca954c7bbf1",
       "name": "Select rows from a table",
       "alwaysOutputData": true,
       "credentials": {
@@ -573,10 +576,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1504,
-        -400
+        1744,
+        752
       ],
-      "id": "507f426c-2958-4f0d-b06b-5481f45c55c9",
+      "id": "6ed881ec-258a-4198-9968-5973d4e48986",
       "name": "[CJ] 08 - DB - Register_Rejected(Not_Relevant)_Product",
       "alwaysOutputData": false,
       "credentials": {
@@ -600,10 +603,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        768,
-        -48
+        1008,
+        1104
       ],
-      "id": "e4d25c19-a8f7-4d21-930e-469730765a54",
+      "id": "9f0b04cb-f316-47fc-8290-b4e82148e7a2",
       "name": "Product_Img_for_analyse"
     },
     {
@@ -623,7 +626,7 @@
           "parameters": [
             {
               "name": "CJ-Access-Token",
-              "value": "API@CJ5184655@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjk0MCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnl1V3Q3blIzZlZvRW82dTVOdG42Z2xiMjB2WTN6TVY4ay9SSHd6RThsNnFqL3g5b3ZnTTdzRnp2M3dyeHlTRVg3eENvU210Tkcycy9wekp5QXBlNFczMjUzYlFWK2ovUHBqbDRjTFJpVnFWM1dPRVRMVlhpME05SmRmakwrdmVEcWw4Q2NMOXJXU2dLZDNRTEIrUDc3SHhRcTFjKzV3ZThQMFhPVEQ5ZS9ZZit0ZVlDemcyUXhsMDYvVmhVNXFrcVRvL2JOd2lnMTFXVi9DaVdGVllkWUQ1cXhsbkVIQVlRQ1RvMDBQTUNIL0lvU0Jjc1hLaHVNOWhwa1p1MFlDWkZwRm90WDM3MmV2VEFuYjNySHFyOWdoYz0iLCJpYXQiOjE3NzE4ODY3NTh9.V-JX1jqJ_4iyONm-vPFYOaYAuuMPOvj1BDDvY40sNOI"
+              "value": "API@CJ5158994@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjY5OCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnlvMHMyT0M5MFhSTTJKU0hvcU8wZnlDVE5yVERld2JNN0NpSE92SlIxTnpsd1NBUDJoc0IrRGtOTm5nYVhaTWY0T29wNU5LV0kwTVZQWDZrQVkrYmNnUDRxazRTQ01TcUdMdHlMVlU2MHE3MnFRcXdWTWk1a005Z0ErcGN1R0VhODVUd2JoZzVPUDRPUlg1YlRTS1BuaVhIYjh1alFiVGRnbk8yTVYvUWhPSGtKRHZlZlRBZVNjNDdvMFUvYVBxVVRYSTlsK0tuY0hFYzcxZzg4bi80Ynd5RTMxVEwxU3JoaVJacEFvNHVkVi9PUyt6ZW1wNkpWS0RobHBzWEcxMkplNytBZVVtN0NUcCtoMzNHMnNlVU1wcz0iLCJpYXQiOjE3NzEwOTE4OTF9.MVX1SPGVbScWWJRw3Vu4Vx1Y8zNr8npAG3_FyzrEqCg"
             }
           ]
         },
@@ -632,10 +635,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1824,
-        -64
+        2064,
+        1088
       ],
-      "id": "eb386963-21d1-40b1-a10b-73281114045f",
+      "id": "48b9c10e-48ba-49fe-9bfb-adceafc72eed",
       "name": "[CJ]_Get_Enrich_Product_Details"
     },
     {
@@ -828,10 +831,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        2624,
-        -288
+        2864,
+        864
       ],
-      "id": "9aa548a1-0384-4a48-9c0b-b35047781073",
+      "id": "12ccf6a4-4bfe-402d-bcf6-c85f4efffbda",
       "name": "[CJ] 14 - DB - Create Product (Rejected - Expert)",
       "alwaysOutputData": false,
       "credentials": {
@@ -1100,10 +1103,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1456,
-        272
+        1696,
+        1424
       ],
-      "id": "7c248def-03c8-4ae2-a7b0-d7ed6ba8d4c3",
+      "id": "36a466f1-47f3-4964-ba17-5c5b31827249",
       "name": "[CJ] 13 - DB - Create Product (Published)",
       "alwaysOutputData": false,
       "credentials": {
@@ -1131,18 +1134,19 @@
           "mappingMode": "defineBelow",
           "value": {
             "weight_grams": "={{ $json.weight_grams }}",
-            "cost_price": "={{ $json.price }}",
+            "cost_price": "={{ $('[CJ]_Get_Enrich_Product_Details').item.json.data.variants[0].variantSellPrice }}",
             "price": "={{ $json.price }}",
             "cj_vid": "={{ $json.cj_vid }}",
             "sku": "={{ $json.sku }}",
             "option1_name": "={{ $json.option1_name }}",
             "option1_value": "={{ $json.option1_value }}",
             "product_id": "={{ $json.products }}",
-            "image_url": "={{ $json.image_url }}",
+            "image_url": "={{ $('[CJ]_Get_Enrich_Product_Details').item.json.data.variants[0].variantImage }}",
             "stock_quantity": "={{ $json.stock_quantity }}",
             "option2_name": "={{ $json.option2_name }}",
             "option2_value": "={{ $json.option2_value }}",
-            "option1_value_factorized": "={{ $json.option1_value_factorized }}"
+            "option1_value_factorized": "={{ $('[CJ]_Get_Enrich_Product_Details').item.json.data.variants[0].variantKey }}",
+            "compare_at_price": "={{ $('[CJ]_Get_Enrich_Product_Details').item.json.data.variants[0].variantSugSellPrice }}"
           },
           "matchingColumns": [
             "id"
@@ -1156,7 +1160,7 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true,
-              "removed": true
+              "removed": false
             },
             {
               "id": "product_id",
@@ -1246,7 +1250,7 @@
               "display": true,
               "type": "number",
               "canBeUsedToMatch": true,
-              "removed": true
+              "removed": false
             },
             {
               "id": "cost_price",
@@ -1306,6 +1310,26 @@
               "type": "string",
               "canBeUsedToMatch": true,
               "removed": false
+            },
+            {
+              "id": "shipping_price",
+              "displayName": "shipping_price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "prix_calcule",
+              "displayName": "prix_calcule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
             }
           ],
           "attemptToConvertTypes": false,
@@ -1316,10 +1340,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1872,
-        272
+        2112,
+        1424
       ],
-      "id": "76c5233a-966c-4d08-83fe-dc04a5504062",
+      "id": "5d6eae18-7ef5-483f-bc0f-69c69f76f443",
       "name": "[CJ] 13B - DB - Create Variants",
       "alwaysOutputData": false,
       "credentials": {
@@ -1331,15 +1355,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. Pays d'entrepôt : Chine uniquement (car c'est là que sont 99% des produits CJ)\nconst pays = [\"CN\"];\n\n// 2. Les pages à scanner (1 page = 50 produits API CJ). \n// Ici on scanne les 10 premières pages, soit les 500 derniers produits par catégorie.\nconst pages_a_scanner = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; \n\n// 3. Ta liste EXACTE et exhaustive des catégories (Inchangée)\nconst categories = [\n  { nom: \"Coques Téléphones\", id: \"9FA474CF-E06D-4708-AD56-F39FED7F88E3\" },\n  { nom: \"Coques Tablettes\", id: \"87A618B5-7CB0-4AF7-BCF8-9E9455F06B7E\" },\n  { nom: \"Verres & Films\", id: \"51D68796-F1B5-4BDC-B9E0-32C3D9FF6994\" },\n  { nom: \"Housses et Pochettes\", id: \"AD2B299F-EC10-4209-998A-8916AE4D4900\" },\n  { nom: \"Câbles standards\", id: \"00134C46-B7DF-4500-A3D9-ABB7B779EFD0\" },\n  { nom: \"Câbles Data/Multi\", id: \"40CC2ED1-8998-4515-9139-787CC25D42A7\" },\n  { nom: \"Chargeurs Muraux\", id: \"B200FABB-A76B-4750-9957-FEA3DCB21F1F\" },\n  { nom: \"Chargeurs Rapides/Stations\", id: \"6DB79FAF-593D-4F52-B6FF-AB1D14331862\" },\n  { nom: \"Power Banks\", id: \"491E5474-524C-4666-BDD7-4E35E38900EA\" },\n  { nom: \"Ecouteurs & Casques\", id: \"DAECCC3B-13D8-4978-86A8-61D3DF186134\" },\n  { nom: \"Enceintes Portables\", id: \"C1AB7563-AED4-44D8-9F01-05BD91C65307\" },\n  { nom: \"Micros\", id: \"8FD4CA46-AA88-4CDC-8EBA-EBD8412152E2\" },\n  { nom: \"Adaptateurs Audio\", id: \"66D0D817-353B-492E-87A5-024091FF9000\" },\n  { nom: \"Supports & Bagues\", id: \"9170B3F9-5B9C-4C39-8CD6-7DC00E481D47\" },\n  { nom: \"Trépieds & Ring Lights\", id: \"11D96803-A0A3-4175-B49B-2102EC285965\" },\n  { nom: \"Objectifs Photo\", id: \"82643737-E055-4FDF-AD69-4E2C3FB6970B\" },\n  { nom: \"Bijoux & Gadgets\", id: \"912FD088-248B-4D58-84F7-1F10B888CF8A\" },\n  { nom: \"Accessoires Tablettes Divers\", id: \"EDC3EDAF-1ED7-4776-8416-E9F8F0A5B4C6\" },\n  { nom: \"Claviers Tablettes\", id: \"2502190343061609600\" },\n  { nom: \"Trackers Bluetooth\", id: \"B39B6F95-9C89-4D6C-9E98-1633DA6A51CF\" }\n];\n\nconst requetes = [];\n\n// Triple boucle : Pays -> Catégories -> Pages\n// Va générer 1 * 20 * 10 = 200 combinaisons à envoyer au Master Loop\nfor (const p of pays) {\n  for (const cat of categories) {\n    for (const page of pages_a_scanner) {\n      requetes.push({\n        json: {\n          pays_cible: p,\n          categorie_id: cat.id,\n          categorie_nom: cat.nom,\n          numero_page: page\n        }\n      });\n    }\n  }\n}\n\nreturn requetes;"
+        "jsCode": "// 1. Pays d'entrepôt : Chine uniquement (car c'est là que sont 99% des produits CJ)\nconst pays = [\"CN\"];\n\n// 2. Les pages à scanner (1 page = 50 produits API CJ). \n// Ici on scanne les 10 premières pages, soit les 500 derniers produits par catégorie.\nconst pages_a_scanner = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; \n\n// 3. Ta liste EXACTE et exhaustive des catégories (Inchangée)\nconst categories = [\n// { nom: \"Coques Téléphones\", id: \"9FA474CF-E06D-4708-AD56-F39FED7F88E3\" },\n// { nom: \"Coques Tablettes\", id: \"87A618B5-7CB0-4AF7-BCF8-9E9455F06B7E\" },\n// { nom: \"Verres & Films\", id: \"51D68796-F1B5-4BDC-B9E0-32C3D9FF6994\" },\n// { nom: \"Housses et Pochettes\", id: \"AD2B299F-EC10-4209-998A-8916AE4D4900\" },\n// { nom: \"Câbles standards\", id: \"00134C46-B7DF-4500-A3D9-ABB7B779EFD0\" },\n// { nom: \"Câbles Data/Multi\", id: \"40CC2ED1-8998-4515-9139-787CC25D42A7\" },\n// { nom: \"Chargeurs Muraux\", id: \"B200FABB-A76B-4750-9957-FEA3DCB21F1F\" },\n// { nom: \"Chargeurs Rapides/Stations\", id: \"6DB79FAF-593D-4F52-B6FF-AB1D14331862\" },\n// { nom: \"Power Banks\", id: \"491E5474-524C-4666-BDD7-4E35E38900EA\" },\n// { nom: \"Ecouteurs & Casques\", id: \"DAECCC3B-13D8-4978-86A8-61D3DF186134\" },\n// { nom: \"Enceintes Portables\", id: \"C1AB7563-AED4-44D8-9F01-05BD91C65307\" },\n// { nom: \"Micros\", id: \"8FD4CA46-AA88-4CDC-8EBA-EBD8412152E2\" },\n// { nom: \"Adaptateurs Audio\", id: \"66D0D817-353B-492E-87A5-024091FF9000\" },\n//  { nom: \"Supports & Bagues\", id: \"9170B3F9-5B9C-4C39-8CD6-7DC00E481D47\" },\n//  { nom: \"Trépieds & Ring Lights\", id: \"11D96803-A0A3-4175-B49B-2102EC285965\" },\n//  { nom: \"Objectifs Photo\", id: \"82643737-E055-4FDF-AD69-4E2C3FB6970B\" },\n//  { nom: \"Bijoux & Gadgets\", id: \"912FD088-248B-4D58-84F7-1F10B888CF8A\" },\n//  { nom: \"Accessoires Tablettes Divers\", id: \"EDC3EDAF-1ED7-4776-8416-E9F8F0A5B4C6\" },\n//  { nom: \"Claviers Tablettes\", id: \"2502190343061609600\" },\n  { nom: \"Trackers Bluetooth\", id: \"B39B6F95-9C89-4D6C-9E98-1633DA6A51CF\" }\n//  { nom: \"Phones & Accessories (Wallet Cases)\" }\n];\n\nconst requetes = [];\n\n// Triple boucle : Pays -> Catégories -> Pages\n// Va générer 1 * 20 * 10 = 200 combinaisons à envoyer au Master Loop\nfor (const p of pays) {\n  for (const cat of categories) {\n    for (const page of pages_a_scanner) {\n      requetes.push({\n        json: {\n          pays_cible: p,\n          categorie_id: cat.id,\n          categorie_nom: cat.nom,\n          numero_page: page\n        }\n      });\n    }\n  }\n}\n\nreturn requetes;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -496,
-        -416
+        1216,
+        496
       ],
-      "id": "732ccbf4-ffc3-4f33-adc3-ad0b33e03c53",
+      "id": "854ebec2-479b-4db9-8437-a57e5b024b00",
       "name": "[CJ] 01 - Planifier le Scan (Pays x Cats x Pages)"
     },
     {
@@ -1349,10 +1373,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -144,
-        -416
+        96,
+        736
       ],
-      "id": "e934b51b-6773-4c7d-900a-15101307d4f1",
+      "id": "4d4b96a9-bdcc-40d6-adee-cab042f157cf",
       "name": "[LOOP] Master - Une combinaison à la fois"
     },
     {
@@ -1392,10 +1416,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        768,
-        -400
+        1008,
+        752
       ],
-      "id": "909071ff-b373-4826-9bbe-5ab3b0c63520",
+      "id": "67e033c9-79fd-4e75-b846-1bde17a43487",
       "name": "Déjà en base ?1",
       "alwaysOutputData": false
     },
@@ -1406,10 +1430,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        112,
-        -400
+        352,
+        752
       ],
-      "id": "ad1850af-4332-49b0-ac3b-b02caec2047f",
+      "id": "e1da3cfd-a932-435f-ba6a-ac7d2e547951",
       "name": "Wait",
       "webhookId": "be1a36bc-5b94-4f17-88e9-64fb92c89d0c"
     },
@@ -1420,27 +1444,72 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        592,
-        -48
+        832,
+        1104
       ],
-      "id": "43b9f0bd-8c0d-4822-a481-d3db1ac0b544",
+      "id": "27e11623-5f3b-4eca-b70e-acc827e16c25",
       "name": "Wait1",
       "webhookId": "f8e4ad3f-a569-4c68-8e0f-590b05c90718"
     },
     {
       "parameters": {
-        "content": "## [\n  {\n    \"code\": 200,\n    \"result\": true,\n    \"message\": \"Success\",\n    \"data\": {\n      \"openId\": 32940,\n      \"accessToken\": \"API@CJ5184655@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjk0MCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnl1V3Q3blIzZlZvRW82dTVOdG42Z2xiMjB2WTN6TVY4ay9SSHd6RThsNnFqL3g5b3ZnTTdzRnp2M3dyeHlTRVg3eENvU210Tkcycy9wekp5QXBlNFczMjUzYlFWK2ovUHBqbDRjTFJpVnFWM1dPRVRMVlhpME05SmRmakwrdmVEcWw4Q2NMOXJXU2dLZDNRTEIrUDc3SHhRcTFjKzV3ZThQMFhPVEQ5ZS9ZZit0ZVlDemcyUXhsMDYvVmhVNXFrcVRvL2JOd2lnMTFXVi9DaVdGVllkWUQ1cXhsbkVIQVlRQ1RvMDBQTUNIL0lvU0Jjc1hLaHVNOWhwa1p1MFlDWkZwRm90WDM3MmV2VEFuYjNySHFyOWdoYz0iLCJpYXQiOjE3NzE4ODY3NTh9.V-JX1jqJ_4iyONm-vPFYOaYAuuMPOvj1BDDvY40sNOI\",\n      \"accessTokenExpiryDate\": \"2026-03-10T22:45:58+08:00\",\n      \n\n\"refreshToken\": \"API@CJ5184655@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjk0MCIsInR5cGUiOiJSRUZSRVNIX1RPS0VOIiwic3ViIjoiYnFMb2JxUTBsbU5ueVFweFBXTFp5dVd0N25SM2ZWb0VvNnU1TnRuNmdsYjIwdlkzek1WOGsvUkh3ekU4bDZxai94OW92Z003c0Z6djN3cnh5U0VYNzd5N3BFWWdEd1FiTDVYOXIycXZoS201M2JRVitqL1Bwamw0Y0xSaVZxVjNXT0VUTFZYaTBNOUpkZmpMK3ZlRHFsOENjTDlyV1NnS2QzUUxCK1A3N0h4UXExYys1d2U4UDBYT1REOWUvWWYrdGVZQ3pnMlF4bDA2L1ZoVTVxa3FUby9iTndpZzExV1YvQ2lXRlZZZFlENXF4bG5FSEFZUUNUbzAwUE1DSC9Jb1NCY3NYS2h1TTlocGtadTBZQ1pGcEZvdFgzNzJldlRBbmIzckhxcjlnaGM9IiwiaWF0IjoxNzcxODg2NzU4fQ.rMBDahdGwjD-SEVADrGXo6m520bwG0EYo297TQjS1Go\",\n      \"refreshTokenExpiryDate\": \"2026-08-22T22:45:58+08:00\",\n      \"createDate\": \"2026-02-23T22:45:58+08:00\"\n    },\n    \"requestId\": \"c9a4d0af7b28489b84c3587a9b1f8e7f\",\n    \"success\": true\n  }\n]",
-        "height": 384,
-        "width": 2112
+        "jsCode": "// 1. Pays d'entrepôt : Chine uniquement (car c'est là que sont 99% des produits CJ)\nconst pays = [\"CN\"];\n\n// 2. Les pages à scanner (1 page = 50 produits API CJ). \n// Ici on scanne les 10 premières pages, soit les 500 derniers produits par catégorie.\nconst pages_a_scanner = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; \n\n// 3. Ta liste EXACTE et exhaustive des catégories (Inchangée)\nconst categories = [\n// { nom: \"Coques Téléphones\", id: \"9FA474CF-E06D-4708-AD56-F39FED7F88E3\" },\n// { nom: \"Coques Tablettes\", id: \"87A618B5-7CB0-4AF7-BCF8-9E9455F06B7E\" },\n// { nom: \"Verres & Films\", id: \"51D68796-F1B5-4BDC-B9E0-32C3D9FF6994\" },\n// { nom: \"Housses et Pochettes\", id: \"AD2B299F-EC10-4209-998A-8916AE4D4900\" },\n// { nom: \"Câbles standards\", id: \"00134C46-B7DF-4500-A3D9-ABB7B779EFD0\" },\n// { nom: \"Câbles Data/Multi\", id: \"40CC2ED1-8998-4515-9139-787CC25D42A7\" },\n// { nom: \"Chargeurs Muraux\", id: \"B200FABB-A76B-4750-9957-FEA3DCB21F1F\" },\n// { nom: \"Chargeurs Rapides/Stations\", id: \"6DB79FAF-593D-4F52-B6FF-AB1D14331862\" },\n// { nom: \"Power Banks\", id: \"491E5474-524C-4666-BDD7-4E35E38900EA\" },\n// { nom: \"Ecouteurs & Casques\", id: \"DAECCC3B-13D8-4978-86A8-61D3DF186134\" },\n// { nom: \"Enceintes Portables\", id: \"C1AB7563-AED4-44D8-9F01-05BD91C65307\" },\n// { nom: \"Micros\", id: \"8FD4CA46-AA88-4CDC-8EBA-EBD8412152E2\" },\n// { nom: \"Adaptateurs Audio\", id: \"66D0D817-353B-492E-87A5-024091FF9000\" },\n//  { nom: \"Supports & Bagues\", id: \"9170B3F9-5B9C-4C39-8CD6-7DC00E481D47\" },\n//  { nom: \"Trépieds & Ring Lights\", id: \"11D96803-A0A3-4175-B49B-2102EC285965\" },\n//  { nom: \"Objectifs Photo\", id: \"82643737-E055-4FDF-AD69-4E2C3FB6970B\" },\n  { nom: \"Bijoux & Gadgets\", id: \"912FD088-248B-4D58-84F7-1F10B888CF8A\" },\n  { nom: \"Accessoires Tablettes Divers\", id: \"EDC3EDAF-1ED7-4776-8416-E9F8F0A5B4C6\" },\n  { nom: \"Claviers Tablettes\", id: \"2502190343061609600\" },\n  { nom: \"Trackers Bluetooth\", id: \"B39B6F95-9C89-4D6C-9E98-1633DA6A51CF\" }\n];\n\nconst requetes = [];\n\n// Triple boucle : Pays -> Catégories -> Pages\n// Va générer 1 * 20 * 10 = 200 combinaisons à envoyer au Master Loop\nfor (const p of pays) {\n  for (const cat of categories) {\n    for (const page of pages_a_scanner) {\n      requetes.push({\n        json: {\n          pays_cible: p,\n          categorie_id: cat.id,\n          categorie_nom: cat.nom,\n          numero_page: page\n        }\n      });\n    }\n  }\n}\n\nreturn requetes;"
       },
-      "type": "n8n-nodes-base.stickyNote",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        -240,
-        -1152
+        1184,
+        256
       ],
+      "id": "cccaa9e7-8aca-4bee-805d-fd622431dd17",
+      "name": "[CJ] 01 - Planifier le Scan (Pays x Cats x Pages)1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "id": "46be65aa-95bf-47f0-a3d2-3e242a0f3ef6",
-      "name": "Sticky Note1"
+      "position": [
+        384,
+        272
+      ],
+      "id": "20b3a6aa-7556-4a5c-a2e2-6e435afb9b64",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://developers.cjdropshipping.com/api2.0/v1/product/list",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "cj_pid",
+              "value": "=2502060645261616100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "CJ-Access-Token",
+              "value": "API@CJ5158994@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjY5OCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnlvMHMyT0M5MFhSTTJKU0hvcU8wZnlDVE5yVERld2JNN0NpSE92SlIxTnpsd1NBUDJoc0IrRGtOTm5nYVhaTWY0T29wNU5LV0kwTVZQWDZrQVkrYmNnUDRxazRTQ01TcUdMdHlMVlU2MHE3MnFRcXdWTWk1a005Z0ErcGN1R0VhODVUd2JoZzVPUDRPUlg1YlRTS1BuaVhIYjh1alFiVGRnbk8yTVYvUWhPSGtKRHZlZlRBZVNjNDdvMFUvYVBxVVRYSTlsK0tuY0hFYzcxZzg4bi80Ynd5RTMxVEwxU3JoaVJacEFvNHVkVi9PUyt6ZW1wNkpWS0RobHBzWEcxMkplNytBZVVtN0NUcCtoMzNHMnNlVU1wcz0iLCJpYXQiOjE3NzEwOTE4OTF9.MVX1SPGVbScWWJRw3Vu4Vx1Y8zNr8npAG3_FyzrEqCg"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        672,
+        272
+      ],
+      "id": "82bd6707-aafe-484c-9fdd-8bfef02b8eb1",
+      "name": "[CJ] 02 - API - Fetch Products (CJ)-cj_pid",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
     }
   ],
   "pinData": {},
@@ -1715,11 +1784,6 @@
         ]
       ]
     },
-    "[CJ] 15 - END - Done": {
-      "main": [
-        []
-      ]
-    },
     "[CJ] 01 - Planifier le Scan (Pays x Cats x Pages)": {
       "main": [
         [
@@ -1788,18 +1852,37 @@
           }
         ]
       ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "[CJ] 02 - API - Fetch Products (CJ)-cj_pid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CJ] 02 - API - Fetch Products (CJ)-cj_pid": {
+      "main": [
+        []
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "availableInMCP": false
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Europe/Paris",
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "5d8d09bb-13dc-4ebe-8c42-47c43268ce15",
+  "versionId": "f2bc74da-f5eb-44b4-8210-00d9a3c80b61",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
   },
-  "id": "kEorAHxVk5n1qYjQ",
+  "id": "582qcIYRjmhjFsSo",
   "tags": []
 }

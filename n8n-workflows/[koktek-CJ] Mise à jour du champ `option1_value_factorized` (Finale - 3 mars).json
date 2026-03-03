@@ -1,0 +1,227 @@
+{
+  "name": "[koktek-CJ] Mise à jour du champ `option1_value_factorized` (Finale - 3 mars)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -528,
+        -16
+      ],
+      "id": "dfab5489-dfdb-4f1b-815c-680e2143a041",
+      "name": "Une fois par jour, le soir à minuit. "
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, option1_value\nFROM koktek.product_variants \nWHERE option1_value IS NOT NULL \nAND option1_value_factorized IS NULL;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -320,
+        -16
+      ],
+      "id": "fe24f67b-1ea5-403d-ae76-b38e496eafb1",
+      "name": "[DB] Get Published Products",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -112,
+        -16
+      ],
+      "id": "97d8b67f-20a2-487c-8c58-79bd12b48236",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        160,
+        320
+      ],
+      "id": "351ba84e-ea05-43df-ac5e-9c30d34a7047",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "cVPDbiG2sQv7okss",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voici les données brutes de la variante à nettoyer :\n- Valeur factorisée prioritaire : {{ $json.option1_value_factorized }}\n- Valeur originale (pour t'aider à comprendre si besoin) : {{ $json.option1_value }}\n\nGénère le JSON final.",
+        "options": {
+          "systemMessage": "# ROLE\nTu es un expert en data-cleansing e-commerce pour une boutique PREMIUM en France. Ta mission est de formater, traduire, et RACCOURCIR des noms de variantes.\n\n# REGLES DE FORMATAGE (STRICTES ET ÉLIMINATOIRES)\n1. STRUCTURE : Le résultat DOIT être \"Couleur - Modèle/Accessoire\".\n2. TRADUCTION INTÉGRALE : L'anglais est STRICTEMENT INTERDIT. Tout doit être en français parfait (la couleur ET le modèle).\n3. CONCISION EXTRÊME : Le nom final doit être ultra-court, digne de chez Apple. Tu DOIS supprimer tout le blabla SEO sans pitié. \n   - Exemple Mauvais : \"Vert Camouflage - Portable Heavy-bass High-volume Wireless Mini Speaker\"\n   - Exemple Parfait : \"Vert Camouflage - Mini Enceinte Sans Fil\"\n4. CASSE DES MARQUES : Respecte toujours l'écriture officielle (iPhone, iPad, Galaxy, AirPods).\n\n# FORMAT DE SORTIE (JSON STRICT UNIQUEMENT)\nNe génère aucun texte avant ou après les accolades.\n{\n  \"clean_name\": \"Couleur en FR - Modèle ultra-court en FR\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        160,
+        0
+      ],
+      "id": "0984f18b-59b9-4674-8e63-e27235b90b19",
+      "name": "[AI] - Clean Variant Name"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE koktek.product_variants\nSET option1_value_factorized = $1\nWHERE id = $2;",
+        "options": {
+          "queryReplacement": "={{ $json.clean_name }}, {{ $node[\"Loop Over Items\"].json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        784,
+        0
+      ],
+      "id": "14f6b60b-4818-4d71-9a9d-c94e8a69681d",
+      "name": "[DB] Update Clean Variant",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. On récupère le texte brut sorti par l'IA (selon le nœud, ça s'appelle output, text ou message)\nlet rawText = $json.output || $json.text || $json.message?.content || $json.message || JSON.stringify($json);\n\n// 2. On utilise une expression régulière (Regex) pour capturer UNIQUEMENT ce qui est entre { et }\nlet extractJson = rawText.match(/\\{[\\s\\S]*\\}/);\n\nif (extractJson) {\n  try {\n    // 3. On transforme le texte capturé en véritable objet de données\n    let cleanData = JSON.parse(extractJson[0]);\n    return cleanData;\n  } catch (error) {\n    throw new Error(\"Le JSON extrait est mal formaté : \" + extractJson[0]);\n  }\n} else {\n  throw new Error(\"L'IA n'a généré aucun format JSON valide. Réponse brute : \" + rawText);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        0
+      ],
+      "id": "c286c1d9-186a-41c0-b265-cdc2b9737ac0",
+      "name": "[CODE] - Nettoyer Reponse IA"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Une fois par jour, le soir à minuit. ": {
+      "main": [
+        [
+          {
+            "node": "[DB] Get Published Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Get Published Products": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "[AI] - Clean Variant Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "[AI] - Clean Variant Name",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[AI] - Clean Variant Name": {
+      "main": [
+        [
+          {
+            "node": "[CODE] - Nettoyer Reponse IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Update Clean Variant": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CODE] - Nettoyer Reponse IA": {
+      "main": [
+        [
+          {
+            "node": "[DB] Update Clean Variant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a8e7deb6-c166-4b94-ac44-4b2baf6e6d5a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "RXlttzk2yE9m6tjz",
+  "tags": []
+}

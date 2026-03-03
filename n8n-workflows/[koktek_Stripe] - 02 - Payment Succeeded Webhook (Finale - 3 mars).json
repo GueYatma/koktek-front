@@ -1,0 +1,382 @@
+{
+  "name": "[koktek_Stripe] - 02 - Payment Succeeded Webhook (Finale - 3 mars)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stripe-webhook-postgres",
+        "options": {}
+      },
+      "name": "[STRIPE] Écouteur de Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        720
+      ],
+      "id": "2963ab99-4a0b-4426-8db2-5278acebff1d",
+      "webhookId": "472fd58c-7962-408c-be26-ba8499902999"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.type}}",
+              "value2": "payment_intent.succeeded"
+            }
+          ]
+        }
+      },
+      "name": "[ROUTER] Paiement Réussi ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        720
+      ],
+      "id": "a08a9d9d-4873-4bfc-98d9-eccc0ff9073a"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "id",
+              "value": "={{$node[\"[STRIPE] Écouteur de Webhook\"].json[\"body\"][\"data\"][\"object\"][\"metadata\"][\"order_id\"]}}"
+            },
+            {
+              "name": "status",
+              "value": "paid"
+            },
+            {
+              "name": "payment_status",
+              "value": "paid"
+            },
+            {
+              "name": "payment_reference",
+              "value": "={{$node[\"[STRIPE] Écouteur de Webhook\"].json[\"body\"][\"data\"][\"object\"][\"id\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "[SUCCÈS] Préparer données (Paid)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        64,
+        704
+      ],
+      "id": "fc0ffa30-a93e-4409-9d10-0fe69a02b3db"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "value": "koktek",
+          "mode": "list",
+          "cachedResultName": "koktek"
+        },
+        "table": {
+          "__rl": true,
+          "value": "orders",
+          "mode": "list",
+          "cachedResultName": "orders"
+        },
+        "dataMode": "defineBelow",
+        "columnToMatchOn": "id",
+        "valueToMatchOn": "={{ $json.id }}",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "status",
+              "value": "paid"
+            },
+            {
+              "column": "payment_status",
+              "value": "paid"
+            },
+            {
+              "column": "payment_reference",
+              "value": "={{ $json.payment_reference }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "[DB] Maj Commande (Paid)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        336,
+        704
+      ],
+      "id": "6c7cb729-e2b6-45c6-b853-f880dc5e1311",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "id",
+              "value": "={{$node[\"[STRIPE] Écouteur de Webhook\"].json[\"body\"][\"data\"][\"object\"][\"metadata\"][\"order_id\"]}}"
+            },
+            {
+              "name": "status",
+              "value": "failed"
+            },
+            {
+              "name": "payment_status",
+              "value": "failed"
+            },
+            {
+              "name": "payment_reference",
+              "value": "={{$node[\"[STRIPE] Écouteur de Webhook\"].json[\"body\"][\"data\"][\"object\"][\"id\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "[ÉCHEC] Préparer données (Failed)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        496
+      ],
+      "id": "cc8a4f5a-abc0-4f8d-9f81-b1ad715d668b"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "value": "koktek",
+          "mode": "list",
+          "cachedResultName": "koktek"
+        },
+        "table": {
+          "__rl": true,
+          "value": "orders",
+          "mode": "list",
+          "cachedResultName": "orders"
+        },
+        "dataMode": "defineBelow",
+        "columnToMatchOn": "id",
+        "valueToMatchOn": "={{ $json.id }}",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "status",
+              "value": "failed"
+            },
+            {
+              "column": "payment_status",
+              "value": "failed"
+            },
+            {
+              "column": "payment_reference",
+              "value": "={{ $json.payment_reference }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "[DB] Maj Commande (Failed)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        48,
+        496
+      ],
+      "id": "0cf30f10-d4d2-415b-8cab-624f3ae45c73",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.srv747988.hstgr.cloud/webhook/creation-commande-CJ-apres-paiement",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"order_id\": \"{{ $json.order_id }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        704
+      ],
+      "id": "e10014ca-07b9-4b61-b175-1c42a93ac6db",
+      "name": "[TRIGGER] Réveiller Workflow creation commande CJ"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "koktek",
+          "mode": "list"
+        },
+        "table": {
+          "__rl": true,
+          "value": "order_billing",
+          "mode": "list"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "order_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "column": "billing_name",
+              "value": "={{ $('[STRIPE] Écouteur de Webhook').first().json.body?.data?.object?.shipping?.name || $('[STRIPE] Écouteur de Webhook').first().json.body?.data?.object?.charges?.data[0]?.billing_details?.name || 'Client KOKTEK' }}"
+            },
+            {
+              "column": "email",
+              "value": "={{ $('[STRIPE] Écouteur de Webhook').first().json.body?.data?.object?.receipt_email || $('[STRIPE] Écouteur de Webhook').first().json.body?.data?.object?.charges?.data[0]?.billing_details?.email || 'contact@koktek.com' }}"
+            },
+            {
+              "column": "address_line1",
+              "value": "={{ $json.shipping_address?.address_line1 || 'Adresse non renseignée' }}"
+            },
+            {
+              "column": "postal_code",
+              "value": "={{ $json.shipping_address?.postal_code || '00000' }}"
+            },
+            {
+              "column": "city",
+              "value": "={{ $json.shipping_address?.city || 'Ville' }}"
+            },
+            {
+              "column": "country",
+              "value": "={{ $json.shipping_address?.country || 'France' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "[DB] Save Billing Info",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        592,
+        704
+      ],
+      "id": "658ea925-3525-4cd1-aa47-6ac338bc573a",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "[STRIPE] Écouteur de Webhook": {
+      "main": [
+        [
+          {
+            "node": "[ROUTER] Paiement Réussi ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[ROUTER] Paiement Réussi ?": {
+      "main": [
+        [
+          {
+            "node": "[SUCCÈS] Préparer données (Paid)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "[ÉCHEC] Préparer données (Failed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[SUCCÈS] Préparer données (Paid)": {
+      "main": [
+        [
+          {
+            "node": "[DB] Maj Commande (Paid)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[ÉCHEC] Préparer données (Failed)": {
+      "main": [
+        [
+          {
+            "node": "[DB] Maj Commande (Failed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Maj Commande (Paid)": {
+      "main": [
+        [
+          {
+            "node": "[DB] Save Billing Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Save Billing Info": {
+      "main": [
+        [
+          {
+            "node": "[TRIGGER] Réveiller Workflow creation commande CJ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "5cfd4052-b284-49d2-8bb3-cfe6894e3b42",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "d3KhQ1oJvvZJHI44",
+  "tags": []
+}

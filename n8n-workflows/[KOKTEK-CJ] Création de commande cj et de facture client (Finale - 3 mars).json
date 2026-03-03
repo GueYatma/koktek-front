@@ -1,0 +1,531 @@
+{
+  "name": "[KOKTEK-CJ] Création de commande cj et de facture client (Finale - 3 mars)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "creation-commande-CJ-apres-paiement",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        304,
+        176
+      ],
+      "id": "26597d9b-2af2-4534-87d3-904f09cee7af",
+      "name": "Le Déclencheur (Trigger)",
+      "webhookId": "c1e8b3ea-800e-4116-96dc-fe12a44b610f"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM koktek.orders WHERE id = $1;",
+        "options": {
+          "queryReplacement": "={{ $json.body.order_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        528,
+        176
+      ],
+      "id": "1112df02-3334-47d8-a4c5-230a5f34e58a",
+      "name": "[DB] Get Order Details",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  oi.*, \n  pv.cj_vid,\n  pv.sku,\n  p.title AS real_product_name,\n  pv.option1_value_factorized AS variant_factorized,\n  p.image AS main_product_image, \n  pv.image_url AS variant_image\nFROM koktek.order_items oi\nLEFT JOIN koktek.products p ON oi.product_id = p.id\nLEFT JOIN koktek.product_variants pv ON oi.variant_id = pv.id\nWHERE oi.order_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('[DB] Get Order Details').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        752,
+        176
+      ],
+      "id": "40db1d6e-ae83-4647-b725-3e27477c531e",
+      "name": "[DB] Get Order Items",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $(\"[DB] Get Order Details\").item.json;\nconst items = $(\"[DB] Get Order Items\").all().map(i => i.json);\n\nconst shipping = typeof order.shipping_address === 'string' \n  ? JSON.parse(order.shipping_address) \n  : (order.shipping_address || {});\n\n// Dictionnaire étendu des pays\nconst countryMap = {\n  'France': 'FR', 'Belgique': 'BE', 'Suisse': 'CH', 'Canada': 'CA',\n  'Luxembourg': 'LU', 'Monaco': 'MC', 'Andorre': 'AD',\n  'Guadeloupe': 'GP', 'Martinique': 'MQ', 'Guyane': 'GF', 'La Réunion': 'RE',\n  'Mayotte': 'YT', 'Nouvelle-Calédonie': 'NC', 'Polynésie française': 'PF',\n  'Saint-Barthélemy': 'BL', 'Saint-Martin': 'MF', 'Saint-Pierre-et-Miquelon': 'PM',\n  'Wallis-et-Futuna': 'WF', 'Espagne': 'ES', 'Italie': 'IT', 'Royaume-Uni': 'GB',\n  'Angleterre': 'GB', 'Allemagne': 'DE', 'Portugal': 'PT', 'Pays-Bas': 'NL'\n};\n\nconst countryCode = countryMap[shipping.country] || 'FR';\n\n// ON UTILISE ENFIN LES VRAIS CODES CJ ICI !\nconst products = items.map(item => ({\n  vid: item.cj_vid || item.sku, // Priorité au Cj Vid, sinon on envoie le SKU\n  quantity: item.quantity\n}));\n\nconst payload = {\n  orderNumber: order.order_number || '',\n  shippingZip: shipping.postal_code || '',\n  shippingCountryCode: countryCode,\n  shippingCountry: shipping.country || 'France',\n  shippingProvince: shipping.region || shipping.city || '',\n  shippingCity: shipping.city || '',\n  shippingAddress: [shipping.address_line1, shipping.address_line2].filter(Boolean).join(' '),\n  shippingCustomerName: order.recipient_name || order.customer_name || 'Client', \n  shippingPhone: order.phone || '0000000000',\n  logisticName: order.logistic_name || 'Standard',\n  fromCountryCode: 'CN',\n  products: products\n};\n\nreturn { json: payload };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        176
+      ],
+      "id": "0bfb66af-39b8-476b-8b45-9fc02b9a9016",
+      "name": "[CODE] Format CJ Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://developers.cjdropshipping.com/api2.0/v1/shopping/order/createOrder",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "CJ-Access-Token",
+              "value": "API@CJ5184655@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjk0MCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnl1V3Q3blIzZlZvRW82dTVOdG42Z2xiMjB2WTN6TVY4ay9SSHd6RThsNnFqL3g5b3ZnTTdzRnp2M3dyeHlTRVg3eENvU210Tkcycy9wekp5QXBlNFczMjUzYlFWK2ovUHBqbDRjTFJpVnFWM1dPRVRMVlhpME05SmRmakwrdmVEcWw4Q2NMOXJXU2dLZDNRTEIrUDc3SHhRcTFjKzV3ZThQMFhPVEQ5ZS9ZZit0ZVlDemcyUXhsMDYvVmhVNXFrcVRvL2JOd2lnMTFXVi9DaVdGVllkWUQ1cXhsbkVIQVlRQ1RvMDBQTUNIL0lvU0Jjc1hLaHVNOWhwa1p1MFlDWkZwRm90WDM3MmV2VEFuYjNySHFyOWdoYz0iLCJpYXQiOjE3NzE4ODY3NTh9.V-JX1jqJ_4iyONm-vPFYOaYAuuMPOvj1BDDvY40sNOI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1184,
+        176
+      ],
+      "id": "64a650b9-e1c0-4dae-846a-865b36089cc7",
+      "name": "[API] POST to CJ Dropshipping"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE koktek.orders SET cj_order_id = $1 WHERE id = $2;",
+        "options": {
+          "queryReplacement": "={{ $json.data }}, {{ $('[DB] Get Order Details').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        2368,
+        160
+      ],
+      "id": "cc9315c4-5bf2-4b8a-a490-78fad73aeab4",
+      "name": "[DB] Update CJ Order ID",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ae62b6c4-9ff3-46a6-98fc-72ec6b97d22d",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1392,
+        176
+      ],
+      "id": "7a379c43-ebeb-4aa1-ac38-76d8b1d1fcb7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2128,
+        160
+      ],
+      "id": "c6d2a778-fac9-4626-8f54-5155e80be7af",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        160
+      ],
+      "id": "97bdcfb5-5a6c-4ef5-b67c-f58326cfb5b3",
+      "name": "[SYS] Wait for CJ Processing",
+      "webhookId": "a2baedfe-63a4-4051-a593-9486a9ca4b63"
+    },
+    {
+      "parameters": {
+        "url": "https://developers.cjdropshipping.com/api2.0/v1/shopping/order/getOrderDetail",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "orderId"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "CJ-Access-Token",
+              "value": "API@CJ5184655@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjk0MCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnl1V3Q3blIzZlZvRW82dTVOdG42Z2xiMjB2WTN6TVY4ay9SSHd6RThsNnFqL3g5b3ZnTTdzRnp2M3dyeHlTRVg3eENvU210Tkcycy9wekp5QXBlNFczMjUzYlFWK2ovUHBqbDRjTFJpVnFWM1dPRVRMVlhpME05SmRmakwrdmVEcWw4Q2NMOXJXU2dLZDNRTEIrUDc3SHhRcTFjKzV3ZThQMFhPVEQ5ZS9ZZit0ZVlDemcyUXhsMDYvVmhVNXFrcVRvL2JOd2lnMTFXVi9DaVdGVllkWUQ1cXhsbkVIQVlRQ1RvMDBQTUNIL0lvU0Jjc1hLaHVNOWhwa1p1MFlDWkZwRm90WDM3MmV2VEFuYjNySHFyOWdoYz0iLCJpYXQiOjE3NzE4ODY3NTh9.V-JX1jqJ_4iyONm-vPFYOaYAuuMPOvj1BDDvY40sNOI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1920,
+        160
+      ],
+      "id": "0c214f71-8f42-47ba-8b81-15350cd34e5b",
+      "name": "[API] GET Final CJ Order Details"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  o.id AS original_order_id,\n  ob.invoice_number,\n  ob.billing_name,\n  ob.email,\n  -- COALESCE = \"Prends l'adresse de facturation, si elle est vide prends la livraison\"\n  COALESCE(ob.address_line1, od.address_line1) AS address_line1,\n  COALESCE(ob.postal_code, od.postal_code) AS postal_code,\n  COALESCE(ob.city, od.city) AS city,\n  c.first_name, \n  c.last_name, \n  c.email AS customer_account_email,\n  od.recipient_name,\n  (SELECT invoice_number FROM koktek.order_billing WHERE invoice_number IS NOT NULL AND invoice_number != '' ORDER BY created_at DESC LIMIT 1) AS last_invoice_number\nFROM koktek.orders o\nLEFT JOIN koktek.order_billing ob ON o.id = ob.order_id\nLEFT JOIN koktek.customers c ON o.customer_id = c.id\nLEFT JOIN koktek.order_delivery od ON o.id = od.order_id\nWHERE o.id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('[DB] Get Order Details').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2352,
+        -112
+      ],
+      "id": "eb3730dd-d0ad-40a1-8bc2-8d5a6f2b3616",
+      "name": "[DB] Get Billing Details",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let billing = $input.item?.json || {};\nlet order = $('[DB] Get Order Details').item.json || {};\n\n// --- NOUVEAU : GÉNÉRATION DU NUMÉRO DE FACTURE (KOKTEK PRO) ---\nlet lastInvoice = billing.last_invoice_number || \"\";\nlet newInvoiceNumber = \"\";\nlet currentYear = new Date().getFullYear(); // Donne 2026 (puis 2027 l'an prochain)\n\n// Le préfixe magique qui s'adapte à l'année\nlet prefix = `KOKTEK-${currentYear}`; \n\nif (lastInvoice.startsWith(prefix + \"-\")) {\n    // Exemple : \"KOKTEK-FAC2026-0003\"\n    // On coupe aux tirets, ça donne [\"KOKTEK\", \"FAC2026\", \"0003\"]\n    let parts = lastInvoice.split('-'); \n    let number = parseInt(parts[2], 10); // Le numéro est la 3ème partie (index 2)\n    let nextNumber = number + 1;\n    newInvoiceNumber = `${prefix}-${String(nextNumber).padStart(4, '0')}`;\n} else {\n    // Si on change d'année ou que c'est la toute première facture KOKTEK\n    newInvoiceNumber = `${prefix}-0001`;\n}\n// --------------------------------------------------------------\n\nlet rawItems = $('[DB] Get Order Items').all();\nlet itemsList = [];\n\nfor (let i = 0; i < rawItems.length; i++) {\n    let item = rawItems[i].json;\n    let price = parseFloat(item.price || item.unit_price || 0);\n    let qty = parseInt(item.quantity || 1, 10);\n    let total = price * qty;\n    let imageUrl = item.variant_image || item.main_product_image || \"\";\n\n    let fullName = item.real_product_name || item.product_title || item.title || \"Article\";\n    if (item.variant_factorized) {\n        fullName += \" - \" + item.variant_factorized;\n    }\n\n    itemsList.push({\n        name: fullName, \n        quantity: qty,\n        unit_price: price.toFixed(2),\n        total_price: total.toFixed(2),\n        image_url: imageUrl\n    });\n}\n\nlet subtotal = parseFloat(order.total_products_price || 0).toFixed(2);\nlet shipping = parseFloat(order.shipping_price || 0).toFixed(2);\nlet totalOrder = parseFloat(order.total_price || 0).toFixed(2);\n\nlet finalClientName = \"Client KOKTEK\";\nif (billing.first_name && billing.last_name) {\n    finalClientName = billing.first_name + \" \" + billing.last_name;\n} else if (billing.recipient_name) {\n    finalClientName = billing.recipient_name;\n}\n\n// 💡 LE FIX EST ICI : On déduit la méthode de paiement\nlet finalPaymentMethod = order.payment_method;\nif (!finalPaymentMethod) {\n    // Si c'est vide dans la DB, on regarde la référence\n    if (order.payment_reference && order.payment_reference.startsWith('pi_')) {\n        finalPaymentMethod = \"Carte Bancaire\";\n    } else {\n        finalPaymentMethod = \"Espèces (Paiement à la livraison)\";\n    }\n}\n\nlet pdfData = {\n    logo_url: \"https://koktek.com/logo-tr.png\", \n    client: {\n        name: finalClientName,\n        address_line1: billing.address_line1 || \"\",\n        postal_code: billing.postal_code || \"\",\n        city: billing.city || \"\",\n        email: billing.customer_account_email || billing.email || order.customer_email || \"\"\n    },\n    order: {\n        // ON INJECTE LE NOUVEAU NUMÉRO ICI POUR PDFMONKEY\n        id: newInvoiceNumber,\n        date: new Date().toLocaleDateString('fr-FR'),\n        payment_method: order.payment_method || \"Carte Bancaire\",\n        subtotal: subtotal,\n        shipping: shipping,\n        total: totalOrder\n    },\n    items: itemsList,\n    // On garde l'ID de la commande en cache pour le sauvegarder dans la DB à l'étape 3\n    _original_order_id: order.id \n};\n\nreturn { json: pdfData };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        -112
+      ],
+      "id": "8c7b0190-a80d-42be-a3e8-5c02a490688f",
+      "name": "[CODE] Format Invoice Data"
+    },
+    {
+      "parameters": {
+        "documentTemplateId": "5F46C558-BC84-41B0-8E1E-2856ADE137E3",
+        "payload": "={{ JSON.stringify($('[CODE] Format Invoice Data').first().json) }}",
+        "filename": "==Facture_KOKTEK_{{ $('[CODE] Format Invoice Data').first().json.order.id }}.pdf",
+        "meta": "="
+      },
+      "type": "n8n-nodes-pdfmonkey.pdfMonkey",
+      "typeVersion": 1,
+      "position": [
+        3072,
+        -112
+      ],
+      "id": "23d58d26-7a28-485d-85a7-383d54d0b600",
+      "name": "[API] PDFMonkey - Create PDF",
+      "credentials": {
+        "pdfMonkeyApi": {
+          "id": "SK08IjnlqClevCmr",
+          "name": "PDFMonkey account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "downloadFile",
+        "documentId": "={{ $json.document_card.id }}"
+      },
+      "type": "n8n-nodes-pdfmonkey.pdfMonkey",
+      "typeVersion": 1,
+      "position": [
+        3296,
+        -112
+      ],
+      "id": "fa392d22-a796-4375-9fdd-2abb3c626618",
+      "name": "[API] PDFMonkey - Download PDF",
+      "credentials": {
+        "pdfMonkeyApi": {
+          "id": "SK08IjnlqClevCmr",
+          "name": "PDFMonkey account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "KOKTEK <contact@koktek.com>",
+        "toEmail": "={{ $('[CODE] Format Invoice Data').first().json.client.email }}",
+        "subject": "=Votre facture KOKTEK - Commande {{ $('[CODE] Format Invoice Data').first().json.order.id }}",
+        "html": "=<p>Bonjour {{ $('[CODE] Format Invoice Data').first().json.client.name }},</p>\n\n<p>Merci pour votre confiance et votre achat sur KOKTEK !</p>\n\n<p>Vous trouverez ci-joint la facture au format PDF correspondant à votre commande <strong>{{ $('[CODE] Format Invoice Data').first().json.order.id }}</strong>.</p>\n\n<p>Si vous avez la moindre question, n'hésitez pas à répondre directement à cet e-mail.</p>\n\n<p>À très bientôt,<br>\n<strong>L'équipe KOKTEK</strong></p>",
+        "options": {
+          "attachments": "data"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        3504,
+        -112
+      ],
+      "id": "c4ee0c72-0b44-486b-80ef-e36078eaa79b",
+      "name": "Send an Email",
+      "webhookId": "3d837280-3b17-4a78-9308-0e12aed441dc",
+      "credentials": {
+        "smtp": {
+          "id": "c7bUAEMii504be6O",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 1. L'arme nucléaire : on remplit TOUTES les colonnes d'adresse d'un coup\nINSERT INTO koktek.order_billing (\n    id, \n    order_id, \n    billing_name, \n    email, \n    address_line1, \n    postal_code, \n    city, \n    country,\n    created_at\n)\nSELECT \n    gen_random_uuid(), \n    $2, \n    $3, \n    $4, \n    $5, \n    $6, \n    $7, \n    'France',\n    NOW()\nWHERE NOT EXISTS (SELECT 1 FROM koktek.order_billing WHERE order_id = $2);\n\n-- 2. On insère notre numéro de facture\nUPDATE koktek.order_billing \nSET invoice_number = $1 \nWHERE order_id = $2\nRETURNING *;",
+        "options": {
+          "queryReplacement": "={{ $json.order.id }}, {{ $json._original_order_id }}, {{ $json.client.name }}, {{ $json.client.email }}, {{ $json.client.address_line1 || 'N/A' }}, {{ $json.client.postal_code || '00000' }}, {{ $json.client.city || 'N/A' }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2848,
+        -112
+      ],
+      "id": "aabc7f0e-3f9b-4379-be0d-ac6ba7ee96c1",
+      "name": "[DB] Save Invoice Number",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Le Déclencheur (Trigger)": {
+      "main": [
+        [
+          {
+            "node": "[DB] Get Order Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Get Order Details": {
+      "main": [
+        [
+          {
+            "node": "[DB] Get Order Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Get Order Items": {
+      "main": [
+        [
+          {
+            "node": "[CODE] Format CJ Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CODE] Format CJ Payload": {
+      "main": [
+        [
+          {
+            "node": "[API] POST to CJ Dropshipping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[API] POST to CJ Dropshipping": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "[SYS] Wait for CJ Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "[DB] Update CJ Order ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[SYS] Wait for CJ Processing": {
+      "main": [
+        [
+          {
+            "node": "[API] GET Final CJ Order Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[API] GET Final CJ Order Details": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Update CJ Order ID": {
+      "main": [
+        [
+          {
+            "node": "[DB] Get Billing Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Get Billing Details": {
+      "main": [
+        [
+          {
+            "node": "[CODE] Format Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CODE] Format Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "[DB] Save Invoice Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[API] PDFMonkey - Create PDF": {
+      "main": [
+        [
+          {
+            "node": "[API] PDFMonkey - Download PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[API] PDFMonkey - Download PDF": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Save Invoice Number": {
+      "main": [
+        [
+          {
+            "node": "[API] PDFMonkey - Create PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "03d7e033-4984-43ac-8c2d-67925e8e64c4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "NOjb7pbOM0m1gb4z",
+  "tags": []
+}
