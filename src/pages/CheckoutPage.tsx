@@ -1000,10 +1000,8 @@ const CheckoutPage = () => {
                   const unitPrice = item.product.prix_calcule ?? item.product.retail_price
                   const articleTotal = unitPrice * item.quantity
                   const shippingName = item.shippingOption?.name
-                  const shippingDays = item.shippingOption?.days
                   const shippingPrice = item.shippingOption?.price != null ? Number(item.shippingOption.price) : 0
-                  const shippingTotalLine = shippingPrice * item.quantity // si les frais de port sont par article, sinon juste shippingPrice
-                  const lineTotal = articleTotal + (shippingTotal / items.length) // Simplification mathématique: le shipping total est déjà calculé au niveau du panier, on va juste afficher le vrai calcul.
+                  const weightGrams = item.variant.weight_grams
                   // Mieux : on affiche explicitement le prix pour l'article et la portion de livraison
                   return (
                   <div
@@ -1172,8 +1170,8 @@ const CheckoutPage = () => {
                   const unitPrice = item.product.prix_calcule ?? item.product.retail_price
                   const articleTotal = unitPrice * item.quantity
                   const shippingName = item.shippingOption?.name
-                  const shippingDays = item.shippingOption?.days
                   const shippingPrice = item.shippingOption?.price != null ? Number(item.shippingOption.price) : 0
+                  const weightGrams = item.variant.weight_grams
                   
                   return (
                   <div
