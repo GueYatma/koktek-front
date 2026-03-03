@@ -301,9 +301,9 @@ const CatalogPage = () => {
             <span>Retour à l’accueil</span>
           </button>
           
-          <div className="flex flex-1 items-center justify-center max-w-md mx-auto">
+          <div className="flex flex-1 items-center justify-center w-full px-2 sm:px-6">
              <div className="flex w-full items-center gap-3">
-               <span className="text-[11px] font-bold text-gray-400 w-8 text-right">{priceRange[0]} €</span>
+               <span className="text-[11px] font-bold text-gray-400 w-8 text-right shrink-0">{priceRange[0]} €</span>
                <div className="relative flex-1 group">
                  <PriceRangeSlider 
                    min={minBound} 
@@ -312,7 +312,7 @@ const CatalogPage = () => {
                    onChange={setPriceRange} 
                  />
                </div>
-               <span className="text-[11px] font-bold text-white w-10 text-left">{priceRange[1]} €</span>
+               <span className="text-[11px] font-bold text-white w-10 text-left shrink-0">{priceRange[1]} €</span>
              </div>
           </div>
 
