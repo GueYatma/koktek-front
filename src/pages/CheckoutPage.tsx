@@ -998,11 +998,13 @@ const CheckoutPage = () => {
                 {items.map((item) => {
                   const variantValue = resolveVariantValue(item.variant)
                   const unitPrice = item.product.prix_calcule ?? item.product.retail_price
-                  const lineTotal = unitPrice * item.quantity
+                  const articleTotal = unitPrice * item.quantity
                   const shippingName = item.shippingOption?.name
                   const shippingDays = item.shippingOption?.days
-                  const shippingPrice = item.shippingOption?.price
-                  const weightGrams = item.variant.weight_grams
+                  const shippingPrice = item.shippingOption?.price != null ? Number(item.shippingOption.price) : 0
+                  const shippingTotalLine = shippingPrice * item.quantity // si les frais de port sont par article, sinon juste shippingPrice
+                  const lineTotal = articleTotal + (shippingTotal / items.length) // Simplification mathématique: le shipping total est déjà calculé au niveau du panier, on va juste afficher le vrai calcul.
+                  // Mieux : on affiche explicitement le prix pour l'article et la portion de livraison
                   return (
                   <div
                     key={item.variant.id}
@@ -1011,42 +1013,48 @@ const CheckoutPage = () => {
                     <img
                       src={resolveImageUrl(item.product.image_url)}
                       alt={item.product.title}
-                      className="h-20 w-20 rounded-xl object-cover"
+                      className="h-20 w-20 rounded-xl object-cover bg-gray-50"
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 flex flex-col justify-between">
                       <div className="flex items-start justify-between">
                         <div className="space-y-0.5">
-                          <p className="text-sm font-semibold text-gray-900">
+                          <p className="text-sm font-semibold text-gray-900 leading-tight">
                             {item.product.title}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 font-medium">
                             {variantValue || '—'}
                           </p>
                           {weightGrams != null && weightGrams > 0 && (
                             <p className="text-xs text-gray-400">Poids : {weightGrams}g</p>
                           )}
-                          {shippingName && (
-                            <p className="text-[10px] text-indigo-600 uppercase tracking-wider font-semibold">
-                              {shippingName}
-                              {shippingDays != null && String(shippingDays).trim().length > 0 ? ` — ${shippingDays}` : ''}
-                              {shippingPrice != null ? ` · ${Number(shippingPrice) > 0 ? formatPrice(Number(shippingPrice)) : 'Inclus'}` : ''}
-                            </p>
-                          )}
+                          <p className="mt-1 text-xs text-gray-500">
+                            Qté : {item.quantity}
+                          </p>
                         </div>
-                        <div className="text-right">
-                          {item.quantity > 1 && (
-                            <p className="text-[10px] text-gray-400">
-                              {formatPrice(unitPrice)} × {item.quantity}
-                            </p>
-                          )}
-                          <span className="text-sm font-bold text-gray-900">
-                            {formatPrice(lineTotal)}
+                      </div>
+                      
+                      {/* --- NOUVEAU BLOC PRIX DÉTAILLÉ --- */}
+                      <div className="mt-3 border-t border-gray-100 pt-3 space-y-1">
+                        <div className="flex justify-between items-center text-[11px] text-gray-500">
+                          <span>Prix article {item.quantity > 1 ? `(${formatPrice(unitPrice)} × ${item.quantity})` : ''}</span>
+                          <span className="font-semibold text-gray-700">{formatPrice(articleTotal)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[11px] text-gray-500">
+                          <span className="flex items-center gap-1">
+                            Livraison {shippingName ? `(${shippingName})` : ''}
+                          </span>
+                          <span className="font-semibold text-gray-700">
+                            {shippingPrice > 0 ? `+ ${formatPrice(shippingPrice)}` : 'Inclus'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1.5 mt-1 border-t border-gray-100/50 text-xs">
+                          <span className="font-semibold text-gray-900 uppercase tracking-wider text-[10px]">Total Ligne</span>
+                          <span className="font-bold text-gray-900">
+                            {formatPrice(articleTotal + shippingPrice)}
                           </span>
                         </div>
                       </div>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Quantité : {item.quantity}
-                      </p>
+                      
                     </div>
                   </div>
                 )})}
@@ -1162,11 +1170,11 @@ const CheckoutPage = () => {
                 {items.map((item) => {
                   const variantValue = resolveVariantValue(item.variant)
                   const unitPrice = item.product.prix_calcule ?? item.product.retail_price
-                  const lineTotal = unitPrice * item.quantity
+                  const articleTotal = unitPrice * item.quantity
                   const shippingName = item.shippingOption?.name
                   const shippingDays = item.shippingOption?.days
-                  const shippingPrice = item.shippingOption?.price
-                  const weightGrams = item.variant.weight_grams
+                  const shippingPrice = item.shippingOption?.price != null ? Number(item.shippingOption.price) : 0
+                  
                   return (
                   <div
                     key={item.variant.id}
@@ -1175,42 +1183,48 @@ const CheckoutPage = () => {
                     <img
                       src={resolveImageUrl(item.product.image_url)}
                       alt={item.product.title}
-                      className="h-20 w-20 rounded-xl object-cover"
+                      className="h-20 w-20 rounded-xl object-cover bg-gray-50"
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 flex flex-col justify-between">
                       <div className="flex items-start justify-between">
                         <div className="space-y-0.5">
-                          <p className="text-sm font-semibold text-gray-900">
+                          <p className="text-sm font-semibold text-gray-900 leading-tight">
                             {item.product.title}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 font-medium">
                             {variantValue || '—'}
                           </p>
                           {weightGrams != null && weightGrams > 0 && (
                             <p className="text-xs text-gray-400">Poids : {weightGrams}g</p>
                           )}
-                          {shippingName && (
-                            <p className="text-[10px] text-indigo-600 uppercase tracking-wider font-semibold">
-                              {shippingName}
-                              {shippingDays != null && String(shippingDays).trim().length > 0 ? ` — ${shippingDays}` : ''}
-                              {shippingPrice != null ? ` · ${Number(shippingPrice) > 0 ? formatPrice(Number(shippingPrice)) : 'Inclus'}` : ''}
-                            </p>
-                          )}
+                          <p className="mt-1 text-xs text-gray-500">
+                            Qté : {item.quantity}
+                          </p>
                         </div>
-                        <div className="text-right">
-                          {item.quantity > 1 && (
-                            <p className="text-[10px] text-gray-400">
-                              {formatPrice(unitPrice)} × {item.quantity}
-                            </p>
-                          )}
-                          <span className="text-sm font-bold text-gray-900">
-                            {formatPrice(lineTotal)}
+                      </div>
+                      
+                      {/* --- NOUVEAU BLOC PRIX DÉTAILLÉ --- */}
+                      <div className="mt-3 border-t border-gray-100 pt-3 space-y-1">
+                        <div className="flex justify-between items-center text-[11px] text-gray-500">
+                          <span>Prix article {item.quantity > 1 ? `(${formatPrice(unitPrice)} × ${item.quantity})` : ''}</span>
+                          <span className="font-semibold text-gray-700">{formatPrice(articleTotal)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[11px] text-gray-500">
+                          <span className="flex items-center gap-1">
+                            Livraison {shippingName ? `(${shippingName})` : ''}
+                          </span>
+                          <span className="font-semibold text-gray-700">
+                            {shippingPrice > 0 ? `+ ${formatPrice(shippingPrice)}` : 'Inclus'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1.5 mt-1 border-t border-gray-100/50 text-xs">
+                          <span className="font-semibold text-gray-900 uppercase tracking-wider text-[10px]">Total Ligne</span>
+                          <span className="font-bold text-gray-900">
+                            {formatPrice(articleTotal + shippingPrice)}
                           </span>
                         </div>
                       </div>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Quantité : {item.quantity}
-                      </p>
+                      
                     </div>
                   </div>
                 )})}
@@ -1303,22 +1317,32 @@ const CheckoutPage = () => {
         imageUrl={ticketImageUrl}
         customerName={ticketCustomerName}
         total={total}
-        headerLabel={confirmedMethod === 'card' ? "REÇU DE PAIEMENT" : "BON DE COMMANDE"}
-        title={confirmedMethod === 'card' ? "Paiement Validé !" : "Commande Réservée !"}
-        noticeTone={confirmedMethod === 'card' ? "success" : "danger"}
-        noticeText={confirmedMethod === 'card' ? "Votre paiement en ligne a été effectué avec succès. Votre commande est en cours de préparation." : undefined}
-        hintText="Retrouvez le détail de l'opération dans votre espace client."
-        showPayByCard={confirmedMethod !== 'card'}
-        payByCardLabel="← Retour en arrière — Finalement, je paie par carte"
-        onPayByCard={() => {
-          setCheckoutStep('payment')
-          setPaymentView('card')
-        }}
-        onClose={() => navigate('/')}
+        subtotal={subtotal}
+        shippingTotal={shippingTotal}
+        noticeTone={confirmedMethod === 'card' ? 'success' : 'danger'}
+        onContinueShopping={() => navigate('/catalogue')}
         onNavigateToProfile={() => {
           navigate('/')
           setTimeout(() => openProfile('orders'), 50)
         }}
+        showPayByCard={confirmedMethod === 'cash'}
+        onPayByCard={async () => {
+          setCheckoutStep('payment')
+          setConfirmedMethod(null)
+          await handlePaymentOnline()
+        }}
+        onClose={
+          confirmedMethod === 'cash'
+            ? undefined
+            : () => {
+                navigate('/')
+              }
+        }
+        headerLabel={confirmedMethod === 'card' ? "REÇU DE PAIEMENT" : "BON DE COMMANDE"}
+        title={confirmedMethod === 'card' ? "Paiement Validé !" : "Commande Réservée !"}
+        noticeText={confirmedMethod === 'card' ? "Votre paiement en ligne a été effectué avec succès. Votre commande est en cours de préparation." : undefined}
+        hintText="Retrouvez le détail de l'opération dans votre espace client."
+        payByCardLabel="← Retour en arrière — Finalement, je paie par carte"
       />
 
       {isCashConfirmOpen ? (
