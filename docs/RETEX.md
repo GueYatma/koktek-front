@@ -37,9 +37,11 @@ Ce document centralise l'expérience globale du projet **Koktek**, son architect
   - Ajout d'un bouton Reset ✕ de sélection rouge premium pour une réinitialisation rapide (UX/Marketing).
 
 ### Bug 4 : Incohérences des Montants sur le Checkout
-- **Symptôme :** Le client constatait un "Total à payer 9,89€", mais la liste n'affichait qu'un article à 5,50€. Cela créait un fort risque de doute et d'abandon de panier. Le reçu post-paiement était également radin en détails.
-- **Cause :** Manque de transparence de l'UI quant à la prise en compte des frais de livraison dans la liste des articles.
-- **Solution :** Refonte UX de la `CheckoutPage` et de l'`OrderTicketModal`. Chaque bloc produit ventile clairement : *Sous-Total Article + Frais de Livraison lié = Total Ligne*. Le modal final ajoute un bouton "Continuer mes achats" noir premium pour accentuer le réengagement et transforme l'alerte grise en message de succès textuel chaleureux.
+- **Symptôme :** Le client constatait un "Total à payer 9,89€", mais la liste n'affichait qu'un article à 5,50€. Cela créait un fort risque de doute et d'abandon de panier. De plus, lors de l'application initiale du correctif d'interface, le déploiement CI/CD a été interrompu ("Process completed with exit code 2") par GitHub.
+- **Cause :**
+  1. Manque de transparence de l'UI quant à la prise en compte des frais de livraison dans la liste des articles.
+  2. *Build Crash* : Des variables TS/JS intermédiaires orphelines (ex: `shippingDays`, `lineTotal`) laissées par la refonte CSS ont rendu le compilateur TypeScript furieux (`tsc --noEmit` crashé).
+- **Solution :** Refonte UX de la `CheckoutPage` et de l'`OrderTicketModal`. Chaque bloc produit ventile clairement : *Sous-Total Article + Frais de Livraison lié = Total Ligne*. Le modal final ajoute un bouton "Continuer mes achats" noir premium pour accentuer le réengagement. Purge impérative du "code mort" signalée par le compilateur TypeScript avant de pousser vers GitHub.
 
 ### Bug 5 : La Barre de Recherche Mobile instable
 - **Symptôme :** Sur smartphone, lors de la frappe au clavier dans le tiroir de recherche du bas, les résultats rafraichissaient le DOM, ce qui causait le saut anarchique ou la disparition pure et simple de la barre de saisie.
