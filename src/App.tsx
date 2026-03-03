@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
+import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/Layout'
 import ScrollToTop from './components/ScrollToTop'
 
@@ -26,7 +27,8 @@ const AdminRedirect = () => {
 
 const App = () => {
   return (
-    <CartProvider>
+    <ThemeProvider>
+      <CartProvider>
       <BrowserRouter>
         <ScrollToTop />
         <Suspense>
@@ -69,6 +71,7 @@ const App = () => {
         </Suspense>
       </BrowserRouter>
     </CartProvider>
+    </ThemeProvider>
   )
 }
 

@@ -276,16 +276,16 @@ const Layout = () => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-white text-black dark:bg-gray-950 dark:text-gray-100">
       <header
-        className={`fixed top-0 left-0 right-0 z-40 border-b border-gray-100 bg-[#fbfbfb]/98 shadow-[0_2px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-300 will-change-opacity ${
+        className={`fixed top-0 left-0 right-0 z-40 border-b border-gray-100 bg-[#fbfbfb]/98 shadow-[0_2px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-300 will-change-opacity dark:border-gray-800 dark:bg-gray-900/95 ${
           isScrolling ? 'opacity-90 shadow-[0_4px_25px_rgba(0,0,0,0.06)]' : 'opacity-100'
         }`}
       >
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="logo-koktek text-2xl font-black uppercase text-gray-900 sm:text-3xl"
+            className="logo-koktek text-2xl font-black uppercase text-gray-900 sm:text-3xl dark:text-white"
           >
             KOKTEK
           </Link>
@@ -302,8 +302,8 @@ const Layout = () => {
                 className={({ isActive }) =>
                   `rounded-full px-5 py-2 text-sm font-bold transition-all ${
                     isActive
-                      ? 'bg-gray-900 text-white shadow-md'
-                      : 'bg-transparent text-gray-600 hover:bg-gray-100/80 hover:text-gray-900'
+                      ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
                   }`
                 }
               >
@@ -329,7 +329,7 @@ const Layout = () => {
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Rechercher..."
-                className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+                className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-gray-400"
                 aria-label="Rechercher"
               />
             </div>
@@ -359,7 +359,7 @@ const Layout = () => {
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Rechercher..."
-                  className="w-full rounded-full border-2 border-gray-200 bg-white py-2 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                  className="w-full rounded-full border-2 border-gray-200 bg-white py-2 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-gray-400"
                   aria-label="Rechercher"
                 />
               </div>
@@ -438,7 +438,7 @@ const Layout = () => {
       ) : null}
 
       <nav
-        className={`koktek-bottom-nav fixed left-0 right-0 bottom-0 z-50 border-t border-gray-200 bg-white/95 transition-opacity duration-200 will-change-opacity md:hidden ${
+        className={`koktek-bottom-nav fixed left-0 right-0 bottom-0 z-50 border-t border-gray-200 bg-white/95 transition-opacity duration-200 will-change-opacity md:hidden dark:border-gray-800 dark:bg-gray-900/95 ${
           isAnyModalOpen
             ? 'hidden'
             : isScrolling
@@ -452,7 +452,7 @@ const Layout = () => {
             end
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-                isActive ? 'text-gray-900' : 'text-gray-500'
+                isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
               }`
             }
             aria-label="Accueil"
@@ -464,7 +464,7 @@ const Layout = () => {
             to="/catalogue"
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
-                isActive ? 'text-gray-900' : 'text-gray-500'
+                isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
               }`
             }
             aria-label="Catalogue"
@@ -475,7 +475,7 @@ const Layout = () => {
           <button
             type="button"
             onClick={handleMobileSearchClick}
-            className="flex flex-col items-center gap-1 text-[11px] font-semibold text-gray-500 transition hover:text-gray-900"
+            className="flex flex-col items-center gap-1 text-[11px] font-semibold text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
             aria-label="Rechercher"
           >
             <Search className="h-5 w-5" />
@@ -513,11 +513,11 @@ const Layout = () => {
         </div>
       </nav>
 
-      <main className="min-h-screen pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0">
+      <main className="min-h-screen pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0 bg-white dark:bg-gray-950">
         {isBuildToastVisible && (
           <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div
-              className="toast-cube pointer-events-auto relative h-full w-full animate-[toast-cube-in_0.55s_ease-out,toast-cube-out_0.45s_ease-in_11.5s_forwards] rounded-[28px] border border-gray-200 bg-white/95 shadow-[0_22px_50px_-18px_rgba(0,0,0,0.45)] backdrop-blur"
+              className="toast-cube pointer-events-auto relative h-full w-full animate-[toast-cube-in_0.55s_ease-out,toast-cube-out_0.45s_ease-in_11.5s_forwards] rounded-[28px] border border-gray-200 bg-white/95 shadow-[0_22px_50px_-18px_rgba(0,0,0,0.45)] backdrop-blur dark:border-gray-700 dark:bg-gray-900/95"
               onAnimationEnd={(event) => {
                 if (event.animationName === 'toast-cube-out') {
                   setIsBuildToastVisible(false)
