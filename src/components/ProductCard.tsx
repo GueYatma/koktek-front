@@ -12,14 +12,16 @@ const ProductCard = ({ product, categoryName }: ProductCardProps) => {
   const finalPrice = product.prix_calcule ?? product.retail_price
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition md:hover:border-gray-300 dark:md:hover:border-gray-500">
-      <Link to={`/produit/${product.slug}`} className="block bg-gray-50 dark:bg-gray-700">
-        <img
-          src={resolveImageUrl(product.image_url)}
-          alt={product.title}
-          className="h-28 w-full object-contain p-1 sm:h-36 md:h-44"
-          loading="lazy"
-          decoding="async"
-        />
+      <Link to={`/produit/${product.slug}`} className="block">
+        <div className="aspect-square w-full overflow-hidden rounded-t-xl bg-gray-50 dark:bg-gray-700">
+          <img
+            src={resolveImageUrl(product.image_url)}
+            alt={product.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-3">
         {categoryName && (
