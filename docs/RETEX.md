@@ -79,6 +79,31 @@ Ce document centralise l'expérience globale du projet **Koktek**, son architect
 
 ---
 
+## 🌙 Les Évolutions d'Interface Post-Lancement
+
+### Bug 11 : Dark Mode — Implémentation et Raffinement
+- **Symptôme :** Le site restait en thème blanc même lorsque le système d'exploitation de l'utilisateur passait en mode sombre. Agressif pour les yeux la nuit. Après une première implémentation, le rendu était trop violent (noir pur / blanc pur) et plusieurs pages majeures n'avaient pas été traitées.
+- **Cause :**
+  1. Tailwind n'avait pas `darkMode: 'class'` dans sa configuration — aucune variante `dark:` n'était générée.
+  2. Première vague trop rapide : CartDrawer, ProductCard, ProductPage, CatalogPage et AdminLayout oubliés. Palette trop contrastée (`gray-950`).
+- **Solution :**
+  - Activation de `darkMode: 'class'` dans `tailwind.config.js`.
+  - Création de `ThemeContext.tsx` : détection automatique de `prefers-color-scheme`, persistance via `localStorage`, écoute en temps réel des changements OS, et exposition d'une fonction `toggleTheme()`.
+  - Ajout d'un bouton **Soleil/Lune** dans le header principal ET dans le header du Back-Office.
+  - Traitement complet de la palette : `dark:bg-gray-900` (fond principal), `dark:bg-gray-800` (cartes), `dark:text-gray-200` (textes).
+  - Tous les composants oubliés patché : `CartDrawer`, `ProductCard`, `ProductPage`, `CatalogPage`, `AdminLayout`.
+- **Leçon :** Traiter le dark mode en une seule passe complète, composant par composant, plutôt qu'en vagues successives.
+
+### Bug 12 : Cadrage des Images du Catalogue
+- **Symptôme :** Sur la page Catalogue (grille produits), les images étaient coupées ou mal rognées selon leur format source. La Fiche Produit, elle, affichait correctement grâce à son aspect-ratio carré.
+- **Cause :**
+  1. Première tentative avec `object-contain` : images non rognées mais espaces vides inégaux autour des produits selon leurs ratios source (portrait, paysage, carré).
+  2. Le composant `ProductCard` utilisait une hauteur fixe (`h-28 sm:h-36`) mais sans forcer un ratio carré.
+- **Solution :** Wrapper l'image dans un `div` avec `aspect-square` + `overflow-hidden` + fond neutre `bg-gray-50`, et utiliser `object-cover` pour remplir parfaitement le carré. Ajout d'un zoom léger au survol (`group-hover:scale-[1.03]`) pour un effet premium cohérent avec la fiche produit.
+- **Leçon :** Pour une grille produits harmonieuse : toujours forcer un ratio fixe (`aspect-square` ou `aspect-[4/3]`) sur le conteneur image plutôt que de fixer une hauteur arbitraire.
+
+---
+
 ## 🧹 Check-list Avant Livraison Finale (Bonnes pratiques adoptées)
 *   **Qualité CSS :** Respect des attributs d'accessibilité (`prefers-reduced-motion`) et attributs `aria-labels` pour les liseuses.
 *   **Performance :** Hook useMemo déployés, écouteurs de Scroll / Click Events nettoyés au démontage du composant.
