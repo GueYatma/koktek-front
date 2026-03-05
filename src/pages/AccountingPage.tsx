@@ -479,11 +479,7 @@ const AccountingPage = () => {
                     stroke="#10b981"
                     strokeWidth={2}
                     fill="url(#marginGradient)"
-                    activeDot={(props: any) => {
-                      const { cx, cy, payload } = props
-                      const isLoss = payload.margin < 0
-                      return <circle cx={cx} cy={cy} r={6} fill={isLoss ? '#e11d48' : '#10b981'} stroke="none" />
-                    }}
+                    activeDot={{ r: 6, fill: '#10b981', strokeWidth: 0 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -675,11 +671,7 @@ const AccountingPage = () => {
                     stroke="#10b981"
                     strokeWidth={2.5}
                     dot={{ r: 4, fill: '#10b981', strokeWidth: 0 }}
-                    activeDot={(props: any) => {
-                      const { cx, cy, payload } = props
-                      const isLoss = payload.marginRate < 0
-                      return <circle cx={cx} cy={cy} r={6} fill={isLoss ? '#e11d48' : '#10b981'} stroke="none" />
-                    }}
+                    activeDot={{ r: 6, fill: '#10b981', strokeWidth: 0 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
