@@ -148,6 +148,8 @@ const AccountingPage = () => {
         subtotal: number
         shipping: number
         cost: number
+        shippingCJ: number
+        stripe: number
         urssaf: number
         margin: number
         orders: Set<string>
