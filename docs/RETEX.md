@@ -125,6 +125,47 @@ Ce document centralise l'expérience globale du projet **Koktek**, son architect
 
 ---
 
+### Bug 14 : Triggers orphelins bloquant tous les UPDATE sur `koktek.orders`
+
+**Date :** 2026-03-05
+**Sévérité :** 🔴 Critique (table `orders` en lecture seule — workflow n8n bloqué)
+
+**Symptôme :**
+Toute tentative de modifier une commande via Directus ou en SQL direct renvoyait :
+```
+ERROR: relation "koktek.admin_orders_dashboard" does not exist
+CONTEXT: PL/pgSQL function koktek.update_dashboard_final() line 16 at SQL statement
+```
+
+**Cause racine :**
+Lors du Bug 13 (remplacement de la table par un trigger), une ancienne infrastructure de mise à jour avait été laissée en place sans être nettoyée :
+- **`trigger_update_orders_dash`** sur `koktek.orders` → appelait `update_dashboard_final()`
+- **`trigger_update_items_dash`** sur `koktek.order_items` → dépendait de la même fonction
+- **`koktek.update_dashboard_final()`** → tentait de lire `koktek.admin_orders_dashboard` (vue supprimée lors du Bug 13)
+
+Ces trois objets étaient orphelins et invisibles dans le dashboard Directus, rendant le diagnostic difficile.
+
+**Résolution :**
+```sql
+DROP TRIGGER IF EXISTS trigger_update_orders_dash ON koktek.orders;
+DROP FUNCTION IF EXISTS koktek.update_dashboard_final() CASCADE;
+-- Le CASCADE a auto-supprimé trigger_update_items_dash sur order_items
+```
+
+**Vérification :** `UPDATE koktek.orders SET cj_order_id = 'SD2603041359570641800' WHERE id = 'd67ba7e1-...'` → `UPDATE 1` ✅
+
+**Leçon retenue :**
+Lors de toute refonte de trigger SQL, **toujours auditer les triggers existants** avant et après intervention :
+```sql
+SELECT event_object_table, trigger_name, action_statement
+FROM information_schema.triggers
+WHERE event_object_schema = 'koktek'
+ORDER BY event_object_table;
+```
+Ne jamais se contenter de créer un nouveau trigger sans s'assurer qu'aucun ancien n'est encore actif sur les mêmes tables. Utiliser `DROP ... CASCADE` pour nettoyer les dépendances en chaîne.
+
+---
+
 ## 🧹 Check-list Avant Livraison Finale (Bonnes pratiques adoptées)
 *   **Qualité CSS :** Respect des attributs d'accessibilité (`prefers-reduced-motion`) et attributs `aria-labels` pour les liseuses.
 *   **Performance :** Hook useMemo déployés, écouteurs de Scroll / Click Events nettoyés au démontage du composant.
