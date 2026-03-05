@@ -700,6 +700,8 @@ export type AdminOrderDashboardRecord = {
   sous_total_produits: string | number
   frais_port_encaisses: string | number
   cout_produits_estime: string | number
+  cout_expedition_estime: string | number
+  frais_stripe: string | number
   frais_urssaf: string | number
   benefice_net_estime: string | number
   cj_order_id?: string | null

@@ -16,3 +16,4 @@ dist/
 deploy_key
 deploy_key.pub
 setup.sh
+docs/keys.md

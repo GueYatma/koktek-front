@@ -102,6 +102,27 @@ Ce document centralise l'expérience globale du projet **Koktek**, son architect
 - **Solution :** Wrapper l'image dans un `div` avec `aspect-square` + `overflow-hidden` + fond neutre `bg-gray-50`, et utiliser `object-cover` pour remplir parfaitement le carré. Ajout d'un zoom léger au survol (`group-hover:scale-[1.03]`) pour un effet premium cohérent avec la fiche produit.
 - **Leçon :** Pour une grille produits harmonieuse : toujours forcer un ratio fixe (`aspect-square` ou `aspect-[4/3]`) sur le conteneur image plutôt que de fixer une hauteur arbitraire.
 
+### Bug 13 : Les Données Fantômes — 114 Commandes Tests Persistantes
+- **Symptôme :** Après suppression manuelle de ~50 commandes test via le back-office Directus, le dashboard admin (Historique des Ventes et Comptabilité) continuait d'afficher 114 anciennes commandes. Les hard-refresh navigateur ne changeaient rien.
+- **Investigation et fausses pistes :**
+  1. *React-Query / Redux / Service Worker / localStorage* : Aucun système de cache client trouvé dans le code. Éliminé.
+  2. *Materialized View* : L'objet `admin_orders_dashboard_final` n'était PAS une Vue Matérialisée (`REFRESH` refusé par PostgreSQL).
+  3. *Vue classique (VIEW)* : Ce n'était PAS non plus une Vue classique. Résultat `information_schema.tables` : **BASE TABLE**.
+  4. *Découverte* : C'était une **table physique dénormalisée**, remplie une seule fois par un workflow n8n sans mécanisme de synchronisation à la suppression.
+- **Première tentative (échec) :** Remplacement de la table par une `CREATE VIEW` PostgreSQL. La vue fonctionnait parfaitement en SQL, MAIS **Directus 11.x ne supporte pas les VIEWs** dans son schema inspector (Knex). Le snapshot de schéma montrait la collection sans section `schema:` → collection "virtuelle" inaccessible via l'API (`FORBIDDEN`).
+- **Solution finale :**
+  1. Remplacement de la VIEW par une **TABLE physique recréée** via `CREATE TABLE AS SELECT` avec les mêmes JOINs (`orders`, `customers`, `order_items`, `product_variants`).
+  2. Ajout d'une `PRIMARY KEY (order_id)`.
+  3. Création d'une **fonction trigger** `koktek.sync_admin_dashboard()` qui reconstruit la table à chaque `INSERT`/`UPDATE`/`DELETE` sur `orders`.
+  4. Création du trigger `trg_sync_admin_dashboard` (AFTER, FOR EACH STATEMENT) sur `koktek.orders`.
+  5. `GRANT SELECT, INSERT, UPDATE, DELETE` à `directus_user` et `n8n_user`.
+- **Résultat :** L'API retourne désormais uniquement les vraies commandes. Toute modification sur `orders` se répercute instantanément sur le dashboard.
+- **Leçons :**
+  1. **Directus 11.x + VIEWs PostgreSQL = incompatible.** Toujours utiliser des `BASE TABLE` pour les collections Directus.
+  2. **Toute table dénormalisée doit avoir un trigger de synchronisation** pour éviter les données orphelines.
+  3. **La policy Directus `admin_access = true` bypasse les permissions individuelles**, mais ne résout pas un mapping schéma manquant.
+  4. **Ne jamais partager de credentials (mots de passe, tokens API) dans un chat IA** — utiliser un gestionnaire de secrets.
+
 ---
 
 ## 🧹 Check-list Avant Livraison Finale (Bonnes pratiques adoptées)
