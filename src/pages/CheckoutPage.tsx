@@ -1319,10 +1319,6 @@ const CheckoutPage = () => {
         shippingTotal={shippingTotal}
         noticeTone={confirmedMethod === 'card' ? 'success' : 'danger'}
         onContinueShopping={() => navigate('/catalogue')}
-        onNavigateToProfile={() => {
-          navigate('/')
-          setTimeout(() => openProfile('orders'), 50)
-        }}
         showPayByCard={confirmedMethod === 'cash'}
         onPayByCard={async () => {
           setCheckoutStep('payment')
