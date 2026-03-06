@@ -267,13 +267,11 @@ const OrderTicketModal = ({
               </button>
             ) : null}
 
-            <button
-              type="button"
-              onClick={onNavigateToProfile}
-              className="flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-xs font-semibold text-gray-500 shadow-sm transition hover:bg-gray-50 hover:text-gray-800"
+            <div
+              className="flex w-full items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-xs font-medium text-gray-500 shadow-inner"
             >
-              Retrouvez votre facture dans votre espace client
-            </button>
+              📝 Votre facture vous a été envoyée par e-mail.
+            </div>
           </div>
 
           {showPayByCard ? (
