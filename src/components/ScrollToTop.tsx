@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { useLocation, useNavigationType } from "react-router-dom"
 
 export default function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const navType = useNavigationType()
 
   useEffect(() => {
@@ -13,7 +13,7 @@ export default function ScrollToTop() {
         behavior: "instant"
       })
     }
-  }, [pathname, navType])
+  }, [pathname, search, navType])
 
   return null
 }

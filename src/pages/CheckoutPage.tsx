@@ -145,6 +145,13 @@ const CheckoutPage = () => {
     checkoutStepRef.current = checkoutStep
   }, [checkoutStep])
 
+  // Remonter en haut de la page lors d'un changement d'étape interne au Checkout
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+  }, [checkoutStep, paymentView])
+
   // Failsafe for Stripe 3D Secure redirects
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)

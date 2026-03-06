@@ -244,7 +244,7 @@ const Layout = () => {
         handleCloseSearch()
       }
     }
-  }, [location.pathname, navType])
+  }, [location.pathname, location.search, navType])
 
   useEffect(() => {
     if (!isMobileSearchOpen) return
