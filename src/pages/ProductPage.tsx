@@ -120,7 +120,7 @@ const ProductPage = () => {
 
   const handleVariantSelect = (variant: VariantWithImage) => {
     setSelectedVariant(variant)
-    handleScrollToImage()
+    // Plus de scroll auto, on laisse l'utilisateur à sa position
   }
 
   const handleImageSelect = (image: string) => {
@@ -142,6 +142,7 @@ const ProductPage = () => {
 
       const loadedVariants = await getVariantsByProductId(productId)
       if (!isActive) return
+
       setVariants(loadedVariants)
       setSelectedVariant(loadedVariants[0] ?? null)
     }
@@ -308,7 +309,7 @@ const ProductPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-16 pt-3 sm:px-6 sm:pt-12 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 pb-[280px] md:pb-16 pt-3 sm:px-6 sm:pt-12 lg:px-8">
       <div className="sticky top-16 z-40 md:static md:top-auto md:z-auto mb-4 md:mb-8 flex items-center justify-between -mx-2 md:mx-0 px-2 md:px-0">
         <BackButton fallback="/catalogue" />
       </div>
@@ -399,7 +400,7 @@ const ProductPage = () => {
             />
           </div>
 
-          <div className="order-2 md:order-3 space-y-4 rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm sm:p-6" id="variant-selector">
+          <div className="order-2 md:order-3 space-y-4 rounded-t-3xl md:rounded-3xl border-t md:border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl p-4 shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.15)] md:shadow-sm sm:p-6 fixed bottom-[calc(env(safe-area-inset-bottom)+68px)] left-0 right-0 z-40 md:static md:bottom-auto md:left-auto md:right-auto md:z-auto" id="variant-selector">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
                 Modèle
