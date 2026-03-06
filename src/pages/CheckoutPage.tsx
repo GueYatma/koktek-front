@@ -5,7 +5,6 @@ import { Elements } from '@stripe/react-stripe-js'
 import StripeCheckoutForm from '../components/StripeCheckoutForm'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-import { useUI } from '../context/UIContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 import { saveOrderForEmail } from '../utils/customerOrders'
@@ -68,7 +67,6 @@ type BillingFormState = {
 
 const CheckoutPage = () => {
   const navigate = useNavigate()
-  const { openProfile } = useUI()
   const { items, total, subtotal, shippingTotal, itemCount, clearCart, cartId, setCartId } = useCart()
   const { user, login, updateProfile } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
