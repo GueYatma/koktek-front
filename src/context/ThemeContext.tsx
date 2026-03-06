@@ -31,16 +31,29 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     return 'light'
   })
 
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
+
+  // Écoute des redimensions pour détecter le passage mobile/desktop
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   // Applique la classe au chargement et à chaque changement
   useEffect(() => {
     const root = document.documentElement
-    if (theme === 'dark') {
+    // Forcer le mode clair sur mobile même si le thème demandé est dark
+    if (theme === 'dark' && !isMobile) {
       root.classList.add('dark')
     } else {
       root.classList.remove('dark')
     }
     localStorage.setItem('koktek:theme', theme)
-  }, [theme])
+  }, [theme, isMobile])
 
   // Écoute les changements de préférence système (ex: l'utilisateur active le dark mode depuis l'OS)
   // mais seulement si aucune préférence manuelle n'a été enregistrée.
