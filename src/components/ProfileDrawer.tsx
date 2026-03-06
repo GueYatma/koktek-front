@@ -419,7 +419,10 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
                             </div>
                             <button
                               type="button"
-                              onClick={() => setActiveOrder(order)}
+                              onClick={() => {
+                                console.log('STATUT REÇU:', order.status, 'PAIEMENT REÇU:', order.payment_status)
+                                setActiveOrder(order)
+                              }}
                               className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-300"
                             >
                               {action.label}

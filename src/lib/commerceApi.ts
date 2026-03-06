@@ -449,33 +449,16 @@ export const getOrdersForHistory = async (input?: {
 export const getCustomerOrdersByEmail = async (
   email: string,
 ): Promise<OrderRecord[]> => {
-  const result = await directusClient.request(
-    readItems('orders', {
-      filter: {
-        'customer_id.email': {
-          _eq: email,
-        },
-      },
-      sort: ['-created_at'],
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Directus cache bypass
-      export: 'json',
-      timestamp: Date.now(),
-      fields: [
-        'id',
-        'order_number',
-        'status',
-        'payment_status',
-        'total_price',
-        'created_at',
-        'logistic_name',
-        'tracking_number',
-        'tracking_url',
-        'delivery_time_estimation',
-      ],
-    }),
-  )
-  return result as OrderRecord[]
+  const result = await requestDirectus<{ data: OrderRecord[] }>('/items/orders', {
+    method: 'GET',
+    params: {
+      'filter[customer_id][email][_eq]': email,
+      sort: '-created_at',
+      fields: 'id,order_number,status,payment_status,total_price,created_at,logistic_name,tracking_number,tracking_url,delivery_time_estimation',
+      timestamp: Date.now().toString(),
+    },
+  })
+  return result.data
 }
 
 export const getOrderItemsByOrderIds = async (
