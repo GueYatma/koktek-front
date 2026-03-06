@@ -66,3 +66,11 @@ export const saveOrderForEmail = (email: string, order: StoredOrder) => {
   all[key] = current
   writeAllOrders(all)
 }
+
+export const setOrdersForEmail = (email: string, orders: StoredOrder[]) => {
+  const key = normalizeEmail(email)
+  if (!key) return
+  const all = readAllOrders()
+  all[key] = orders
+  writeAllOrders(all)
+}

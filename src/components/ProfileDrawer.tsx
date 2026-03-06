@@ -5,7 +5,7 @@ import { useUI } from '../context/UIContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 import { getCustomerOrdersByEmail } from '../lib/commerceApi'
-import { getOrdersForEmail, saveOrderForEmail, type StoredOrder } from '../utils/customerOrders'
+import { getOrdersForEmail, setOrdersForEmail, type StoredOrder } from '../utils/customerOrders'
 import OrderTicketModal from './OrderTicketModal'
 
 type ProfileDrawerProps = {
@@ -55,26 +55,51 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
         const localOrders = getOrdersForEmail(user.email!)
         let hasChanges = false
 
+        // Purger les commandes fantômes qui auraient été supprimées en base
+        const remoteIds = new Set(remoteOrders.map(r => r.id))
+        const remoteNumbers = new Set(remoteOrders.map(r => r.order_number).filter(Boolean))
+        
+        const cleanedLocalOrders = localOrders.filter(l => {
+          return remoteIds.has(l.id) || (l.orderNumber && remoteNumbers.has(l.orderNumber))
+        })
+        
+        if (cleanedLocalOrders.length !== localOrders.length) {
+          hasChanges = true
+        }
+
         remoteOrders.forEach((remoteOrder) => {
           // Chercher par order_number (ex: KOK-...) ou id
-          const localMatch = localOrders.find(
+          const localMatch = cleanedLocalOrders.find(
             (l) => l.orderNumber === remoteOrder.order_number || l.id === remoteOrder.id
           )
           if (localMatch) {
-            localMatch.status = remoteOrder.status
-            localMatch.payment_status = remoteOrder.payment_status
-            localMatch.logisticName = remoteOrder.logistic_name
-            localMatch.trackingNumber = remoteOrder.tracking_number
-            localMatch.trackingUrl = remoteOrder.tracking_url
-            localMatch.deliveryTimeEstimation = remoteOrder.delivery_time_estimation
-            saveOrderForEmail(user.email!, localMatch)
-            hasChanges = true
+            const needsUpdate = 
+              localMatch.status !== remoteOrder.status ||
+              localMatch.payment_status !== remoteOrder.payment_status ||
+              localMatch.logisticName !== remoteOrder.logistic_name ||
+              localMatch.trackingNumber !== remoteOrder.tracking_number ||
+              localMatch.trackingUrl !== remoteOrder.tracking_url ||
+              localMatch.deliveryTimeEstimation !== remoteOrder.delivery_time_estimation
+              
+            if (needsUpdate) {
+              localMatch.status = remoteOrder.status
+              localMatch.payment_status = remoteOrder.payment_status
+              localMatch.logisticName = remoteOrder.logistic_name
+              localMatch.trackingNumber = remoteOrder.tracking_number
+              localMatch.trackingUrl = remoteOrder.tracking_url
+              localMatch.deliveryTimeEstimation = remoteOrder.delivery_time_estimation
+              hasChanges = true
+            }
           }
         })
 
         if (hasChanges) {
-          // Rafraîchir l'affichage avec les données mises à jour
-          setOrders(getOrdersForEmail(user.email!))
+          // Écraser tout l'historique local avec les données parfaitement nettoyées et à jour
+          setOrdersForEmail(user.email!, cleanedLocalOrders)
+          // Rafraîchir l'affichage
+          setOrders([...cleanedLocalOrders].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          ))
         }
       } catch (error) {
         console.error('Erreur lors de la synchronisation des commandes', error)
