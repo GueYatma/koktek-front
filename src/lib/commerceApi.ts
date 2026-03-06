@@ -457,6 +457,10 @@ export const getCustomerOrdersByEmail = async (
         },
       },
       sort: ['-created_at'],
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - Directus cache bypass
+      export: 'json',
+      timestamp: Date.now(),
       fields: [
         'id',
         'order_number',

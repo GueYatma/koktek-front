@@ -115,6 +115,22 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
 
   const resolveOrderAction = (order: StoredOrder) => {
     const paymentStatus = order.payment_status ?? order.status ?? ''
+    const logisticStatus = order.status ?? ''
+
+    // Si la commande est expédiée ou livrée, peu importe le moyen de paiement,
+    // on ne la considère plus 'pending', on affiche le ticket final avec tracking.
+    if (logisticStatus === 'shipped' || logisticStatus === 'delivered' || paymentStatus === 'paid') {
+      return {
+        label: 'Voir mon Ticket et Suivi',
+        headerLabel: logisticStatus === 'shipped' ? 'EXPÉDIÉ' : 'REÇU / PAYÉ',
+        title: logisticStatus === 'shipped' ? 'Commande expédiée !' : 'Paiement confirmé',
+        noticeTone: 'success' as const,
+        noticeText: logisticStatus === 'shipped'
+          ? 'Bonne nouvelle, votre commande est en route ! Consultez les détails de livraison ci-dessous.'
+          : 'Paiement confirmé. Merci, votre commande est en cours de préparation.',
+      }
+    }
+
     if (paymentStatus === 'pending_cash') {
       return {
         label: 'Voir mon Bon de Commande',
@@ -125,16 +141,7 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
           'Votre commande sera préparée uniquement après réception de votre paiement en espèces dans notre boutique à Marseille.',
       }
     }
-    if (paymentStatus === 'paid') {
-      return {
-        label: 'Voir mon Ticket de paiement',
-        headerLabel: 'REÇU / PAYÉ',
-        title: 'Paiement confirmé',
-        noticeTone: 'success' as const,
-        noticeText:
-          'Paiement confirmé. Merci, votre commande est en cours de préparation.',
-      }
-    }
+
     return {
       label: 'Voir mon Bon de Commande',
       headerLabel: 'BON DE COMMANDE',
