@@ -127,7 +127,7 @@ const OrderTicketModal = ({
                   <p className="text-[0.65rem] uppercase tracking-[0.3em] text-gray-400">
                     N° Commande
                   </p>
-                  <p className="mt-1 whitespace-nowrap text-lg font-bold tracking-[0.14em] text-gray-900">
+                  <p className="mt-1 text-lg font-bold tracking-[0.14em] text-gray-900 break-all">
                     {orderNumber}
                   </p>
                 </div>

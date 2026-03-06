@@ -650,7 +650,7 @@ const CheckoutPage = () => {
                           first_name: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       required
                     />
                   </label>
@@ -665,7 +665,7 @@ const CheckoutPage = () => {
                           last_name: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       required
                     />
                   </label>
@@ -680,7 +680,7 @@ const CheckoutPage = () => {
                           email: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       required
                     />
                   </label>
@@ -695,7 +695,7 @@ const CheckoutPage = () => {
                           phone: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm text-gray-600 sm:col-span-2">
@@ -709,7 +709,7 @@ const CheckoutPage = () => {
                           address_line1: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       required
                     />
                   </label>
@@ -724,7 +724,7 @@ const CheckoutPage = () => {
                           address_line2: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm text-gray-600">
@@ -738,7 +738,7 @@ const CheckoutPage = () => {
                           postal_code: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       required
                     />
                   </label>
@@ -753,7 +753,7 @@ const CheckoutPage = () => {
                           city: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       required
                     />
                   </label>
@@ -768,7 +768,7 @@ const CheckoutPage = () => {
                           region: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm text-gray-600">
@@ -782,7 +782,7 @@ const CheckoutPage = () => {
                           country: event.target.value,
                         }))
                       }
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       required
                     />
                   </label>
@@ -824,7 +824,7 @@ const CheckoutPage = () => {
                             first_name: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                         required
                       />
                     </label>
@@ -839,7 +839,7 @@ const CheckoutPage = () => {
                             last_name: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                         required
                       />
                     </label>
@@ -854,7 +854,7 @@ const CheckoutPage = () => {
                             company_name: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       />
                     </label>
                     <label className="flex flex-col gap-2 text-sm text-gray-600">
@@ -868,7 +868,7 @@ const CheckoutPage = () => {
                             tax_id: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       />
                     </label>
                     <label className="flex flex-col gap-2 text-sm text-gray-600">
@@ -882,7 +882,7 @@ const CheckoutPage = () => {
                             email: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                         required
                       />
                     </label>
@@ -897,7 +897,7 @@ const CheckoutPage = () => {
                             phone: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       />
                     </label>
                     <label className="flex flex-col gap-2 text-sm text-gray-600 sm:col-span-2">
@@ -911,7 +911,7 @@ const CheckoutPage = () => {
                             address_line1: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                         required
                       />
                     </label>
@@ -926,7 +926,7 @@ const CheckoutPage = () => {
                             address_line2: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       />
                     </label>
                     <label className="flex flex-col gap-2 text-sm text-gray-600">
@@ -940,7 +940,7 @@ const CheckoutPage = () => {
                             postal_code: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                         required
                       />
                     </label>
@@ -955,7 +955,7 @@ const CheckoutPage = () => {
                             city: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                         required
                       />
                     </label>
@@ -970,7 +970,7 @@ const CheckoutPage = () => {
                             region: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                       />
                     </label>
                     <label className="flex flex-col gap-2 text-sm text-gray-600">
@@ -984,7 +984,7 @@ const CheckoutPage = () => {
                             country: event.target.value,
                           }))
                         }
-                        className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-[16px] text-gray-900"
                         required
                       />
                     </label>

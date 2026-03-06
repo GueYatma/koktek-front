@@ -321,7 +321,7 @@ const Layout = () => {
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Rechercher..."
-                className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-gray-400"
+                className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-[16px] font-medium text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-gray-400"
                 aria-label="Rechercher"
               />
             </div>

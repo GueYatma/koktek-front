@@ -171,7 +171,7 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vous@exemple.com"
-                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[16px] text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
               />
             </div>
             <div>
@@ -183,7 +183,7 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Commande, produit, livraison..."
-                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[16px] text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
               />
             </div>
             <div>
@@ -196,7 +196,7 @@ const ContactDrawer = ({ open, onClose }: ContactDrawerProps) => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Décrivez votre demande..."
-                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[16px] text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
               />
             </div>
             <button
