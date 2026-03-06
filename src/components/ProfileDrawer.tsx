@@ -14,7 +14,7 @@ type ProfileDrawerProps = {
 }
 
 const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, logout } = useAuth()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
@@ -99,6 +99,12 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
   const handleClose = () => {
     setActiveOrder(null)
     onClose()
+  }
+
+  const handleLogout = () => {
+    logout()
+    handleClose()
+    window.location.reload()
   }
 
   const formatOrderDate = (value: string) => {
@@ -437,13 +443,20 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
             )}
           </div>
           {activeProfileTab === 'profile' && (
-            <div className="border-t border-gray-200 px-4 py-4">
+            <div className="border-t border-gray-200 px-4 py-4 space-y-3">
               <button
                 type="button"
                 onClick={handleSave}
                 className="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
               >
                 Mettre à jour mon profil
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 hover:text-red-600"
+              >
+                Se déconnecter
               </button>
             </div>
           )}
