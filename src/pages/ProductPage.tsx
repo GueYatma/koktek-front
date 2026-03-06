@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Link, useParams } from 'react-router-dom'
-import { ChevronDown, ChevronLeft } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../hooks/useProducts'
 import type { ShippingOption, Variant } from '../types'
@@ -196,6 +196,28 @@ const ProductPage = () => {
     : ''
   const displayImage = safeSelectedImage || variantImage || fallbackImage
 
+  const handleNextImage = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (images.length <= 1) return;
+    const currentIndex = images.indexOf(displayImage);
+    const nextIndex = (currentIndex + 1) % images.length;
+    setSelectedImage(images[nextIndex]);
+  };
+
+  const handlePrevImage = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (images.length <= 1) return;
+    const currentIndex = images.indexOf(displayImage);
+    const prevIndex = (currentIndex - 1 + images.length) % images.length;
+    setSelectedImage(images[prevIndex]);
+  };
+
   const displayPrice = product?.prix_calcule ?? product?.retail_price ?? 0
 
   const expertStarsRaw = product?.expert_stars
@@ -288,7 +310,7 @@ const ProductPage = () => {
   return (
     <div className="mx-auto max-w-6xl px-4 pb-16 pt-3 sm:px-6 sm:pt-12 lg:px-8">
       <div className="sticky top-16 z-40 md:static md:top-auto md:z-auto mb-4 md:mb-8 flex items-center justify-between -mx-2 md:mx-0 px-2 md:px-0">
-        <BackButton fallback="/catalogue" label="Retour au catalogue" />
+        <BackButton fallback="/catalogue" />
       </div>
 
       <div className="mb-6 space-y-2 md:hidden">
@@ -302,12 +324,31 @@ const ProductPage = () => {
 
       <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
         <div className="order-1 md:sticky md:top-24 md:self-start">
-          <div ref={mainImageRef} className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white dark:bg-gray-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]">
+          <div ref={mainImageRef} className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white dark:bg-gray-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] relative group">
             <img
               src={displayImage}
               alt={product.title}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover cursor-pointer"
+              onClick={handleNextImage}
             />
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-gray-800 shadow-sm backdrop-blur-md transition-all hover:bg-white/90 active:scale-95 md:opacity-0 md:group-hover:opacity-100"
+                  aria-label="Image précédente"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-gray-800 shadow-sm backdrop-blur-md transition-all hover:bg-white/90 active:scale-95 md:opacity-0 md:group-hover:opacity-100"
+                  aria-label="Image suivante"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
           </div>
           {images.length > 1 && (
             <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4">

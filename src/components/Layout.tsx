@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useNavigationType, useSearchParams } from 'react-router-dom'
 import { Home, Layers, LayoutGrid, MessageCircle, Moon, Search, ShoppingBag, Sun, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useUI } from '../context/UIContext'
@@ -215,26 +215,36 @@ const Layout = () => {
     }
   }, [isCartOpen, isContactOpen, isAuthOpen, isProfileOpen])
 
+  const navType = useNavigationType()
   useEffect(() => {
     if (typeof window === 'undefined') return
-    // Disable native scroll restoration to ensure our custom scroll fires correctly
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual'
-    }
-    // Immediate scroll
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-    // Delayed scroll to catch post-render layout shifts
-    const timer = setTimeout(() => {
+    
+    // Check if user pressed "back" to prevent forcing scroll to top
+    if (navType !== 'POP') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual'
+      }
+      // Immediate scroll
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-    }, 50)
-    
-    // Cancel search and hide mobile search on route changes when clicking away
-    if (isMobileSearchOpen) {
-      handleCloseSearch()
+      // Delayed scroll to catch post-render layout shifts
+      const timer = setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      }, 50)
+      
+      // Cancel search and hide mobile search on route changes when clicking away
+      if (isMobileSearchOpen) {
+        handleCloseSearch()
+      }
+      return () => clearTimeout(timer)
+    } else {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto'
+      }
+      if (isMobileSearchOpen) {
+        handleCloseSearch()
+      }
     }
-    
-    return () => clearTimeout(timer)
-  }, [location.pathname])
+  }, [location.pathname, navType])
 
   useEffect(() => {
     if (!isMobileSearchOpen) return
