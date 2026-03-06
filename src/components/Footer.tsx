@@ -15,7 +15,7 @@ const Footer = ({ buildLabel, buildDateLabel }: FooterProps) => {
   return (
     <footer className="w-full">
       {/* SECTION 1: BANDE BLANCHE (CTA + CARTE DE VISITE) */}
-      <div className="w-full bg-white border-b border-t border-gray-200 py-12 lg:py-16">
+      <div className="w-full bg-white border-b border-t border-gray-200 pt-6 pb-12 lg:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col gap-10">
             {/* CTA Header Level */}

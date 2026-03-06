@@ -133,6 +133,16 @@ const CatalogPage = () => {
     [allCategories],
   );
 
+  // Open categories filter modal from URL
+  useEffect(() => {
+    if (searchParams.get("categories") === "open") {
+      setIsFilterOpen(true);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("categories");
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   // Sync URL -> State
   useEffect(() => {
     const brandParam = searchParams.get("brand");
@@ -260,35 +270,8 @@ const CatalogPage = () => {
 
 
   return (
-    <div className="mx-auto max-w-6xl pb-24 pt-4 sm:pb-28 md:pt-4">
-      {/* Mobile action bar */}
-      <div className="md:hidden px-4 sm:px-6">
-        <div className="fixed left-0 right-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-30 border-b border-gray-200 bg-gray-50/95 shadow-sm backdrop-blur">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className={actionButtonClass}
-              >
-                ← Retour
-              </button>
-              <span className="inline-flex h-8 items-center justify-center rounded-md bg-gray-900 px-2.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
-                CATALOGUE
-              </span>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsFilterOpen(true)}
-                  className={actionButtonClass}
-                >
-                  Catégorie
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl w-full pb-24 pt-2 sm:pb-28 md:pt-4">
+
 
       {/* Desktop sticky action bar */}
       <div className="sticky top-[64px] z-30 hidden md:block px-4 sm:px-6">
@@ -338,7 +321,7 @@ const CatalogPage = () => {
       </div>
 
       {/* --- GRILLE --- */}
-      <div className="mt-6 px-4 sm:px-6">
+      <div className="mt-2 md:mt-6 px-4 sm:px-6">
         {loading ? (
           <p className="text-center text-sm text-gray-500">Chargement...</p>
         ) : filteredProducts.length === 0 ? (
@@ -365,75 +348,125 @@ const CatalogPage = () => {
         )}
       </div>
 
-      {isFilterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-          <div
-            className="absolute inset-0 bg-black/20"
-            onClick={() => setIsFilterOpen(false)}
-          />
-          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white dark:bg-gray-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">
-                  Catégories
-                </p>
-                <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                  Choisir une catégorie
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(false)}
-                className="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
-                aria-label="Fermer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      {/* --- MENU CATÉGORIES (PANNEAU FLOTTANT PREMIUM) --- */}
+      {/* Overlay sombre léger */}
+      <div
+        className={`fixed inset-0 z-50 bg-black/10 transition-opacity duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] dark:bg-black/30 ${
+          isFilterOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsFilterOpen(false)}
+      />
 
-            <div className="max-h-[70vh] overflow-y-auto px-4 py-4">
-              <div>
-                <div className="mt-2 grid grid-cols-1 gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedCategory("all");
-                      setSelectedBrand("all");
-                      setIsFilterOpen(false);
-                    }}
-                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                      selectedCategory === "all"
-                        ? "border-gray-900 bg-gray-900 text-white dark:border-gray-200 dark:bg-gray-200 dark:text-gray-900"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
-                    }`}
-                  >
-                    Toutes
-                  </button>
-                  {orderedCategories.map((category) => {
-                    const isActive = selectedCategory === category.id;
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => {
-                          setSelectedCategory(category.id);
-                          setSelectedBrand("all");
-                          setIsFilterOpen(false);
-                        }}
-                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                          isActive
-                            ? "border-gray-900 bg-gray-900 text-white dark:border-gray-200 dark:bg-gray-200 dark:text-gray-900"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
-                        }`}
-                      >
-                        {category.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+      {/* Le Panneau - Plus court, plus transparent, flottant à droite */}
+      <div
+        className={`fixed right-3 sm:right-6 top-1/2 z-50 w-max min-w-[220px] max-w-[280px] -translate-y-1/2 transform rounded-[24px] border border-white/20 bg-white/40 backdrop-blur-md shadow-[0_15px_40px_-5px_rgba(0,0,0,0.1)] transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col dark:border-gray-700/30 dark:bg-gray-900/40 dark:shadow-[0_15px_40px_-5px_rgba(0,0,0,0.4)] ${
+          isFilterOpen ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-8 opacity-0 scale-95 pointer-events-none"
+        }`}
+      >
+        {/* Header minimaliste */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
+              Menu
+            </span>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen(false)}
+            className="group flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-gray-500 transition-all hover:bg-white/80 hover:text-gray-900 active:scale-95 dark:bg-gray-800/40 dark:text-gray-400 dark:hover:bg-gray-800/80 dark:hover:text-white"
+            aria-label="Fermer"
+          >
+            <X className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+          </button>
         </div>
-      )}
+
+        {/* Liste des catégories en bandelettes */}
+        <div className="flex flex-col gap-1.5 px-3 pb-5 overflow-y-auto max-h-[65vh] custom-scrollbar hide-scrollbar">
+          {/* Le bouton "Toutes" */}
+          <button
+            onClick={() => {
+              setSelectedCategory("all");
+              setSelectedBrand("all");
+              setIsFilterOpen(false);
+            }}
+            className={`group relative flex w-full items-center rounded-[14px] px-4 py-3 text-left transition-all duration-300 ease-out active:scale-[0.98] ${
+              selectedCategory === "all"
+                ? "bg-white/80 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:bg-gray-800/80"
+                : "bg-transparent hover:bg-white/30 dark:hover:bg-gray-800/30"
+            }`}
+          >
+            {/* L'indicateur de flèche dynamique (actif ou hover) */}
+            <div
+              className={`absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-r-full transition-all duration-300 ease-out ${
+                selectedCategory === "all"
+                  ? "translate-x-0 opacity-100 bg-gray-900 dark:bg-white"
+                  : "translate-x-[-100%] opacity-0 bg-gray-300 group-hover:translate-x-0 group-hover:opacity-100 dark:bg-gray-600"
+              }`}
+            />
+
+            {/* Le Texte de la bandelette */}
+            <span
+              className={`relative z-10 text-[14px] font-medium transition-all duration-300 ease-out ${
+                selectedCategory === "all"
+                  ? "translate-x-2 text-gray-900 font-semibold dark:text-white"
+                  : "text-gray-600 group-hover:translate-x-1.5 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200"
+              }`}
+            >
+              Toutes
+            </span>
+            
+            {/* Petit point discret si actif */}
+            {selectedCategory === "all" && (
+              <div className="absolute right-4 z-10 h-1.5 w-1.5 rounded-full bg-gray-900 dark:bg-white opacity-40 shadow-[0_0_8px_currentColor]" />
+            )}
+          </button>
+
+          {/* Les catégories de la BDD */}
+          {orderedCategories.map((category) => {
+            const isActive = selectedCategory === category.id;
+            return (
+              <button
+                key={category.id}
+                onClick={() => {
+                  setSelectedCategory(category.id);
+                  setSelectedBrand("all");
+                  setIsFilterOpen(false);
+                }}
+                className={`group relative flex w-full items-center rounded-[14px] px-4 py-3 text-left transition-all duration-300 ease-out active:scale-[0.98] ${
+                  isActive
+                    ? "bg-white/80 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:bg-gray-800/80"
+                    : "bg-transparent hover:bg-white/30 dark:hover:bg-gray-800/30"
+                }`}
+              >
+                {/* Flèche dynamique légère */}
+                <div
+                  className={`absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-r-full transition-all duration-300 ease-out ${
+                    isActive
+                      ? "translate-x-0 opacity-100 bg-gray-900 dark:bg-white"
+                      : "translate-x-[-100%] opacity-0 bg-gray-300 group-hover:translate-x-0 group-hover:opacity-100 dark:bg-gray-600"
+                  }`}
+                />
+
+                {/* Texte */}
+                <span
+                  className={`relative z-10 text-[14px] font-medium transition-all duration-300 ease-out ${
+                    isActive
+                      ? "translate-x-2 text-gray-900 font-semibold dark:text-white"
+                      : "text-gray-600 group-hover:translate-x-1.5 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200"
+                  }`}
+                >
+                  {category.name}
+                </span>
+                
+                {/* Point discret si actif */}
+                {isActive && (
+                  <div className="absolute right-4 z-10 h-1.5 w-1.5 rounded-full bg-gray-900 dark:bg-white opacity-40 shadow-[0_0_8px_currentColor]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

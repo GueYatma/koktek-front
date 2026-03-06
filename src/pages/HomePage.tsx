@@ -64,7 +64,48 @@ const HERO_FALLBACKS = [
 
 const HomePage = () => {
   const { categories, products, loading } = useProducts()
-  const featuredCategories = categories
+
+  const normalizeCategoryKey = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/&/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+
+  const featuredCategories = useMemo(() => {
+    const byKey = new Map<string, typeof categories[0][]>()
+    categories.forEach((category) => {
+      const key = normalizeCategoryKey(category.name)
+      const list = byKey.get(key) ?? []
+      list.push(category)
+      byKey.set(key, list)
+    })
+
+    const desiredOrder = [
+      'coques protections',
+      'charge energie',
+      'audio son',
+      'supports fixations',
+      'support fixation',
+      'decoration goodies',
+      'autres',
+      'autre',
+    ]
+
+    const ordered: typeof categories[0][] = []
+    desiredOrder.forEach((key) => {
+      const list = byKey.get(key)
+      if (list && list.length > 0) {
+        ordered.push(...list)
+        byKey.delete(key)
+      }
+    })
+
+    const remaining = Array.from(byKey.values()).flat()
+    return [...ordered, ...remaining]
+  }, [categories])
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>()
     categories.forEach((category) => {
@@ -77,14 +118,6 @@ const HomePage = () => {
     return map
   }, [categories])
 
-  const normalizeCategoryKey = (value: string) =>
-    value
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/&/g, ' ')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim()
 
   const resolveCategoryName = (product: any) => {
     const byId = categoryNameById.get(String(product?.category_id ?? ''))
@@ -216,7 +249,7 @@ const HomePage = () => {
               </ul>
             </div>
           </div>
-          <div className="relative lg:justify-self-end mt-4 lg:mt-0">
+          <div className="relative hidden lg:block lg:justify-self-end mt-4 lg:mt-0">
             {heroProduct?.slug ? (
               <Link to={`/produit/${heroProduct.slug}`} className="group block focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-4 rounded-[22px]">
                 <div className="relative rounded-[22px] border border-white/70 bg-white/80 p-2.5 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.55)] lg:max-w-xs transition-transform duration-300 group-hover:-translate-y-1">
@@ -325,7 +358,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 pb-4 md:pb-10 sm:px-6">
         <div className="mb-6">
           <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
             Vos appareils
@@ -403,7 +436,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="bg-gray-100">
+      <section className="hidden md:block bg-gray-100">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <div className="mb-8">
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">

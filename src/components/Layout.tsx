@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Home, LayoutGrid, MessageCircle, Moon, Search, ShoppingBag, Sun, User } from 'lucide-react'
+import { Home, Layers, LayoutGrid, MessageCircle, Moon, Search, ShoppingBag, Sun, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useUI } from '../context/UIContext'
 import { useAuth } from '../context/AuthContext'
@@ -461,6 +461,11 @@ const Layout = () => {
           <NavLink
             to="/"
             end
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem('koktek_mobile_home_visited', 'true')
+              }
+            }}
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 text-[11px] font-semibold transition ${
                 isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
@@ -485,12 +490,21 @@ const Layout = () => {
           </NavLink>
           <button
             type="button"
-            onClick={handleMobileSearchClick}
+            onClick={() => {
+              if (location.pathname === '/catalogue') {
+                setSearchParams((prev) => {
+                  prev.set('categories', 'open');
+                  return prev;
+                });
+              } else {
+                navigate('/catalogue?categories=open');
+              }
+            }}
             className="flex flex-col items-center gap-1 text-[11px] font-semibold text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            aria-label="Rechercher"
+            aria-label="Catégories"
           >
-            <Search className="h-5 w-5" />
-            Recherche
+            <Layers className="h-5 w-5" />
+            Catégories
           </button>
           <button
             type="button"
@@ -526,7 +540,7 @@ const Layout = () => {
 
       <main className="min-h-screen pt-14 pb-[calc(86px+env(safe-area-inset-bottom))] md:pb-0 bg-white dark:bg-gray-900">
         {isBuildToastVisible && (
-          <div className="pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
+          <div className="hidden md:block pointer-events-none fixed bottom-24 right-4 z-50 h-56 w-56 md:bottom-6 md:right-6">
             <div
               className="toast-cube pointer-events-auto relative h-full w-full animate-[toast-cube-in_0.55s_ease-out,toast-cube-out_0.45s_ease-in_11.5s_forwards] rounded-[28px] border border-gray-200 bg-white/95 shadow-[0_22px_50px_-18px_rgba(0,0,0,0.45)] backdrop-blur dark:border-gray-700 dark:bg-gray-900/95"
               onAnimationEnd={(event) => {

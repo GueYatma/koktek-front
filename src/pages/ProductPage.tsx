@@ -287,8 +287,8 @@ const ProductPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-32 pt-10 sm:px-6 sm:pt-12 lg:px-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="mx-auto max-w-6xl px-4 pb-16 pt-3 sm:px-6 sm:pt-12 lg:px-8">
+      <div className="sticky top-16 z-40 md:static md:top-auto md:z-auto mb-4 md:mb-8 flex items-center justify-between -mx-2 md:mx-0 px-2 md:px-0">
         <BackButton fallback="/catalogue" label="Retour au catalogue" />
       </div>
 
@@ -422,31 +422,37 @@ const ProductPage = () => {
               </p>
             )}
 
-            <div className="md:hidden mt-6 border-t border-gray-100 pt-5">
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(displayPrice)}</p>
-            </div>
+            <div className="mt-6 md:mt-5 flex border-t border-gray-100 md:border-0 pt-6 md:pt-0 gap-4 sm:gap-6 justify-between items-center">
+              {/* Mobile Pricing (Left Column) */}
+              <div className="md:hidden flex flex-col justify-center items-center shrink-0 w-[100px] sm:w-[120px]">
+                <p className="text-2xl sm:text-[32px] leading-none font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-1.5">
+                  {formatPrice(displayPrice)}
+                </p>
+                <span className="text-[11px] sm:text-xs text-gray-500 font-medium">Prix</span>
+              </div>
 
-            <div className="space-y-3 mt-5">
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedVariant) {
-                    addItem(product, selectedVariant, 1, shippingOptions[selectedShippingIndex])
-                  }
-                }}
-                disabled={!selectedVariant}
-                className={`hidden w-full rounded-2xl px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] transition active:scale-95 md:block ${
-                  selectedVariant
-                    ? 'bg-black text-white hover:bg-gray-900'
-                    : 'cursor-not-allowed bg-gray-200 text-gray-400'
-                }`}
-              >
-                Ajouter au panier
-              </button>
-
-              <p className="text-xs text-gray-500">
-                Livraison offerte dès 80€ d'achat.
-              </p>
+              {/* Right Column: Button + Info container */}
+              <div className="flex flex-col flex-1 items-center justify-center min-w-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedVariant) {
+                      addItem(product, selectedVariant, 1, shippingOptions[selectedShippingIndex])
+                    }
+                  }}
+                  disabled={!selectedVariant}
+                  className={`w-full max-w-[280px] rounded-2xl px-4 py-3.5 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.1em] sm:tracking-[0.2em] transition active:scale-95 ${
+                    selectedVariant
+                      ? 'bg-black text-white shadow-lg hover:bg-gray-900'
+                      : 'cursor-not-allowed bg-gray-200 text-gray-400'
+                  }`}
+                >
+                  Ajouter au panier
+                </button>
+                <p className="text-[11px] sm:text-xs text-gray-500 mt-2 text-center">
+                  Livraison offerte dès 80€ d'achat.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -602,40 +608,6 @@ const ProductPage = () => {
               </Link>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] left-0 right-0 z-40 md:hidden px-4 pointer-events-none">
-        <div className="mx-auto max-w-6xl pointer-events-auto">
-          <button
-            type="button"
-            onClick={() => {
-              if (selectedVariant) {
-                addItem(product, selectedVariant, 1, shippingOptions[selectedShippingIndex])
-              }
-            }}
-            disabled={!selectedVariant}
-            className={`flex w-full items-center justify-between gap-3 rounded-2xl px-5 py-3.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all active:scale-95 ${
-              selectedVariant
-                ? 'bg-gray-900/95 border border-gray-700 text-white'
-                : 'cursor-not-allowed bg-gray-200/90 border border-gray-300 text-gray-500'
-            }`}
-          >
-            <div className="flex flex-col items-start text-left">
-              <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-400 mb-0.5">
-                Ajouter au panier
-              </span>
-              <span className="text-sm font-bold truncate max-w-[200px]">
-                {selectedVariantLabel}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="h-8 w-px bg-gray-700"></span>
-              <span className="text-lg font-bold tracking-tight">
-                {formatPrice(displayPrice)}
-              </span>
-            </div>
-          </button>
         </div>
       </div>
     </div>
