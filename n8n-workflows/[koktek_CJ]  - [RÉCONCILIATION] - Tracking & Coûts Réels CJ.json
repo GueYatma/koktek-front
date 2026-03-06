@@ -1,0 +1,297 @@
+{
+  "name": "[koktek_CJ]  - [RÉCONCILIATION] - Tracking & Coûts Réels CJ",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bddfeb72-b59b-4e45-958b-aeccf4ae1055",
+      "name": "🕒 Déclencheur : Toutes les 6 heures"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    o.id, \n    o.order_number,\n    o.status,\n    d.client_email,\n    d.client_nom_complet\nFROM \n    koktek.orders o\nLEFT JOIN \n    koktek.admin_orders_dashboard_final d ON o.order_number = d.order_number\nWHERE \n    (o.tracking_number IS NULL OR o.tracking_number = '') \n    AND o.status NOT IN ('canceled', 'refunded', 'Annulée', 'Remboursée');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "3f5f6ead-194c-40e5-9a40-a8be842a33b2",
+      "name": "[DB] Chercher les Commandes sans Tracking",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "73f55dd9-dd79-442d-905b-b74ec89dc227",
+      "name": "🔁 Boucler sur chaque Commande"
+    },
+    {
+      "parameters": {
+        "url": "https://developers.cjdropshipping.com/api2.0/v1/shopping/order/getOrderDetail",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "orderId",
+              "value": "={{ $('[DB] Chercher les Commandes sans Tracking').item.json.order_number }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "CJ-Access-Token",
+              "value": "API@CJ5184655@CJ:eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzMjk0MCIsInR5cGUiOiJBQ0NFU1NfVE9LRU4iLCJzdWIiOiJicUxvYnFRMGxtTm55UXB4UFdMWnl1V3Q3blIzZlZvRW82dTVOdG42Z2xiMjB2WTN6TVY4ay9SSHd6RThsNnFqL3g5b3ZnTTdzRnp2M3dyeHlTRVg3eENvU210Tkcycy9wekp5QXBlNFczMjUzYlFWK2ovUHBqbDRjTFJpVnFWM1dPRVRMVlhpME05SmRmakwrdmVEcWw4Q2NMOXJXU2dLZDNRTEIrUDc3SHhRcTFjKzV3ZThQMFhPVEQ5ZS9ZZit0ZVlDemcyUXhsMDYvVmhVNXFrcVRvL2JOd2lnMTFXVi9DaVdGVllkWUQ1cXhsbkVIQVlRQ1RvMDBQTUNIL0lvU0Jjc1hLaHVNOWhwa1p1MFlDWkZwRm90WDM3MmV2VEFuYjNySHFyOWdoYz0iLCJpYXQiOjE3NzE4ODY3NTh9.V-JX1jqJ_4iyONm-vPFYOaYAuuMPOvj1BDDvY40sNOI"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        96
+      ],
+      "id": "a16b06e9-ef3f-4668-ae36-a683cc74e120",
+      "name": "[API CJ] Demander les infos de la Commande"
+    },
+    {
+      "parameters": {
+        "jsCode": "let cjResponse = $json.data || $json.result || $json;\n\n// Extraction de toutes les données\nlet tracking = cjResponse.trackNumber || null;\nlet tracking_url = cjResponse.trackingUrl || null;\nlet logistic_name = cjResponse.logisticName || null;\nlet vrai_cout_port = cjResponse.postageAmount || null;\nlet statut_cj = cjResponse.orderStatus || \"Inconnu\";\nlet cj_id = cjResponse.cjOrderCode || null; \n\n// La fameuse ligne pour le délai estimé :\nlet delai_estime = cjResponse.logisticsTimeliness || null; \n\nlet db_order_id = $('🔁 Boucler sur chaque Commande').item.json.id;\n\nreturn {\n  id: db_order_id,\n  tracking_number: tracking,\n  tracking_url: tracking_url,\n  logistic_name: logistic_name,\n  vrai_cout_expedition: vrai_cout_port,\n  cj_order_id: cj_id,\n  statut_cj: statut_cj,\n  delai_estime: delai_estime, // On l'ajoute au payload de sortie\n  pret_pour_maj: tracking ? true : false \n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        96
+      ],
+      "id": "84e759f9-0c12-42d1-b0f4-f16061534aea",
+      "name": "⚙️ Extraire le Vrai Prix et le Tracking"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE koktek.orders\nSET \n    tracking_number = '{{ $json.tracking_number }}',\n    tracking_url = NULLIF('{{ $json.tracking_url }}', 'null'),\n    logistic_name = NULLIF('{{ $json.logistic_name }}', 'null'),\n    shipping_price = {{ $json.vrai_cout_expedition }},\n    cj_order_id = '{{ $json.cj_order_id }}',\n    delivery_time_estimation = NULLIF('{{ $json.delai_estime }}', 'null'),\n    status = 'shipped'\nWHERE id = '{{ $json.id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1312,
+        80
+      ],
+      "id": "1b05fb48-4ef3-4a20-85ac-aa1f1a9cf1ab",
+      "name": "[DB] Mettre à jour la Commande Directus",
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c2d58ba4-c42a-4515-bf87-09ae8c356503",
+              "leftValue": "={{ $json.pret_pour_maj }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        96
+      ],
+      "id": "57102504-70d7-435b-aede-0b9fe6064d83",
+      "name": "[FILTRE] Tracking Existant ?"
+    },
+    {
+      "parameters": {
+        "fromEmail": "KOKTEK <contact@koktek.com>",
+        "toEmail": "={{ $('🔁 Boucler sur chaque Commande').item.json.client_email }}",
+        "subject": "=KOKTEK : Votre commande {{ $('🔁 Boucler sur chaque Commande').item.json.order_number }} est en route 🚚",
+        "html": "=<p>Bonjour {{ $('🔁 Boucler sur chaque Commande').item.json.client_nom_complet }},</p>\n\n<p>Nous avons le plaisir de vous informer que votre commande <strong>{{ $('🔁 Boucler sur chaque Commande').item.json.order_number }}</strong> a quitté notre entrepôt !</p>\n\n<p>Votre colis a été confié au transporteur <strong>{{ $('⚙️ Extraire le Vrai Prix et le Tracking').item.json.logistic_name }}</strong>.</p>\n\n<p style=\"margin-top: 20px; margin-bottom: 20px;\">\n  <a href=\"{{ $('⚙️ Extraire le Vrai Prix et le Tracking').item.json.tracking_url }}\" style=\"padding: 12px 24px; background-color: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;\">\n    Suivre mon colis\n  </a>\n</p>\n\n<p><em>(Le lien de suivi peut prendre 24 à 48h pour afficher les premières étapes).</em></p>\n\n<p>Si vous avez la moindre question, répondez simplement à cet e-mail.</p>\n\n<p>À très bientôt,<br>\n<strong>L'équipe KOKTEK</strong></p>",
+        "options": {
+          "attachments": "data"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1568,
+        80
+      ],
+      "id": "b310a0d2-793c-4a11-949c-286e5ec0174c",
+      "name": "Send an Email",
+      "webhookId": "3d837280-3b17-4a78-9308-0e12aed441dc",
+      "credentials": {
+        "smtp": {
+          "id": "c7bUAEMii504be6O",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "🕒 Déclencheur : Toutes les 6 heures": {
+      "main": [
+        [
+          {
+            "node": "[DB] Chercher les Commandes sans Tracking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Chercher les Commandes sans Tracking": {
+      "main": [
+        [
+          {
+            "node": "🔁 Boucler sur chaque Commande",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔁 Boucler sur chaque Commande": {
+      "main": [
+        [],
+        [
+          {
+            "node": "[API CJ] Demander les infos de la Commande",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[API CJ] Demander les infos de la Commande": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Extraire le Vrai Prix et le Tracking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ Extraire le Vrai Prix et le Tracking": {
+      "main": [
+        [
+          {
+            "node": "[FILTRE] Tracking Existant ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DB] Mettre à jour la Commande Directus": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[FILTRE] Tracking Existant ?": {
+      "main": [
+        [
+          {
+            "node": "[DB] Mettre à jour la Commande Directus",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🔁 Boucler sur chaque Commande",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an Email": {
+      "main": [
+        [
+          {
+            "node": "🔁 Boucler sur chaque Commande",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "20f8e414-aecf-4d02-98a5-f068c8eeddc0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "A1Xf2WwAkx1yqVpO",
+  "tags": []
+}
