@@ -63,6 +63,9 @@ export type OrderRecord = {
   shipping_price?: number | null
   shipping_address?: Record<string, unknown> | string | null
   logistic_name?: string | null
+  tracking_number?: string | null
+  tracking_url?: string | null
+  delivery_time_estimation?: string | null
   item_count?: number | null
   created_at?: string
   updated_at?: string
@@ -437,6 +440,34 @@ export const getOrdersForHistory = async (input?: {
         'customer_id.first_name',
         'customer_id.last_name',
         'customer_id.email',
+      ],
+    }),
+  )
+  return result as OrderRecord[]
+}
+
+export const getCustomerOrdersByEmail = async (
+  email: string,
+): Promise<OrderRecord[]> => {
+  const result = await directusClient.request(
+    readItems('orders', {
+      filter: {
+        'customer_id.email': {
+          _eq: email,
+        },
+      },
+      sort: ['-created_at'],
+      fields: [
+        'id',
+        'order_number',
+        'status',
+        'payment_status',
+        'total_price',
+        'created_at',
+        'logistic_name',
+        'tracking_number',
+        'tracking_url',
+        'delivery_time_estimation',
       ],
     }),
   )

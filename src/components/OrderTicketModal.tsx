@@ -16,6 +16,11 @@ type OrderTicketModalProps = {
   total: number
   subtotal?: number // NOUVEAU
   shippingTotal?: number // NOUVEAU
+  status?: string | null
+  logisticName?: string | null
+  trackingNumber?: string | null
+  trackingUrl?: string | null
+  deliveryTimeEstimation?: string | null
   noticeText?: string
   hintText?: string
   headerLabel?: string
@@ -41,6 +46,11 @@ const OrderTicketModal = ({
   total,
   subtotal,
   shippingTotal,
+  status,
+  logisticName,
+  trackingNumber,
+  trackingUrl,
+  deliveryTimeEstimation,
   noticeText,
   hintText,
   headerLabel = 'BON DE COMMANDE',
@@ -183,6 +193,55 @@ const OrderTicketModal = ({
 
               </div>
             </div>
+
+            {/* --- NOUVEAU BLOC INFORMATIONS DE LIVRAISON --- */}
+            {(trackingNumber || status === 'shipped') && (
+              <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm border border-emerald-50 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-600 mb-3">
+                  Informations de Livraison
+                </p>
+                
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Statut</span>
+                    <span className="font-semibold text-emerald-700">📦 Expédié</span>
+                  </div>
+                  
+                  {logisticName && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Transporteur</span>
+                      <span className="font-semibold text-gray-900">{logisticName}</span>
+                    </div>
+                  )}
+                  
+                  {trackingNumber && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">N° de Suivi</span>
+                      <span className="font-mono font-medium text-gray-800 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">{trackingNumber}</span>
+                    </div>
+                  )}
+                  
+                  {deliveryTimeEstimation && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Délai estimé</span>
+                      <span className="font-medium text-gray-900">{deliveryTimeEstimation}</span>
+                    </div>
+                  )}
+                </div>
+
+                {trackingUrl && (
+                  <a
+                    href={trackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 flex w-full items-center justify-center rounded-xl bg-gray-900 px-4 py-3 text-xs font-bold tracking-wide text-white shadow-md transition-all hover:bg-gray-800 hover:-translate-y-0.5"
+                  >
+                    Suivre mon colis
+                  </a>
+                )}
+              </div>
+            )}
 
             <div className="relative mt-6">
               <div className="absolute -left-3 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[#f5f0e8]" />

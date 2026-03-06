@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useUI } from '../context/UIContext'
 import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
-import { getOrdersForEmail, type StoredOrder } from '../utils/customerOrders'
+import { getCustomerOrdersByEmail } from '../lib/commerceApi'
+import { getOrdersForEmail, saveOrderForEmail, type StoredOrder } from '../utils/customerOrders'
 import OrderTicketModal from './OrderTicketModal'
 
 type ProfileDrawerProps = {
@@ -44,7 +45,42 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
       setOrders([])
       return
     }
+    // 1. Initialiser avec le cache local immédiatement
     setOrders(getOrdersForEmail(user.email))
+
+    // 2. Récupérer les données réelles (tracking) en arrière-plan
+    const syncOrders = async () => {
+      try {
+        const remoteOrders = await getCustomerOrdersByEmail(user.email!)
+        const localOrders = getOrdersForEmail(user.email!)
+        let hasChanges = false
+
+        remoteOrders.forEach((remoteOrder) => {
+          // Chercher par order_number (ex: KOK-...) ou id
+          const localMatch = localOrders.find(
+            (l) => l.orderNumber === remoteOrder.order_number || l.id === remoteOrder.id
+          )
+          if (localMatch) {
+            localMatch.status = remoteOrder.status
+            localMatch.payment_status = remoteOrder.payment_status
+            localMatch.logisticName = remoteOrder.logistic_name
+            localMatch.trackingNumber = remoteOrder.tracking_number
+            localMatch.trackingUrl = remoteOrder.tracking_url
+            localMatch.deliveryTimeEstimation = remoteOrder.delivery_time_estimation
+            saveOrderForEmail(user.email!, localMatch)
+            hasChanges = true
+          }
+        })
+
+        if (hasChanges) {
+          // Rafraîchir l'affichage avec les données mises à jour
+          setOrders(getOrdersForEmail(user.email!))
+        }
+      } catch (error) {
+        console.error('Erreur lors de la synchronisation des commandes', error)
+      }
+    }
+    syncOrders()
   }, [user, open])
 
   const handleSave = () => {
@@ -107,6 +143,14 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
       noticeText:
         'Votre commande sera préparée uniquement après réception du paiement.',
     }
+  }
+
+  const displayStatus = (order: StoredOrder) => {
+    if (order.status === 'shipped') return '📦 Expédié'
+    if (order.status === 'canceled' || order.payment_status === 'canceled') return '❌ Annulé'
+    if (order.payment_status === 'paid') return '⏳ En préparation'
+    if (order.payment_status === 'pending_cash') return '⏳ Attente paiement boutique'
+    return order.payment_status ?? order.status ?? '—'
   }
 
   return (
@@ -363,7 +407,7 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
                             <div className="text-xs text-gray-500">
                               Statut:{' '}
                               <span className="font-semibold text-gray-900">
-                                {order.payment_status ?? order.status ?? '—'}
+                                {displayStatus(order)}
                               </span>
                             </div>
                             <button
@@ -421,6 +465,11 @@ const ProfileDrawer = ({ open, onClose }: ProfileDrawerProps) => {
         noticeTone={
           activeOrder ? resolveOrderAction(activeOrder).noticeTone : undefined
         }
+        status={activeOrder?.status ?? null}
+        logisticName={activeOrder?.logisticName ?? null}
+        trackingNumber={activeOrder?.trackingNumber ?? null}
+        trackingUrl={activeOrder?.trackingUrl ?? null}
+        deliveryTimeEstimation={activeOrder?.deliveryTimeEstimation ?? null}
       />
     </div>
   )

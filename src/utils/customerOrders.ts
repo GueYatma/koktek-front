@@ -10,6 +10,10 @@ export type StoredOrder = {
   status?: string | null
   payment_status?: string | null
   customerName?: string | null
+  logisticName?: string | null
+  trackingNumber?: string | null
+  trackingUrl?: string | null
+  deliveryTimeEstimation?: string | null
   createdAt: string
 }
 
