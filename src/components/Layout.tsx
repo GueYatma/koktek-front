@@ -146,37 +146,27 @@ const Layout = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  // Debounced live search: navigate 300ms after the user stops typing
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchQuery(value);
-    if (searchTimerRef.current) {
-      window.clearTimeout(searchTimerRef.current);
-    }
-    searchTimerRef.current = window.setTimeout(() => {
-      const trimmed = value.trim();
-      if (trimmed) {
-        navigate(`/catalogue?search=${encodeURIComponent(trimmed)}`, { replace: true });
-      } else {
-        if (location.pathname === '/catalogue') {
-          navigate('/catalogue', { replace: true });
-        }
+  const handleSearchSubmit = useCallback((e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      navigate(`/catalogue?search=${encodeURIComponent(trimmed)}`, { replace: true });
+    } else {
+      if (location.pathname === '/catalogue') {
+        navigate('/catalogue', { replace: true });
       }
-    }, 300);
-  }, [navigate, location.pathname]);
+    }
+  }, [navigate, location.pathname, searchQuery]);
 
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimerRef.current) window.clearTimeout(searchTimerRef.current);
-    };
-  }, []);
-
+  // Keep a simple search change handler that just updates state
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
 
 
   const handleCloseSearch = () => {
     setIsMobileSearchOpen(false);
     setSearchQuery('');
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     
     // Completely clear the search param if we are currently searching
     if (searchParams.has('search')) {
@@ -317,7 +307,7 @@ const Layout = () => {
           </nav>
 
           <div className="ml-auto flex flex-1 items-center gap-2 md:hidden">
-            <div className="relative flex-1">
+            <form onSubmit={handleSearchSubmit} className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 id="mobile-search-input"
@@ -329,7 +319,7 @@ const Layout = () => {
                 className="w-full rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-[16px] font-medium text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-gray-400"
                 aria-label="Rechercher"
               />
-            </div>
+            </form>
             <button
               type="button"
               onClick={handleAccountClick}
@@ -348,7 +338,7 @@ const Layout = () => {
 
           <div className="ml-auto hidden items-center gap-3 md:flex">
             <div className="relative w-52">
-              <div className="relative w-full">
+              <form onSubmit={handleSearchSubmit} className="relative w-full">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   name="search"
@@ -359,7 +349,7 @@ const Layout = () => {
                   className="w-full rounded-full border-2 border-gray-200 bg-white py-2 pl-10 pr-4 text-sm font-medium text-gray-700 placeholder:text-gray-400 transition focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-gray-400"
                   aria-label="Rechercher"
                 />
-              </div>
+              </form>
             </div>
             <button
               type="button"
@@ -418,7 +408,8 @@ const Layout = () => {
               </p>
             </div>
           )}
-          <div
+          <form
+            onSubmit={handleSearchSubmit}
             className="relative flex items-center rounded-2xl border border-gray-300 bg-[#fafafa] px-4 py-3.5 shadow-[0_15px_40px_-5px_rgba(0,0,0,0.4)]"
           >
             <Search className="h-[18px] w-[18px] text-gray-400" />
@@ -439,7 +430,7 @@ const Layout = () => {
             >
               Fermer
             </button>
-          </div>
+          </form>
         </div>
       ) : null}
 

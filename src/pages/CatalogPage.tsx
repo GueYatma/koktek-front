@@ -344,6 +344,24 @@ const CatalogPage = () => {
               );
             })}
           </div>
+          </div>
+        )}
+
+        {/* Bouton de réinitialisation de recherche (bas de page) */}
+        {searchParams.has("search") && (
+          <div className="mt-8 flex justify-center pb-6">
+            <button
+              onClick={() => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.delete("search");
+                setSearchParams(newParams, { replace: true });
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+            >
+              <X className="h-4 w-4" />
+              Supprimer la recherche
+            </button>
+          </div>
         )}
       </div>
 
