@@ -224,14 +224,14 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             </Link>
 
             <div className="flex gap-2.5">
-              <Link
-                to="/catalogue"
+              <button
+                type="button"
                 onClick={onClose}
-                className="group flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/60 px-2 py-3.5 text-[13px] font-semibold text-gray-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/80 hover:text-amber-900"
+                className="group flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/60 px-2 py-3.5 text-[12px] sm:text-[13px] font-semibold text-gray-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/80 hover:text-amber-900"
               >
                 <span className="transition-transform duration-300 ease-out group-hover:-translate-x-1">←</span>
-                <span>Catalogue</span>
-              </Link>
+                <span>Continuer mes achats</span>
+              </button>
               <button
                 type="button"
                 onClick={clearCart}

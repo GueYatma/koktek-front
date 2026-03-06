@@ -76,11 +76,6 @@ const Layout = () => {
       cartAnimTimeoutRef.current = setTimeout(() => {
         setIsCartAnimating(false)
         setIsCartOpen(true)
-        
-        // Auto close after 2.5 seconds to let the user see the cart contents
-        cartAutoCloseTimeoutRef.current = setTimeout(() => {
-          setIsCartOpen(false)
-        }, 2500)
       }, 800)
     }
     prevItemCount.current = itemCount
