@@ -344,7 +344,6 @@ const CatalogPage = () => {
               );
             })}
           </div>
-          </div>
         )}
 
         {/* Bouton de réinitialisation de recherche (bas de page) */}
