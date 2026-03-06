@@ -62,14 +62,12 @@ const Layout = () => {
 
   const prevItemCount = useRef(itemCount)
   const cartAnimTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const cartAutoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isCartAnimating, setIsCartAnimating] = useState(false)
 
   // Track item additions for the cart animation
   useEffect(() => {
     if (itemCount > prevItemCount.current) {
       if (cartAnimTimeoutRef.current) clearTimeout(cartAnimTimeoutRef.current)
-      if (cartAutoCloseTimeoutRef.current) clearTimeout(cartAutoCloseTimeoutRef.current)
       
       setIsCartAnimating(true)
       
@@ -84,7 +82,6 @@ const Layout = () => {
   useEffect(() => {
     return () => {
       if (cartAnimTimeoutRef.current) clearTimeout(cartAnimTimeoutRef.current)
-      if (cartAutoCloseTimeoutRef.current) clearTimeout(cartAutoCloseTimeoutRef.current)
     }
   }, [])
 
@@ -101,7 +98,6 @@ const Layout = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentSearch = searchParams.get('search') || '';
   const [searchQuery, setSearchQuery] = useState(currentSearch);
-  const searchTimerRef = useRef<number | null>(null);
 
   const { products } = useProducts();
 
