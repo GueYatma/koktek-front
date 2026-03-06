@@ -148,6 +148,10 @@ const Layout = () => {
 
   const handleSearchSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
     const trimmed = searchQuery.trim();
     if (trimmed) {
       navigate(`/catalogue?search=${encodeURIComponent(trimmed)}`, { replace: true });
@@ -158,9 +162,14 @@ const Layout = () => {
     }
   }, [navigate, location.pathname, searchQuery]);
 
-  // Keep a simple search change handler that just updates state
+  // Keep a simple search change handler that updates state and catches native "X" clear events
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
+    if (value.trim() === '') {
+      if (location.pathname === '/catalogue' && searchParams.has('search')) {
+        navigate('/catalogue', { replace: true });
+      }
+    }
   };
 
 

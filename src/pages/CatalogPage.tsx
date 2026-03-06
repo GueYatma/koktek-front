@@ -350,10 +350,10 @@ const CatalogPage = () => {
         {searchParams.has("search") && (
           <div className="mt-8 flex justify-center pb-6">
             <button
+              type="button"
               onClick={() => {
-                const newParams = new URLSearchParams(searchParams);
-                newParams.delete("search");
-                setSearchParams(newParams, { replace: true });
+                navigate('/catalogue', { replace: true });
+                window.scrollTo(0, 0);
               }}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-700"
             >
