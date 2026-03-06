@@ -634,11 +634,11 @@ const ProductPage = () => {
                 </div>
               </div>
             </details>
-
-            {/* Bottom Return CTA */}
-            <div className="order-6 mt-8 flex justify-center md:items-start pb-4 md:pb-0">
-              <BackButton fallback="/catalogue" />
-            </div>
+          </div>
+          
+          {/* Bottom Return CTA */}
+          <div className="order-6 mt-4 md:mt-8 flex justify-center md:items-start pb-4 md:pb-0 w-full">
+            <BackButton fallback="/catalogue" />
           </div>
         </div>
       </div>
