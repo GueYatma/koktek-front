@@ -320,9 +320,9 @@ const ProductPage = () => {
         </h1>
       </div>
 
-      <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
-        <div className="order-1 md:sticky md:top-24 md:self-start">
-          <div ref={mainImageRef} className="animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white dark:bg-gray-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] relative group">
+      <div className="flex flex-col gap-6 md:grid md:gap-12 md:grid-cols-[3fr_2fr]">
+        <div className="contents md:block md:sticky md:top-24 md:self-start">
+          <div ref={mainImageRef} className="order-1 md:order-none animate-float aspect-square w-full max-w-lg mx-auto overflow-hidden rounded-3xl bg-white dark:bg-gray-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] relative group">
             <img
               src={displayImage}
               alt={product.title}
@@ -349,7 +349,7 @@ const ProductPage = () => {
             )}
           </div>
           {images.length > 1 && (
-            <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4">
+            <div className="order-5 md:order-none mt-2 md:mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4">
               {images.map((image) => {
                 const isActive = image === displayImage
                 return (
@@ -375,7 +375,7 @@ const ProductPage = () => {
           )}
         </div>
 
-        <div className="order-2 flex flex-col gap-8">
+        <div className="contents md:flex md:flex-col md:gap-8">
           <div className="order-1 hidden space-y-4 md:block">
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500 dark:text-gray-400">
               Collection Koktek
@@ -636,14 +636,8 @@ const ProductPage = () => {
             </details>
 
             {/* Bottom Return CTA */}
-            <div className="mt-8 flex flex-col items-start pb-4 md:pb-0">
-              <Link
-                to="/catalogue"
-                className="inline-flex w-auto items-center justify-center gap-1.5 rounded-xl border border-gray-200/80 bg-gray-50/80 px-4 py-2.5 text-[13px] font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 active:scale-95"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Retour au catalogue
-              </Link>
+            <div className="order-6 mt-8 flex justify-center md:items-start pb-4 md:pb-0">
+              <BackButton fallback="/catalogue" />
             </div>
           </div>
         </div>
