@@ -176,17 +176,7 @@ const Layout = () => {
     };
   }, []);
 
-  const handleMobileSearchClick = () => {
-    // Force scroll to top instantly to see the search results, avoiding footer jump
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    setIsMobileSearchOpen(true);
-    // Give enough time for the render, then focus
-    setTimeout(() => {
-      if (mobileSearchInputRef.current) {
-        mobileSearchInputRef.current.focus({ preventScroll: true });
-      }
-    }, 100);
-  }
+
 
   const handleCloseSearch = () => {
     setIsMobileSearchOpen(false);

@@ -27,8 +27,7 @@ const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const navigate = useNavigate();
-  const actionButtonClass =
-    "inline-flex h-9 w-[92px] items-center justify-center whitespace-nowrap rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm transition hover:border-gray-900 hover:text-gray-900";
+
 
   // Calcul des bornes de prix maximales et minimales de l'inventaire complet
   const { minBound, maxBound } = useMemo(() => {

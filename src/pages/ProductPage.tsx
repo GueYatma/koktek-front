@@ -197,8 +197,7 @@ const ProductPage = () => {
   const displayImage = safeSelectedImage || variantImage || fallbackImage
 
   const displayPrice = product?.prix_calcule ?? product?.retail_price ?? 0
-  const selectedVariantLabel =
-    selectedVariant?.option1_value || 'Standard'
+
   const expertStarsRaw = product?.expert_stars
   const expertReview = product?.expert_review?.trim() ?? ''
   const expertStarsScore = useMemo(() => {
