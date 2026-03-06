@@ -94,33 +94,30 @@ const ProductPage = () => {
   const handleScrollToImage = () => {
     if (window.innerWidth >= 768 || !mainImageRef.current) return
 
-    // Debounce to prevent scroll spam jank
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current)
     }
 
     scrollTimeoutRef.current = setTimeout(() => {
-      // 1. Dynamic offset based on the actual header
-      const header = document.querySelector('header')
-      const headerHeight = header ? header.getBoundingClientRect().height : 60
-      // safe-area-inset-top padding + a small visual gap
-      const offset = headerHeight + 16
+      const selectorEl = document.getElementById('variant-selector')
+      if (!mainImageRef.current || !selectorEl) return
 
-      const y = mainImageRef.current!.getBoundingClientRect().top + window.scrollY - offset
+      const selectorRect = selectorEl.getBoundingClientRect()
+      // Scroll until the bottom of the selector is just above the bottom menu (approx 75px from bottom edge)
+      const y = window.scrollY + selectorRect.bottom - (window.innerHeight - 75)
 
-      // 2. Accessibility: check prefers-reduced-motion
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
       window.scrollTo({
-        top: y,
+        top: Math.max(0, y),
         behavior: prefersReducedMotion ? 'instant' : 'smooth',
       })
-    }, 150) // 150ms debounce
+    }, 150)
   }
 
   const handleVariantSelect = (variant: VariantWithImage) => {
     setSelectedVariant(variant)
-    // Plus de scroll auto, on laisse l'utilisateur à sa position
+    handleScrollToImage()
   }
 
   const handleImageSelect = (image: string) => {
@@ -309,7 +306,7 @@ const ProductPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-[280px] md:pb-16 pt-3 sm:px-6 sm:pt-12 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 pb-16 pt-3 sm:px-6 sm:pt-12 lg:px-8">
       <div className="sticky top-16 z-40 md:static md:top-auto md:z-auto mb-4 md:mb-8 flex items-center justify-between -mx-2 md:mx-0 px-2 md:px-0">
         <BackButton fallback="/catalogue" />
       </div>
@@ -400,7 +397,7 @@ const ProductPage = () => {
             />
           </div>
 
-          <div className="order-2 md:order-3 space-y-4 rounded-t-3xl md:rounded-3xl border-t md:border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl p-4 shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.15)] md:shadow-sm sm:p-6 fixed bottom-[calc(env(safe-area-inset-bottom)+68px)] left-0 right-0 z-40 md:static md:bottom-auto md:left-auto md:right-auto md:z-auto" id="variant-selector">
+          <div className="order-2 md:order-3 space-y-4 rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm sm:p-6" id="variant-selector">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
                 Modèle
