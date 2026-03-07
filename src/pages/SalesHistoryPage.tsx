@@ -200,8 +200,15 @@ const SalesHistoryPage = () => {
       const customerName = (order.client_nom_complet || '').toLowerCase()
       const customerEmail = (order.client_email || '').toLowerCase()
 
+      // Une commande "En attente (Espèces)" a payment_method = 'cash' et status != 'paid'
+      const isCashPendingOrder =
+        (order.methode_paiement || '').toLowerCase().includes('cash') &&
+        paymentStatus !== 'paid'
+
       const matchesPayment =
-        paymentFilter === 'all' || paymentStatus === paymentFilter
+        paymentFilter === 'all' ||
+        paymentStatus === paymentFilter ||
+        (paymentFilter === 'pending_cash' && isCashPendingOrder)
       const matchesDelivery =
         deliveryFilter === 'all' || deliveryStatus === deliveryFilter
       const matchesQuery =
@@ -396,7 +403,9 @@ const SalesHistoryPage = () => {
                   const netProfit = toNumberValue(order.benefice_net_estime)
                   const paymentStatus = order.status_paiement || ''
                   const deliveryStatus = order.status_commande || '—'
-                  const isCash = paymentStatus === 'pending_cash'
+                  const isCash =
+                    (order.methode_paiement || '').toLowerCase().includes('cash') ||
+                    paymentStatus === 'pending_cash'
                   const paymentMethodLabel =
                     order.methode_paiement ||
                     (isCash ? '💵 Espèces' : paymentStatus ? '💳 Carte' : '—')
