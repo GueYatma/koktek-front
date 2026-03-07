@@ -15,9 +15,7 @@ type DirectusListResponse<T> = {
   data: T[];
 };
 
-type VariantWithImage = Variant & {
-  image_url?: string;
-};
+
 
 const toStringValue = (value: unknown) => {
   if (typeof value === "string") return value;
@@ -197,7 +195,7 @@ const mapCategory = (row: Record<string, unknown>): Category => {
   };
 };
 
-const mapVariant = (row: Record<string, unknown>): VariantWithImage => {
+const mapVariant = (row: Record<string, unknown>): Variant => {
   return {
     id: extractId(row.id ?? row.ID ?? row.Id),
     product_id: extractId(
@@ -238,7 +236,7 @@ const mapVariant = (row: Record<string, unknown>): VariantWithImage => {
 const mapProduct = (
   row: Record<string, unknown>,
   categoriesById: Map<string, Category>,
-  variantsByProductId: Map<string, VariantWithImage[]>,
+  variantsByProductId: Map<string, Variant[]>,
 ): Product => {
   const title = toStringValue(row.title ?? row.name);
   const slug =
@@ -447,7 +445,7 @@ export const getCatalogProducts = async (input: {
     .map(mapVariant)
     .filter((variant) => variant.id && variant.product_id);
 
-  const variantsByProductId = new Map<string, VariantWithImage[]>();
+  const variantsByProductId = new Map<string, Variant[]>();
   variants.forEach((variant) => {
     const productId = String(variant.product_id);
     const next = variantsByProductId.get(productId) ?? [];
@@ -499,7 +497,7 @@ export const getAllProducts = async (): Promise<{
     .map(mapVariant)
     .filter((variant) => variant.id && variant.product_id);
 
-  const variantsByProductId = new Map<string, VariantWithImage[]>();
+  const variantsByProductId = new Map<string, Variant[]>();
   variants.forEach((variant) => {
     const productId = String(variant.product_id);
     const next = variantsByProductId.get(productId) ?? [];

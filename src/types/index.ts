@@ -54,6 +54,7 @@ export type Variant = {
   stock_quantity: number;
   cj_vid: string;
   weight_grams?: number;
+  image_url?: string | null;
 };
 
 export type CartItem = {

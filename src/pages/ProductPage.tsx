@@ -9,67 +9,6 @@ import { formatPrice } from '../utils/format'
 import { resolveImageUrl } from '../utils/image'
 import BackButton from '../components/BackButton'
 
-type VariantWithImage = Variant & {
-  image_url?: string
-}
-
-
-const normalizeKey = (value: string) =>
-  value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-
-const tokenize = (value: string) =>
-  normalizeKey(value)
-    .split(' ')
-    .filter((token) => token.length > 0)
-
-const extractFileTokens = (url: string) => {
-  try {
-    const parsed = new URL(url)
-    const filename = decodeURIComponent(parsed.pathname.split('/').pop() ?? '')
-    if (!filename) return tokenize(parsed.pathname)
-    return tokenize(filename)
-  } catch {
-    return tokenize(url)
-  }
-}
-
-const findVariantImageMatch = (
-  variant: VariantWithImage | null,
-  images: string[],
-) => {
-  if (!variant || images.length === 0) return ''
-  const candidate = [
-    variant.option1_value,
-    variant.option1_name,
-    variant.sku,
-  ]
-    .filter(Boolean)
-    .join(' ')
-  const variantTokens = tokenize(candidate)
-  if (variantTokens.length === 0) return ''
-
-  let bestScore = 0
-  let bestImage = ''
-  images.forEach((image) => {
-    const imageTokens = extractFileTokens(image)
-    if (imageTokens.length === 0) return
-    let score = 0
-    variantTokens.forEach((token) => {
-      if (imageTokens.includes(token)) score += 1
-    })
-    if (score > bestScore) {
-      bestScore = score
-      bestImage = image
-    }
-  })
-
-  return bestScore > 0 ? bestImage : ''
-}
 
 const ProductPage = () => {
   const { slug } = useParams()
@@ -82,9 +21,9 @@ const ProductPage = () => {
   )
   const productId = product?.id
 
-  const [variants, setVariants] = useState<VariantWithImage[]>([])
+  const [variants, setVariants] = useState<Variant[]>([])
   const [selectedVariant, setSelectedVariant] =
-    useState<VariantWithImage | null>(null)
+    useState<Variant | null>(null)
   const [selectedImage, setSelectedImage] = useState('')
   const [selectedShippingIndex, setSelectedShippingIndex] = useState(0)
 
@@ -115,7 +54,7 @@ const ProductPage = () => {
     }, 150)
   }
 
-  const handleVariantSelect = (variant: VariantWithImage) => {
+  const handleVariantSelect = (variant: Variant) => {
     setSelectedVariant(variant)
     handleScrollToImage()
   }
@@ -171,24 +110,11 @@ const ProductPage = () => {
     variantImageRaw.trim().length > 0
       ? resolveImageUrl(variantImageRaw, '')
       : ''
-  const variantImageMatch = useMemo(
-    () => findVariantImageMatch(selectedVariant, images),
-    [selectedVariant, images],
-  )
 
   useEffect(() => {
-    if (!selectedVariant) {
-      setSelectedImage('')
-      return
-    }
-    if (variantImageMatch) {
-      setSelectedImage(variantImageMatch)
-      return
-    }
-    if (variantImageRaw.trim().length > 0) {
-      setSelectedImage('')
-    }
-  }, [selectedVariant, variantImageMatch, variantImageRaw])
+    // Réinitialise la sélection manuelle si la variante change, pour afficher sa propre image
+    setSelectedImage('')
+  }, [selectedVariant])
   const safeSelectedImage = images.includes(selectedImage)
     ? selectedImage
     : ''
