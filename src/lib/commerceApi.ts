@@ -741,3 +741,7 @@ export const getAdminOrdersDashboard = async (input?: {
   )
   return result as AdminOrderDashboardRecord[]
 }
+
+export const deleteOrderById = async (orderId: string): Promise<void> => {
+  await requestDirectus<void>(`/items/orders/${orderId}`, { method: 'DELETE' })
+}

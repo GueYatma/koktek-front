@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatPrice } from '../utils/format'
 import {
   getAdminOrdersDashboard,
+  deleteOrderById,
   type AdminOrderDashboardRecord,
 } from '../lib/commerceApi'
 import { useSearchParams } from 'react-router-dom'
 import ValidationModal from '../components/ValidationModal'
 import OrderDetailsModal from '../components/OrderDetailsModal'
-import { Settings2 } from 'lucide-react'
+import { Settings2, Trash2 } from 'lucide-react'
 
 const formatDateTime = (value?: string) => {
   if (!value) return '—'
@@ -138,6 +139,8 @@ const SalesHistoryPage = () => {
   const [query, setQuery] = useState('')
   const [visibleCols, setVisibleCols] = useState<Set<ColumnKey>>(DEFAULT_VISIBLE)
   const [showColPicker, setShowColPicker] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const validateOrderId = searchParams.get('validate_order')
@@ -200,16 +203,15 @@ const SalesHistoryPage = () => {
       const customerName = (order.client_nom_complet || '').toLowerCase()
       const customerEmail = (order.client_email || '').toLowerCase()
 
-      // Valeurs exactes en DB pour une commande espèces: status_paiement='pending_cash', methode_paiement='Espèces'
-      const isCashPendingOrder =
+      // Fix strict : une commande espèces a payment_status='pending_cash' ET/OU payment_method='Espèces'
+      const isCashOrder =
         paymentStatus === 'pending_cash' ||
-        (order.methode_paiement || '').toLowerCase().includes('espèces') ||
-        (order.methode_paiement || '').toLowerCase().includes('cash')
+        (order.methode_paiement || '') === 'Espèces'
 
       const matchesPayment =
         paymentFilter === 'all' ||
         paymentStatus === paymentFilter ||
-        (paymentFilter === 'pending_cash' && isCashPendingOrder)
+        (paymentFilter === 'pending_cash' && isCashOrder)
       const matchesDelivery =
         deliveryFilter === 'all' || deliveryStatus === deliveryFilter
       const matchesQuery =
@@ -222,8 +224,10 @@ const SalesHistoryPage = () => {
     })
   }, [orders, paymentFilter, deliveryFilter, query])
 
+  // Résumé : uniquement les commandes définitivement payées
   const totals = useMemo(() => {
-    return rows.reduce(
+    const paidRows = rows.filter((o) => (o.status_paiement || '').toLowerCase() === 'paid')
+    return paidRows.reduce(
       (acc, order) => {
         acc.total += toNumberValue(order.total_paye_client)
         acc.subtotal += toNumberValue(order.sous_total_produits)
@@ -255,6 +259,52 @@ const SalesHistoryPage = () => {
     if (col.align === 'center') return 'text-center'
     return 'text-left'
   }
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }, [])
+
+  const toggleSelectAll = useCallback(() => {
+    const allIds = rows.map((o) => o.order_id)
+    const allSelected = allIds.every((id) => selectedIds.has(id))
+    setSelectedIds(allSelected ? new Set() : new Set(allIds))
+  }, [rows, selectedIds])
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedIds.size === 0) return
+    const confirmed = window.confirm(
+      `Supprimer définitivement ${selectedIds.size} commande${selectedIds.size > 1 ? 's' : ''} de la base de données ?`
+    )
+    if (!confirmed) return
+    setIsDeleting(true)
+    try {
+      await Promise.all([...selectedIds].map((id) => deleteOrderById(id)))
+      setOrders((prev) => prev.filter((o) => !selectedIds.has(o.order_id)))
+      setSelectedIds(new Set())
+    } catch (err) {
+      console.error('Erreur suppression', err)
+      alert('Une erreur est survenue lors de la suppression.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [selectedIds])
+
+  const handleDeleteOne = useCallback(async (orderId: string, orderLabel: string) => {
+    const confirmed = window.confirm(`Annuler et supprimer la commande ${orderLabel} ?`)
+    if (!confirmed) return
+    try {
+      await deleteOrderById(orderId)
+      setOrders((prev) => prev.filter((o) => o.order_id !== orderId))
+      setSelectedIds((prev) => { const n = new Set(prev); n.delete(orderId); return n })
+    } catch (err) {
+      console.error('Erreur suppression', err)
+      alert('Impossible de supprimer cette commande.')
+    }
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -331,12 +381,30 @@ const SalesHistoryPage = () => {
         </div>
       </header>
 
-      {/* Sticky Summary Card */}
-      {!loading && !error && rows.length > 0 && (
+      {/* Bandeau bulk delete */}
+      {selectedIds.size > 0 && (
+        <div className="sticky top-0 z-40 flex items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 shadow-md dark:border-rose-800 dark:bg-rose-950/40">
+          <span className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+            {selectedIds.size} commande{selectedIds.size > 1 ? 's' : ''} sélectionnée{selectedIds.size > 1 ? 's' : ''}
+          </span>
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={handleDeleteSelected}
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+            {isDeleting ? 'Suppression…' : `Supprimer ${selectedIds.size} commande${selectedIds.size > 1 ? 's' : ''}`}
+          </button>
+        </div>
+      )}
+
+      {/* Sticky Summary Card — uniquement les commandes payées */}
+      {!loading && !error && totals.count > 0 && (
         <div className="sticky top-0 z-30 rounded-2xl border border-indigo-100 bg-gradient-to-r from-slate-50 via-indigo-50/50 to-slate-50 dark:border-indigo-900/30 dark:from-gray-800 dark:via-indigo-950/20 dark:to-gray-800 px-5 py-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Résumé</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Résumé (Payé)</span>
               <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-bold text-white">{totals.count}</span>
               <span className="text-gray-500 dark:text-gray-400">commande{totals.count > 1 ? 's' : ''}</span>
             </div>
@@ -381,10 +449,20 @@ const SalesHistoryPage = () => {
             <table className="w-full text-xs md:text-sm text-left">
               <thead className="text-white font-bold tracking-wider text-xs uppercase">
                 <tr className="text-left">
+                  {/* Checkbox select-all */}
+                  <th className="sticky top-0 z-20 bg-gray-800 py-4 pl-4 pr-2 w-8 rounded-tl-xl">
+                    <input
+                      type="checkbox"
+                      aria-label="Tout sélectionner"
+                      checked={rows.length > 0 && rows.every((o) => selectedIds.has(o.order_id))}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-gray-500 bg-gray-700 text-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                    />
+                  </th>
                   {ALL_COLUMNS.filter((c) => isVisible(c.key)).map((col, idx, arr) => (
                     <th
                       key={col.key}
-                      className={`sticky top-0 z-20 bg-gray-800 py-4 px-2 whitespace-nowrap ${alignClass(col)} ${idx === 0 ? 'pl-4 rounded-tl-xl' : ''} ${idx === arr.length - 1 ? 'pr-4 rounded-tr-xl' : ''}`}
+                      className={`sticky top-0 z-20 bg-gray-800 py-4 px-2 whitespace-nowrap ${alignClass(col)} ${idx === arr.length - 1 ? 'pr-4 rounded-tr-xl' : ''}`}
                     >
                       {col.label}
                     </th>
@@ -404,10 +482,10 @@ const SalesHistoryPage = () => {
                   const netProfit = toNumberValue(order.benefice_net_estime)
                   const paymentStatus = order.status_paiement || ''
                   const deliveryStatus = order.status_commande || '—'
+                  // Valeurs strictes de la DB : status_paiement='pending_cash' OU methode_paiement='Espèces'
                   const isCash =
                     paymentStatus === 'pending_cash' ||
-                    (order.methode_paiement || '').toLowerCase().includes('espèces') ||
-                    (order.methode_paiement || '').toLowerCase().includes('cash')
+                    (order.methode_paiement || '') === 'Espèces'
                   const paymentMethodLabel =
                     order.methode_paiement ||
                     (isCash ? '💵 Espèces' : paymentStatus ? '💳 Carte' : '—')
@@ -531,20 +609,29 @@ const SalesHistoryPage = () => {
                       </td>
                     ),
                     action: (
-                      <td key="action" className="py-4 pl-2 pr-4 text-center min-w-[120px]" onClick={(e) => e.stopPropagation()}>
-                        {isCash ? (
-                          paymentStatus === 'pending_cash' ? (
+                      <td key="action" className="py-4 pl-2 pr-4 text-center min-w-[150px]" onClick={(e) => e.stopPropagation()}>
+                        {isCash && paymentStatus === 'pending_cash' ? (
+                          <div className="inline-flex items-center gap-1.5">
                             <button
+                              type="button"
                               onClick={() => setSearchParams({ validate_order: order.order_number || order.order_id })}
                               className="rounded-xl px-2 md:px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
                             >
-                              Valider Espèces
+                              Valider
                             </button>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2 md:px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">
-                              Versement effectué
-                            </span>
-                          )
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteOne(order.order_id, order.order_number || order.order_id)}
+                              title="Annuler et supprimer cette commande"
+                              className="rounded-xl p-1.5 text-xs font-semibold bg-rose-100 text-rose-600 hover:bg-rose-200 transition shadow-sm dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/50"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : isCash ? (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2 md:px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">
+                            Versement effectué
+                          </span>
                         ) : order.methode_paiement === 'Carte Bancaire' ? (
                           <span className="text-xs text-gray-400 dark:text-gray-500">
                             {paymentStatus === 'paid' ? 'Payé via Stripe' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
@@ -558,12 +645,22 @@ const SalesHistoryPage = () => {
                     ),
                   }
 
+                  const isSelected = selectedIds.has(order.order_id)
                   return (
                     <tr
                       key={order.order_id}
                       onClick={() => setSearchParams({ view_order: order.order_id })}
-                      className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition"
+                      className={`text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition ${isSelected ? 'bg-indigo-50 dark:bg-indigo-950/20' : ''}`}
                     >
+                      {/* Checkbox par ligne */}
+                      <td className="py-4 pl-4 pr-2" onClick={(e) => { e.stopPropagation(); toggleSelect(order.order_id) }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(order.order_id)}
+                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                      </td>
                       {ALL_COLUMNS.filter((c) => isVisible(c.key)).map((col) => cellMap[col.key])}
                     </tr>
                   )
