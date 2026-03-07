@@ -1313,11 +1313,14 @@ const CheckoutPage = () => {
       <OrderTicketModal
         open={checkoutStep === 'success'}
         orderNumber={ticketOrderNumber}
-        productName={ticketProductName}
-        variantName={ticketVariantName}
-        variantValue={ticketVariantValue}
-        sku={ticketSku}
-        imageUrl={ticketImageUrl}
+        items={items.map((cartItem) => ({
+          imageUrl: resolveImageUrl(cartItem.product.image_url),
+          productName: cartItem.product.title,
+          variantName: cartItem.variant.option1_name?.trim() || null,
+          variantValue: resolveVariantValue(cartItem.variant) || null,
+          sku: cartItem.variant.sku?.trim() || null,
+          quantity: cartItem.quantity,
+        }))}
         customerName={ticketCustomerName}
         total={total}
         subtotal={subtotal}
