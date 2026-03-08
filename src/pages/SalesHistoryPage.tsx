@@ -209,11 +209,6 @@ const SalesHistoryPage = () => {
         methodePaiement.includes('espèces') ||
         methodePaiement.includes('especes') ||
         methodePaiement.includes('cash')
-      
-      const isPendingCashStatus = 
-        paymentStatus === 'pending_cash' || 
-        paymentStatus === 'pending' || 
-        paymentStatus === 'unpaid'
 
       const isCashOrderPending = isPendingCashDetails && paymentStatus !== 'paid'
 

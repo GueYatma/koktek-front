@@ -741,23 +741,6 @@ export const getAdminOrdersDashboard = async (input?: {
     readItems('orders', {
       sort: ['-created_at'],
       limit,
-      fields: [
-        'id',
-        'order_number',
-        'created_at',
-        'status',
-        'payment_status',
-        'payment_method',
-        'total_price',
-        'shipping_price',
-        'logistic_name',
-        'tracking_number',
-        'delivery_time_estimation',
-        'item_count',
-        'customer_id.email',
-        'customer_id.first_name',
-        'customer_id.last_name',
-      ] as any,
     }),
   )
 
