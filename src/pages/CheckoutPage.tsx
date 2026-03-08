@@ -122,17 +122,6 @@ const CheckoutPage = () => {
   })
 
   const ticketOrderNumber = orderNumber ?? orderId ?? ''
-  const ticketMainItem = items[0]
-  const ticketProductName = ticketMainItem
-    ? ticketMainItem.product.title
-    : 'Commande Koktek'
-  const ticketImageUrl = ticketMainItem
-    ? resolveImageUrl(ticketMainItem.product.image_url)
-    : ''
-  const ticketVariantName = ticketMainItem?.variant.option1_name?.trim()
-  const ticketVariantValue =
-    resolveVariantValue(ticketMainItem?.variant ?? null) || '—'
-  const ticketSku = ticketMainItem?.variant.sku?.trim() || ''
   const ticketCustomerName = [
     customerSnapshot?.first_name || delivery.first_name,
     customerSnapshot?.last_name || delivery.last_name,
