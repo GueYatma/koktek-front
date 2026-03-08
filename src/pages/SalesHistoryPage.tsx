@@ -203,17 +203,27 @@ const SalesHistoryPage = () => {
       const customerName = (order.client_nom_complet || '').toLowerCase()
       const customerEmail = (order.client_email || '').toLowerCase()
 
-      // Fix strict : une commande espèces a payment_status='pending_cash' ET/OU payment_method='Espèces'
-      const isCashOrder =
-        paymentStatus === 'pending_cash' ||
-        (order.methode_paiement || '') === 'Espèces'
+      // Règles Strictes pour Espèces en attente (Ticket Bug)
+      // Doit être: methode_paiement='Espèces' ET paymentStatus n'est pas 'paid'
+      const isPendingCashDetails =
+        (order.methode_paiement || '').toLowerCase().includes('espèces') ||
+        (order.methode_paiement || '').toLowerCase().includes('cash')
+      
+      const isPendingCashStatus = 
+        paymentStatus === 'pending_cash' || 
+        paymentStatus === 'pending' || 
+        paymentStatus === 'unpaid'
+
+      const isCashOrderPending = isPendingCashDetails && paymentStatus !== 'paid'
 
       const matchesPayment =
         paymentFilter === 'all' ||
         paymentStatus === paymentFilter ||
-        (paymentFilter === 'pending_cash' && isCashOrder)
+        (paymentFilter === 'pending_cash' && isCashOrderPending)
+
       const matchesDelivery =
         deliveryFilter === 'all' || deliveryStatus === deliveryFilter
+      
       const matchesQuery =
         !search ||
         String(order.order_number || order.order_id).toLowerCase().includes(search) ||
@@ -610,12 +620,12 @@ const SalesHistoryPage = () => {
                     ),
                     action: (
                       <td key="action" className="py-4 pl-2 pr-4 text-center min-w-[150px]" onClick={(e) => e.stopPropagation()}>
-                        {isCash && paymentStatus === 'pending_cash' ? (
-                          <div className="inline-flex items-center gap-1.5">
+                        {isPendingCashDetails && paymentStatus !== 'paid' ? (
+                          <div className="inline-flex items-center gap-1.5 justify-center w-full">
                             <button
                               type="button"
                               onClick={() => setSearchParams({ validate_order: order.order_number || order.order_id })}
-                              className="rounded-xl px-2 md:px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
+                              className="rounded-xl px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
                             >
                               Valider
                             </button>
@@ -625,20 +635,20 @@ const SalesHistoryPage = () => {
                               title="Annuler et supprimer cette commande"
                               className="rounded-xl p-1.5 text-xs font-semibold bg-rose-100 text-rose-600 hover:bg-rose-200 transition shadow-sm dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/50"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
-                        ) : isCash ? (
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2 md:px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">
-                            Versement effectué
+                        ) : isPendingCashDetails ? (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">
+                            Espèces Validées
                           </span>
-                        ) : order.methode_paiement === 'Carte Bancaire' ? (
+                        ) : order.methode_paiement === 'Carte Bancaire' || paymentStatus === 'paid' ? (
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {paymentStatus === 'paid' ? 'Payé via Stripe' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
+                            {paymentStatus === 'paid' ? 'Payé en ligne' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
                           </span>
                         ) : (
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {paymentStatus === 'paid' ? 'Payé' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'En attente'}
+                            {paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'En attente'}
                           </span>
                         )}
                       </td>
