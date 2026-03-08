@@ -343,7 +343,6 @@ const SalesHistoryPage = () => {
             <option value="all">Paiement: Tous</option>
             <option value="paid">Payé</option>
             <option value="pending_cash">En attente (Espèces)</option>
-            <option value="pending_payment">En attente de paiement</option>
           </select>
           <select
             value={deliveryFilter}

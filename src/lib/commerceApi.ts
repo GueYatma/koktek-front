@@ -733,13 +733,92 @@ export type AdminOrderDashboardRecord = {
 export const getAdminOrdersDashboard = async (input?: {
   limit?: number
 }): Promise<AdminOrderDashboardRecord[]> => {
-  const result = await directusClient.request(
-    readItems('admin_orders_dashboard_final', {
-      sort: ['-date_commande'],
-      limit: input?.limit ?? 200,
+  const limit = input?.limit ?? 200
+
+  // 1. Rapatrier 100% des lignes depuis la source de vérité absolue (orders)
+  // pour s'assurer que les commandes non-payées (cash etc) ne soient JAMAIS exclues.
+  const rawOrdersResult = await directusClient.request(
+    readItems('orders', {
+      sort: ['-created_at'],
+      limit,
+      fields: [
+        'id',
+        'order_number',
+        'created_at',
+        'status',
+        'payment_status',
+        'payment_method',
+        'total_price',
+        'shipping_price',
+        'logistic_name',
+        'tracking_number',
+        'delivery_time_estimation',
+        'item_count',
+        'customer_id.email',
+        'customer_id.first_name',
+        'customer_id.last_name',
+      ] as any,
     }),
   )
-  return result as AdminOrderDashboardRecord[]
+
+  // 2. Rapatrier la vue consolidée (qui contient les calculs SQL de Marge, Stripe, N8N)
+  // Attention: cette vue manque probablement des lignes "pending_cash" car SQL INNER JOIN.
+  const dashboardResult = await directusClient.request(
+    readItems('admin_orders_dashboard_final', {
+      sort: ['-date_commande'],
+      limit,
+    }),
+  )
+
+  // 3. Fusion et réconciliation
+  const dashboardMap = new Map()
+  for (const row of dashboardResult as AdminOrderDashboardRecord[]) {
+    dashboardMap.set(row.order_id, row)
+    dashboardMap.set(row.order_number, row)
+  }
+
+  const merged = rawOrdersResult.map((o: any) => {
+    const d = dashboardMap.get(o.id) || dashboardMap.get(o.order_number)
+    const customerFullName = [o.customer_id?.first_name, o.customer_id?.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim() || 'Client inconnu'
+
+    return {
+      order_id: o.id,
+      order_number: o.order_number || o.id,
+      date_commande: o.created_at || (d?.date_commande ?? new Date().toISOString()),
+      status_commande: o.status || (d?.status_commande ?? 'pending'),
+      status_paiement: o.payment_status || (d?.status_paiement ?? 'unpaid'),
+      methode_paiement: o.payment_method || (d?.methode_paiement ?? ''),
+      client_nom_complet: d?.client_nom_complet || customerFullName,
+      client_email: d?.client_email || o.customer_id?.email || '',
+      
+      // Financials (Fallback brut si non existant dans la vue dashboard)
+      total_paye_client: d?.total_paye_client ?? o.total_price ?? 0,
+      sous_total_produits: d?.sous_total_produits ?? o.total_price ?? 0,
+      frais_port_encaisses: d?.frais_port_encaisses ?? o.shipping_price ?? 0,
+      
+      // Costs (La vue SQL est maître)
+      cout_produits_estime: d?.cout_produits_estime ?? 0,
+      cout_expedition_estime: d?.cout_expedition_estime ?? 0,
+      frais_stripe: d?.frais_stripe ?? 0,
+      frais_urssaf: d?.frais_urssaf ?? 0,
+      benefice_net_estime: d?.benefice_net_estime ?? 0,
+
+      // Logistics 
+      cj_order_id: d?.cj_order_id ?? null,
+      tracking_number: o.tracking_number || (d?.tracking_number ?? null),
+      delai_livraison_estime: o.delivery_time_estimation || (d?.delai_livraison_estime ?? null),
+      
+      // Items
+      nombre_articles: o.item_count || (d?.nombre_articles ?? 0),
+      resume_articles: d?.resume_articles ?? 'En attente...',
+      details_articles_json: d?.details_articles_json ?? null
+    } as AdminOrderDashboardRecord
+  })
+
+  return merged
 }
 
 export const deleteOrderById = async (orderId: string): Promise<void> => {
