@@ -198,16 +198,17 @@ const SalesHistoryPage = () => {
   const rows = useMemo(() => {
     const search = query.trim().toLowerCase()
     return orders.filter((order) => {
-      const paymentStatus = (order.status_paiement || '').toLowerCase()
-      const deliveryStatus = (order.status_commande || '').toLowerCase()
-      const customerName = (order.client_nom_complet || '').toLowerCase()
-      const customerEmail = (order.client_email || '').toLowerCase()
+      const paymentStatus = String(order.status_paiement || '').toLowerCase()
+      const deliveryStatus = String(order.status_commande || '').toLowerCase()
+      const customerName = String(order.client_nom_complet || '').toLowerCase()
+      const customerEmail = String(order.client_email || '').toLowerCase()
 
-      // Règles Strictes pour Espèces en attente (Ticket Bug)
-      // Doit être: methode_paiement='Espèces' ET paymentStatus n'est pas 'paid'
+      // Règles Strictes pour Espèces en attente (Ticket Bug) + SÉCURITÉ ANTI-CRASH
+      const methodePaiement = String(order.methode_paiement || '').toLowerCase()
       const isPendingCashDetails =
-        (order.methode_paiement || '').toLowerCase().includes('espèces') ||
-        (order.methode_paiement || '').toLowerCase().includes('cash')
+        methodePaiement.includes('espèces') ||
+        methodePaiement.includes('especes') ||
+        methodePaiement.includes('cash')
       
       const isPendingCashStatus = 
         paymentStatus === 'pending_cash' || 
@@ -490,12 +491,17 @@ const SalesHistoryPage = () => {
                   const urssaf = toNumberValue(order.frais_urssaf)
                   const itemsCount = toNumberValue(order.nombre_articles)
                   const netProfit = toNumberValue(order.benefice_net_estime)
-                  const paymentStatus = order.status_paiement || ''
-                  const deliveryStatus = order.status_commande || '—'
-                  // Valeurs strictes de la DB : status_paiement='pending_cash' OU methode_paiement='Espèces'
-                  const isCash =
-                    paymentStatus === 'pending_cash' ||
-                    (order.methode_paiement || '') === 'Espèces'
+                  const paymentStatus = String(order.status_paiement || '').toLowerCase()
+                  const deliveryStatus = String(order.status_commande || '—')
+                  
+                  const methodePaiement = String(order.methode_paiement || '').toLowerCase()
+                  const isPendingCashDetails =
+                    methodePaiement.includes('espèces') ||
+                    methodePaiement.includes('especes') ||
+                    methodePaiement.includes('cash')
+                  
+                  const isCash = paymentStatus === 'pending_cash' || isPendingCashDetails
+                  
                   const paymentMethodLabel =
                     order.methode_paiement ||
                     (isCash ? '💵 Espèces' : paymentStatus ? '💳 Carte' : '—')
