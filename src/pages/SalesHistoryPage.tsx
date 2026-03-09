@@ -146,10 +146,25 @@ const SalesHistoryPage = () => {
   const validateOrderId = searchParams.get('validate_order')
   const viewOrderId = searchParams.get('view_order')
 
+  const loadOrders = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await getAdminOrdersDashboard({ limit: 200 })
+      setOrders(data)
+    } catch (fetchError) {
+      console.error('Erreur chargement ventes', fetchError)
+      setError('Impossible de charger les commandes.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleCloseModal = () => {
     const newParams = new URLSearchParams(searchParams)
     newParams.delete('validate_order')
     setSearchParams(newParams, { replace: true })
+    void loadOrders() // Refetch les données après fermeture !
   }
 
   const handleCloseDetailsModal = () => {
@@ -171,28 +186,7 @@ const SalesHistoryPage = () => {
   }
 
   useEffect(() => {
-    let isActive = true
-
-    const load = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await getAdminOrdersDashboard({ limit: 200 })
-        if (!isActive) return
-        setOrders(data)
-      } catch (fetchError) {
-        console.error('Erreur chargement ventes', fetchError)
-        if (isActive) setError('Impossible de charger les commandes.')
-      } finally {
-        if (isActive) setLoading(false)
-      }
-    }
-
-    void load()
-
-    return () => {
-      isActive = false
-    }
+    void loadOrders()
   }, [])
 
   const rows = useMemo(() => {

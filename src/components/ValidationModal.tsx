@@ -591,6 +591,9 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
         prev ? { ...prev, status: "paid", payment_status: "paid" } : prev,
       ); // Succès : On met à jour l'UI React (source de vérité locale)
       setSuccess(true); // Déclenche l'alerte verte
+      setTimeout(() => {
+        onClose();
+      }, 1500); // 1.5s auto-fermeture
     } catch (payError) {
       // Si échec réseau ou Directus
       console.error("Erreur validation", payError); // Trace dev
@@ -606,17 +609,18 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-[#f4f5f7] p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-[#f4f5f7] p-4 sm:p-6 shadow-xl">
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 rounded-full p-2 text-gray-500 hover:bg-gray-200 transition"
+          className="absolute right-4 top-4 rounded-full p-4 -m-2 text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition"
+          aria-label="Fermer la fenêtre"
         >
-          <X className="h-5 w-5" />
+          <X className="h-6 w-6" />
         </button>
-        <div className="space-y-6 mt-4">
+        <div className="space-y-4 sm:space-y-6 mt-4">
       {/* Wrapping Root */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-4 shadow-sm">
         {" "}
         {/* Header Section */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

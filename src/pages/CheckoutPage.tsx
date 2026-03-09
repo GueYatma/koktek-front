@@ -24,6 +24,7 @@ import {
   markOrderPaid,
   removeCartItem,
   updateCartItem,
+  deleteOrderById,
 } from '../lib/commerceApi'
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL as
@@ -1318,9 +1319,20 @@ const CheckoutPage = () => {
         onContinueShopping={() => navigate('/catalogue')}
         showPayByCard={confirmedMethod === 'cash'}
         onPayByCard={async () => {
-          setCheckoutStep('payment')
+          // Si on revient en arrière depuis un paiement "espèces" vers "carte",
+          // on DOIT détruire la commande pending_cash pour éviter un doublon en base !
+          if (orderId) {
+            try {
+              await deleteOrderById(orderId);
+            } catch (err) {
+              console.error("Échec de la suppression de l'ancienne commande", err);
+            }
+          }
+          // On nettoie l'état local pour générer une commande neuve
+          setOrderId(null);
+          setOrderNumber(null);
+          setCheckoutStep('form') // On ramène à l'étape des coordonnées (ou payment selon besoin, mais form garantit un nouveau flux)
           setConfirmedMethod(null)
-          await handlePaymentOnline()
         }}
         onClose={
           confirmedMethod === 'cash'

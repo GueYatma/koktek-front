@@ -741,7 +741,13 @@ export const getAdminOrdersDashboard = async (input?: {
     readItems('orders', {
       sort: ['-created_at'],
       limit,
-      fields: ['*', 'customer_id.*', 'order_items.*'] as any,
+      fields: [
+        '*', 
+        'customer_id.*', 
+        'order_items.*', 
+        'order_items.variant_id.cost_price', 
+        'order_items.product_id.cost_price'
+      ] as any,
     }),
   )
 
@@ -768,6 +774,30 @@ export const getAdminOrdersDashboard = async (input?: {
       .join(' ')
       .trim() || 'Client inconnu'
 
+    // Calcul immédiat des coûts produits (COGS) si `order_items` disponibles
+    let immediateCogs = 0;
+    if (Array.isArray(o.order_items)) {
+      for (const item of o.order_items) {
+        const qty = item.quantity || 0;
+        const variantCost = item.variant_id?.cost_price;
+        const productCost = item.product_id?.cost_price;
+        const costPrice = typeof variantCost === 'number' ? variantCost : (typeof productCost === 'number' ? productCost : 0);
+        immediateCogs += costPrice * qty;
+      }
+    }
+
+    const totalPayeClient = d?.total_paye_client ?? o.total_price ?? 0;
+    const fraisPortEncaisses = d?.frais_port_encaisses ?? o.shipping_price ?? 0;
+    const fraisStripe = d?.frais_stripe ?? 0;
+    const fraisUrssaf = d?.frais_urssaf ?? 0;
+    const coutProduitsEstime = d?.cout_produits_estime && d.cout_produits_estime > 0 ? d.cout_produits_estime : immediateCogs;
+    
+    // Le coût CJ n'est applicable qu'en dropshipping pur, sinon on prend le port encaissé comme estimation de départ (si non défini)
+    const coutExpeditionEstime = d?.cout_expedition_estime && d.cout_expedition_estime > 0 ? d.cout_expedition_estime : (immediateCogs > 0 ? fraisPortEncaisses : 0);
+    
+    // Bénéfice instantané (Chiffre d'Affaires - Coût Produits - Coût Shipping - Stripe - Urssaf)
+    const beneficeInstantane = totalPayeClient - coutProduitsEstime - coutExpeditionEstime - fraisStripe - fraisUrssaf;
+
     return {
       order_id: o.id,
       order_number: o.order_number || o.id,
@@ -779,16 +809,16 @@ export const getAdminOrdersDashboard = async (input?: {
       client_email: d?.client_email || o.customer_id?.email || '',
       
       // Financials (Fallback brut si non existant dans la vue dashboard)
-      total_paye_client: d?.total_paye_client ?? o.total_price ?? 0,
+      total_paye_client: totalPayeClient,
       sous_total_produits: d?.sous_total_produits ?? o.total_price ?? 0,
-      frais_port_encaisses: d?.frais_port_encaisses ?? o.shipping_price ?? 0,
+      frais_port_encaisses: fraisPortEncaisses,
       
       // Costs (La vue SQL est maître)
-      cout_produits_estime: d?.cout_produits_estime ?? 0,
-      cout_expedition_estime: d?.cout_expedition_estime ?? 0,
-      frais_stripe: d?.frais_stripe ?? 0,
-      frais_urssaf: d?.frais_urssaf ?? 0,
-      benefice_net_estime: d?.benefice_net_estime ?? 0,
+      cout_produits_estime: coutProduitsEstime,
+      cout_expedition_estime: coutExpeditionEstime,
+      frais_stripe: fraisStripe,
+      frais_urssaf: fraisUrssaf,
+      benefice_net_estime: d?.benefice_net_estime && d.cout_produits_estime > 0 ? d.benefice_net_estime : beneficeInstantane,
 
       // Logistics 
       cj_order_id: d?.cj_order_id ?? null,
@@ -796,7 +826,7 @@ export const getAdminOrdersDashboard = async (input?: {
       delai_livraison_estime: o.delivery_time_estimation || (d?.delai_livraison_estime ?? null),
       
       // Items (Fusion avec `order_items` de Directus)
-      nombre_articles: (o.order_items?.length || 0) || (d?.nombre_articles ?? 0),
+      nombre_articles: (Array.isArray(o.order_items) && o.order_items.length > 0) ? o.order_items.length : (d?.nombre_articles ?? 0),
       resume_articles: d?.resume_articles ?? 'En attente...',
       details_articles_json: d?.details_articles_json ?? null
     } as AdminOrderDashboardRecord
