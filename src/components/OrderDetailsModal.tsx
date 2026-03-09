@@ -55,11 +55,24 @@ const OrderDetailsModal = ({ isOpen, order, onClose }: OrderDetailsModalProps) =
   const total = n(order.total_paye_client)
   const subtotal = n(order.sous_total_produits)
   const shippingClient = n(order.frais_port_encaisses)
-  const costCJ = n(order.cout_produits_estime)
-  const shippingCJ = n(order.cout_expedition_estime)
+  // Si la vue SQL retourne 0 pour les coûts CJ, on les recompute depuis les détails articles
+  const rawCostCJ = n(order.cout_produits_estime)
+  const rawShippingCJ = n(order.cout_expedition_estime)
+  const itemsCostCJ = items.length > 0
+    ? items.reduce((sum, item) => sum + n(item.cost_price ?? item.cout_cj ?? item.cost) * Math.max(1, n(item.quantity ?? item.quantite ?? item.qty)), 0)
+    : 0
+  const itemsShippingCJ = items.length > 0
+    ? items.reduce((sum, item) => sum + n(item.shipping_cost ?? item.shipping_price ?? 0), 0)
+    : 0
+  const costCJ = rawCostCJ > 0 ? rawCostCJ : itemsCostCJ
+  const shippingCJ = rawShippingCJ > 0 ? rawShippingCJ : itemsShippingCJ
   const stripe = n(order.frais_stripe)
   const urssaf = n(order.frais_urssaf)
-  const profit = n(order.benefice_net_estime)
+  // Recalcul du bénéfice si les coûts CJ ont été recalculés depuis les items
+  const rawProfit = n(order.benefice_net_estime)
+  const profit = (rawCostCJ === 0 && itemsCostCJ > 0)
+    ? total - costCJ - shippingCJ - stripe - urssaf
+    : rawProfit
   const marginRate = total > 0 ? (profit / total) * 100 : 0
   const totalCharges = costCJ + shippingCJ + stripe + urssaf
 

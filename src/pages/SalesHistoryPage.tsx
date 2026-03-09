@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { formatPrice } from '../utils/format'
 import {
   getAdminOrdersDashboard,
@@ -30,9 +30,11 @@ const PAYMENT_STATUS_FR: Record<string, string> = {
 
 const DELIVERY_STATUS_FR: Record<string, string> = {
   pending: 'En préparation',
+  processing: 'En cours',
   shipped: 'Expédié',
   in_transit: 'En transit',
   delivered: 'Livré',
+  paid: 'Payé (archive)',
 }
 
 const normalizePaymentStatus = (value?: string | null) => {
@@ -84,7 +86,6 @@ type ColumnKey =
   | 'shippingCJ'
   | 'stripe'
   | 'urssaf'
-  | 'articles'
   | 'resume'
   | 'profit'
   | 'method'
@@ -114,8 +115,7 @@ const ALL_COLUMNS: ColumnDef[] = [
   { key: 'shippingCJ', label: 'Expéd. CJ', defaultVisible: true, align: 'right' },
   { key: 'stripe', label: 'Stripe', defaultVisible: false, align: 'right' },
   { key: 'urssaf', label: 'URSSAF', defaultVisible: false, align: 'right' },
-  { key: 'articles', label: 'Articles', defaultVisible: true, align: 'center' },
-  { key: 'resume', label: 'Détail articles', defaultVisible: false },
+  { key: 'resume', label: 'Détail articles', defaultVisible: true },
   { key: 'profit', label: 'Bénéfice net', defaultVisible: true, align: 'right' },
   { key: 'method', label: 'Méthode', defaultVisible: true, align: 'center' },
   { key: 'payment', label: 'Paiement', defaultVisible: true, align: 'center' },
@@ -139,8 +139,21 @@ const SalesHistoryPage = () => {
   const [query, setQuery] = useState('')
   const [visibleCols, setVisibleCols] = useState<Set<ColumnKey>>(DEFAULT_VISIBLE)
   const [showColPicker, setShowColPicker] = useState(false)
+  const colPickerRef = useRef<HTMLDivElement>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Ferme le menu "Colonnes" au clic en dehors
+  useEffect(() => {
+    if (!showColPicker) return
+    const handler = (e: MouseEvent) => {
+      if (colPickerRef.current && !colPickerRef.current.contains(e.target as Node)) {
+        setShowColPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showColPicker])
 
   const [searchParams, setSearchParams] = useSearchParams()
   const validateOrderId = searchParams.get('validate_order')
@@ -340,11 +353,12 @@ const SalesHistoryPage = () => {
           >
             <option value="all">Livraison: Toutes</option>
             <option value="pending">En préparation</option>
+            <option value="processing">En cours</option>
             <option value="shipped">Expédié</option>
             <option value="in_transit">En transit</option>
             <option value="delivered">Livré</option>
           </select>
-          <div className="relative">
+          <div className="relative" ref={colPickerRef}>
             <button
               onClick={() => setShowColPicker((v) => !v)}
               className="inline-flex items-center gap-1.5 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -354,11 +368,11 @@ const SalesHistoryPage = () => {
               Colonnes
             </button>
             {showColPicker && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+              <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-800">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Colonnes visibles
                 </p>
-                <div className="max-h-64 space-y-1 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
                   {ALL_COLUMNS.filter((c) => c.key !== 'action').map((col) => (
                     <label
                       key={col.key}
