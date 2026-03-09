@@ -1327,7 +1327,6 @@ const CheckoutPage = () => {
         title={confirmedMethod === 'card' ? "Paiement Validé !" : "Commande Réservée !"}
         noticeText={confirmedMethod === 'card' ? "Votre paiement en ligne a été effectué avec succès. Votre commande est en cours de préparation." : undefined}
         hintText="Retrouvez le détail de l'opération dans votre espace client."
-        payByCardLabel="← Retour en arrière — Finalement, je paie par carte"
       />
 
       {isCashConfirmOpen ? (
