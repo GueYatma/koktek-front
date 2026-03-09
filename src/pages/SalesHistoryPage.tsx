@@ -589,8 +589,14 @@ const SalesHistoryPage = () => {
                     ),
                     payment: (
                       <td key="payment" className="py-4 px-2 text-center">
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold text-center leading-tight ${resolvePaymentTone(paymentStatus)}`}>
-                          {normalizePaymentStatus(paymentStatus)}
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold text-center leading-tight ${
+                          order.methode_paiement === 'Carte Bancaire' && paymentStatus !== 'paid'
+                            ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
+                            : resolvePaymentTone(paymentStatus)
+                        }`}>
+                          {order.methode_paiement === 'Carte Bancaire' && paymentStatus !== 'paid'
+                            ? 'Abandonné'
+                            : normalizePaymentStatus(paymentStatus)}
                         </span>
                       </td>
                     ),
@@ -642,9 +648,20 @@ const SalesHistoryPage = () => {
                           <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">
                             Espèces Validées
                           </span>
-                        ) : order.methode_paiement === 'Carte Bancaire' || paymentStatus === 'paid' ? (
+                        ) : order.methode_paiement === 'Carte Bancaire' && paymentStatus !== 'paid' ? (
+                          <div className="inline-flex items-center gap-1.5 justify-center w-full">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteOne(order.order_id, order.order_number || order.order_id)}
+                              title="Annuler et supprimer cette commande"
+                              className="rounded-xl p-1.5 text-xs font-semibold bg-rose-100 text-rose-600 hover:bg-rose-200 transition shadow-sm dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : paymentStatus === 'paid' ? (
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {paymentStatus === 'paid' ? 'Payé en ligne' : paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'Attente Stripe'}
+                            {order.methode_paiement === 'Carte Bancaire' ? 'Payé en ligne' : 'Payé'}
                           </span>
                         ) : (
                           <span className="text-xs text-gray-400 dark:text-gray-500">

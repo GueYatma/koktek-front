@@ -741,6 +741,7 @@ export const getAdminOrdersDashboard = async (input?: {
     readItems('orders', {
       sort: ['-created_at'],
       limit,
+      fields: ['*', 'customer_id.*', 'order_items.*'] as any,
     }),
   )
 
@@ -794,8 +795,8 @@ export const getAdminOrdersDashboard = async (input?: {
       tracking_number: o.tracking_number || (d?.tracking_number ?? null),
       delai_livraison_estime: o.delivery_time_estimation || (d?.delai_livraison_estime ?? null),
       
-      // Items
-      nombre_articles: o.item_count || (d?.nombre_articles ?? 0),
+      // Items (Fusion avec `order_items` de Directus)
+      nombre_articles: (o.order_items?.length || 0) || (d?.nombre_articles ?? 0),
       resume_articles: d?.resume_articles ?? 'En attente...',
       details_articles_json: d?.details_articles_json ?? null
     } as AdminOrderDashboardRecord

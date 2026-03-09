@@ -80,7 +80,6 @@ const AccountingPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('30d')
-  const [paymentFilter, setPaymentFilter] = useState<'paid' | 'all'>('all')
 
   const getStartDate = (preset: PeriodPreset): Date => {
     const now = new Date()
@@ -165,7 +164,7 @@ const AccountingPage = () => {
       if (orderDate < startDate) return
 
       const paymentStatus = (order.status_paiement || '').toLowerCase()
-      if (paymentFilter !== 'all' && !paymentStatus.includes(paymentFilter)) return
+      if (paymentStatus !== 'paid') return
 
       const periodKey = formatPeriodKey(order.date_commande, activeGrouping)
       if (!periodKey) return
@@ -270,14 +269,14 @@ const AccountingPage = () => {
       const orderDate = new Date(order.date_commande)
       if (orderDate < startDate) return
       const paymentStatus = (order.status_paiement || '').toLowerCase()
-      if (paymentFilter !== 'all' && !paymentStatus.includes(paymentFilter)) return
+      if (paymentStatus !== 'paid') return
       const method = order.methode_paiement || 'Non renseigné'
       methods.set(method, (methods.get(method) ?? 0) + 1)
     })
     return Array.from(methods.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-  }, [orders, periodPreset, paymentFilter])
+  }, [orders, periodPreset])
 
   return (
     <div className="space-y-6">
@@ -300,16 +299,6 @@ const AccountingPage = () => {
             <option value="30d">30 derniers jours</option>
             <option value="current_month">Mois en cours</option>
             <option value="current_year">Année en cours</option>
-          </select>
-          <select
-            value={paymentFilter}
-            onChange={(event) =>
-              setPaymentFilter(event.target.value as 'paid' | 'all')
-            }
-            className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-          >
-            <option value="paid">Paiement: paid</option>
-            <option value="all">Paiement: tous</option>
           </select>
         </div>
       </header>
