@@ -472,7 +472,7 @@ export const getOrderItemsByOrderIds = async (
     chunks.map(async (chunk) => {
       const params: Record<string, string> = {
         'filter[order_id][_in]': chunk.join(','),
-        fields: 'id,order_id,product_id,variant_id,quantity,unit_price',
+        fields: '*,product_id.*,variant_id.*',
       }
       const payload = await requestDirectus<DirectusListResponse<OrderItemRecord>>(
         `/items/order_items`,
@@ -795,11 +795,12 @@ export const getAdminOrdersDashboard = async (input?: {
       }
     }
 
-    const totalPayeClient = d?.total_paye_client ?? o.total_price ?? 0;
-    const fraisPortEncaisses = d?.frais_port_encaisses ?? o.shipping_price ?? 0;
-    const fraisStripe = d?.frais_stripe ?? 0;
-    const fraisUrssaf = d?.frais_urssaf ?? 0;
-    const coutProduitsEstime = d?.cout_produits_estime && d.cout_produits_estime > 0 ? d.cout_produits_estime : immediateCogs;
+    const totalPayeClient = Number(d?.total_paye_client ?? o.total_price ?? 0);
+    const fraisPortEncaisses = Number(d?.frais_port_encaisses ?? o.shipping_price ?? 0);
+    const fraisStripe = Number(d?.frais_stripe ?? 0);
+    // URSSAF : 12,3% du CA — toujours calculé depuis le total réel si la vue ne le fournit pas
+    const fraisUrssaf = Number(d?.frais_urssaf) > 0 ? Number(d.frais_urssaf) : totalPayeClient * 0.123;
+    const coutProduitsEstime = Number(d?.cout_produits_estime) > 0 ? Number(d.cout_produits_estime) : immediateCogs;
     
     // Le coût CJ n'est applicable qu'en dropshipping pur, sinon on prend le port encaissé comme estimation de départ (si non défini)
     const coutExpeditionEstime = d?.cout_expedition_estime && d.cout_expedition_estime > 0 ? d.cout_expedition_estime : (immediateCogs > 0 ? fraisPortEncaisses : 0);
@@ -819,7 +820,8 @@ export const getAdminOrdersDashboard = async (input?: {
       
       // Financials (Fallback brut si non existant dans la vue dashboard)
       total_paye_client: totalPayeClient,
-      sous_total_produits: d?.sous_total_produits ?? o.total_price ?? 0,
+      // sous_total = Total - Port (jamais o.total_price qui est identique au total)
+      sous_total_produits: Number(d?.sous_total_produits) > 0 ? Number(d.sous_total_produits) : (totalPayeClient - fraisPortEncaisses),
       frais_port_encaisses: fraisPortEncaisses,
       
       // Costs (La vue SQL est maître)
@@ -836,8 +838,18 @@ export const getAdminOrdersDashboard = async (input?: {
       
       // Items (Fusion avec `order_items` de Directus)
       nombre_articles: localItems.length > 0 ? localItems.length : (d?.nombre_articles ?? 0),
-      resume_articles: d?.resume_articles ?? 'En attente...',
-      details_articles_json: d?.details_articles_json ?? null
+      resume_articles: d?.resume_articles ?? (localItems.length > 0 ? `${localItems.length}× Article${localItems.length > 1 ? 's' : ''}` : 'En attente...'),
+      // Si la vue SQL ne fournit pas de détails (nouvelle commande), on les construit depuis localItems
+      details_articles_json: d?.details_articles_json != null ? d.details_articles_json : (
+        localItems.length > 0 ? localItems.map((item: any) => ({
+          product_title: item.product_id?.title ?? item.product_title ?? null,
+          variant_name: item.variant_id?.option1_value ?? item.variant_name ?? null,
+          quantity: item.quantity,
+          unit_price: Number(item.unit_price ?? 0),
+          cost_price: Number(item.variant_id?.cost_price ?? item.product_id?.cost_price ?? 0),
+          shipping_cost: Number(item.variant_id?.shipping_price ?? 0),
+        })) : null
+      )
     } as AdminOrderDashboardRecord
   })
 
