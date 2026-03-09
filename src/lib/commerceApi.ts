@@ -744,14 +744,22 @@ export const getAdminOrdersDashboard = async (input?: {
       fields: [
         '*', 
         'customer_id.*', 
-        'order_items.*', 
-        'order_items.variant_id.*', 
-        'order_items.product_id.*'
       ] as any,
     }),
   )
 
-  // 2. Rapatrier la vue consolidée (qui contient les calculs SQL de Marge, Stripe, N8N)
+  // 2. Rapatrier les order_items indépendamment (pour contourner le défaut de permission / limitation de profondeur Directus)
+  const orderIds = rawOrdersResult.map((o: any) => o.id);
+  const orderItemsResult = await getOrderItemsByOrderIds(orderIds);
+  const itemsByOrderId = new Map<string, any[]>();
+  for (const item of orderItemsResult) {
+    if (!itemsByOrderId.has(item.order_id)) {
+      itemsByOrderId.set(item.order_id, []);
+    }
+    itemsByOrderId.get(item.order_id)!.push(item);
+  }
+
+  // 3. Rapatrier la vue consolidée (qui contient les calculs SQL de Marge, Stripe, N8N)
   // Attention: cette vue manque probablement des lignes "pending_cash" car SQL INNER JOIN.
   const dashboardResult = await directusClient.request(
     readItems('admin_orders_dashboard_final', {
@@ -760,7 +768,7 @@ export const getAdminOrdersDashboard = async (input?: {
     }),
   )
 
-  // 3. Fusion et réconciliation
+  // 4. Fusion et réconciliation
   const dashboardMap = new Map()
   for (const row of dashboardResult as AdminOrderDashboardRecord[]) {
     dashboardMap.set(row.order_id, row)
@@ -769,15 +777,16 @@ export const getAdminOrdersDashboard = async (input?: {
 
   const merged = rawOrdersResult.map((o: any) => {
     const d = dashboardMap.get(o.id) || dashboardMap.get(o.order_number)
+    const localItems = itemsByOrderId.get(o.id) || [];
     const customerFullName = [o.customer_id?.first_name, o.customer_id?.last_name]
       .filter(Boolean)
       .join(' ')
       .trim() || 'Client inconnu'
 
-    // Calcul immédiat des coûts produits (COGS) si `order_items` disponibles
+    // Calcul immédiat des coûts produits (COGS) si `order_items` disponibles (maintenant via appels manuels liés)
     let immediateCogs = 0;
-    if (Array.isArray(o.order_items)) {
-      for (const item of o.order_items) {
+    if (localItems.length > 0) {
+      for (const item of localItems) {
         const qty = item.quantity || 0;
         const variantCost = item.variant_id?.cost_price;
         const productCost = item.product_id?.cost_price;
@@ -826,7 +835,7 @@ export const getAdminOrdersDashboard = async (input?: {
       delai_livraison_estime: o.delivery_time_estimation || (d?.delai_livraison_estime ?? null),
       
       // Items (Fusion avec `order_items` de Directus)
-      nombre_articles: (Array.isArray(o.order_items) && o.order_items.length > 0) ? o.order_items.length : (d?.nombre_articles ?? 0),
+      nombre_articles: localItems.length > 0 ? localItems.length : (d?.nombre_articles ?? 0),
       resume_articles: d?.resume_articles ?? 'En attente...',
       details_articles_json: d?.details_articles_json ?? null
     } as AdminOrderDashboardRecord
