@@ -571,11 +571,6 @@ const SalesHistoryPage = () => {
                         {formatPrice(urssaf)}
                       </td>
                     ),
-                    articles: (
-                      <td key="articles" className="py-4 px-2 text-center font-semibold text-gray-700 dark:text-gray-300">
-                        {itemsCount || 0}
-                      </td>
-                    ),
                     resume: (
                       <td key="resume" className="py-4 px-2 text-gray-500 dark:text-gray-400 min-w-[150px] max-w-[220px] truncate" title={order.resume_articles || ''}>
                         {order.resume_articles || '—'}
