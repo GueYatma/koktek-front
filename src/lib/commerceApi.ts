@@ -745,8 +745,8 @@ export const getAdminOrdersDashboard = async (input?: {
         '*', 
         'customer_id.*', 
         'order_items.*', 
-        'order_items.variant_id.cost_price', 
-        'order_items.product_id.cost_price'
+        'order_items.variant_id.*', 
+        'order_items.product_id.*'
       ] as any,
     }),
   )

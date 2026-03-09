@@ -481,7 +481,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
           headers: buildHeaders(), // Content-Type et Token
           body: JSON.stringify({
             // Les champs à écraser
-            status: "paid", // MAJ statut de commande
+            status: "processing", // MAJ statut logistique (en préparation)
             payment_status: "paid", // MAJ statut de l'argent
           }), // Fin Payload
         },
@@ -493,7 +493,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
       try {
         const orderSnapshot = {
           ...order,
-          status: "paid",
+          status: "processing",
           payment_status: "paid",
         };
 
@@ -588,7 +588,7 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
       }
 
       setOrder((prev) =>
-        prev ? { ...prev, status: "paid", payment_status: "paid" } : prev,
+        prev ? { ...prev, status: "processing", payment_status: "paid" } : prev,
       ); // Succès : On met à jour l'UI React (source de vérité locale)
       setSuccess(true); // Déclenche l'alerte verte
       setTimeout(() => {

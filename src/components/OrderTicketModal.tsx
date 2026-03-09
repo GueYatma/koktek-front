@@ -309,15 +309,13 @@ const OrderTicketModal = ({
             </div>
           </div>
 
-          {showPayByCard ? (
-            <button
-              type="button"
-              onClick={onPayByCard}
-              className="mt-4 w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-orange-500"
-            >
-              {payByCardLabel}
-            </button>
-          ) : null}
+          {/* Link: Retour Boutique (Remplace l'ancienne action Destructrice onPayByCard) */}
+          <a
+            href="/catalogue"
+            className="mt-4 flex w-full items-center justify-center rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-600 shadow-sm transition hover:bg-orange-100"
+          >
+            ← Retour à la boutique
+          </a>
         </div>
       </aside>
     </div>

@@ -165,12 +165,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     let shippingA = 0;
     groupA.forEach((unit, index) => {
-      if (index === 0) {
-        shippingA += unit.shippingPrice; // 1er : 100%
-      } else if (index === 1) {
-        shippingA += 0;                  // 2ème : offert
+      if (index % 3 === 0) {
+        shippingA += unit.shippingPrice; // Ex: 1er (index 0), 4ème (index 3), 7ème (index 6) paient plein pot
       } else {
-        shippingA += 1;                  // 3ème et + : +1 € chacun
+        shippingA += 0;                  // Ex: 2ème, 3ème, 5ème, 6ème sont 100% offerts
       }
     });
 
