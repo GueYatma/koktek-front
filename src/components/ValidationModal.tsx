@@ -390,7 +390,6 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
     return { subtotal, shipping, total }; // Renvoi obj
   }, [order, lineItems]); // Dép
 
-  const vatRate = 0; // KOKTEK utilise un taux à 0% par demande
   const totalTtc = Number.isFinite(totals.total) ? totals.total : 0; // TTC
   const vatAmount = 0; // Pas de calcul rétroactif erroné sur un HT inexistant
 
