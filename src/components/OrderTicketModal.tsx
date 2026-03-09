@@ -221,6 +221,10 @@ const OrderTicketModal = ({
                     </span>
                   </div>
                 )}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500">TVA</span>
+                  <span className="font-semibold text-gray-800">0 %</span>
+                </div>
                 <div className="flex justify-between items-center pt-2 mt-1 border-t border-gray-100">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-gray-900">
                     Total {noticeTone === 'success' ? 'Payé' : 'À régler'}
