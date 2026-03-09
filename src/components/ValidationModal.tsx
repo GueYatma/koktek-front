@@ -157,6 +157,23 @@ const fetchProductSummaries = async (ids: string[]) => {
   return map; // Retour final
 }; // Fin fonction
 
+const translateStatus = (status: string | null | undefined): string => {
+  if (!status) return "—";
+  const str = status.toLowerCase();
+  switch (str) {
+    case 'pending': return 'En attente';
+    case 'pending_payment': return 'Paiement en attente';
+    case 'pending_cash': return 'En attente d\'espèces';
+    case 'paid': return 'Payé';
+    case 'processing': return 'En cours de traitement';
+    case 'shipped': return 'Expédié';
+    case 'delivered': return 'Livré';
+    case 'cancelled': return 'Annulé';
+    case 'abandoned': return 'Abandonné';
+    default: return status;
+  }
+};
+
 type ValidationModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -373,9 +390,10 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
     return { subtotal, shipping, total }; // Renvoi obj
   }, [order, lineItems]); // Dép
 
-  const vatRate = 0.2; // Taux TVA France
+  const vatRate = 0; // KOKTEK utilise un taux à 0% par demande
   const totalTtc = Number.isFinite(totals.total) ? totals.total : 0; // TTC
-  const vatAmount = totalTtc - totalTtc / (1 + vatRate); // Rétrocalcul TVA
+  const vatAmount = 0; // Pas de calcul rétroactif erroné sur un HT inexistant
+
 
   const resolvedCustomer = customerProfile ?? customer; // Priorité au fetch
 
@@ -615,9 +633,8 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
             <h1 className="mt-2 text-2xl font-semibold text-gray-900">
               Validation vendeur
             </h1>{" "}
-            {/* Titre H1 */}
             <p className="mt-1 text-sm text-gray-500">
-              Entrez un numéro de commande pour afficher les détails.
+              Vérifiez les détails de la commande avant de valider l'encaissement.
             </p>{" "}
             {/* S/Titre */}
           </div>{" "}
@@ -675,14 +692,21 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
                 <div className="flex flex-wrap items-center gap-2">
                   {" "}
                   {/* Badges internes */}
-                  <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                    Statut: {order.status ?? "—"}
-                  </span>{" "}
-                  {/* S1 */}
-                  <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                    Paiement: {order.payment_status ?? "—"}
-                  </span>{" "}
-                  {/* P1 */}
+                  {order.status === order.payment_status || (order.status === 'pending' && order.payment_status === 'pending_cash') ? (
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                      {order.payment_status === 'pending_cash' ? "En attente d'espèces" : translateStatus(order.status)}
+                    </span>
+                  ) : (
+                    <>
+                      <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+                        Commande: {translateStatus(order.status)}
+                      </span>
+                      <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+                        Paiement: {translateStatus(order.payment_status)}
+                      </span>
+                    </>
+                  )}{" "}
+                  {/* Fin Badges */}
                 </div>{" "}
                 {/* Fin Badges */}
               </div>{" "}
@@ -844,23 +868,23 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
                 {" "}
                 {/* Liste TVA */}
                 <div className="flex items-center justify-between">
-                  <span>Sous-total HT</span>
+                  <span>Sous-total articles</span>
                   <span className="font-semibold text-gray-900">
                     {formatPrice(totals.subtotal)}
                   </span>
                 </div>{" "}
-                {/* HT */}
+                {/* Articles */}
                 <div className="flex items-center justify-between">
-                  <span>Frais de port</span>
+                  <span>Frais de livraison</span>
                   <span className="font-semibold text-gray-900">
-                    {formatPrice(totals.shipping)}
+                    {totals.shipping > 0 ? formatPrice(totals.shipping) : 'Inclus'}
                   </span>
                 </div>{" "}
                 {/* Port */}
                 <div className="flex items-center justify-between">
-                  <span>TVA incl.</span>
+                  <span>TVA</span>
                   <span className="font-semibold text-gray-900">
-                    {formatPrice(vatAmount)}
+                    0 %
                   </span>
                 </div>{" "}
                 {/* TVA */}
