@@ -39,9 +39,6 @@ type OrderTicketModalProps = {
   title?: string
   noticeTone?: 'danger' | 'success'
   onClose?: () => void
-  showPayByCard?: boolean
-  onPayByCard?: () => void
-  payByCardLabel?: string
   onContinueShopping?: () => void
 }
 
@@ -69,9 +66,6 @@ const OrderTicketModal = ({
   title = 'Commande Réservée !',
   noticeTone = 'danger',
   onClose,
-  showPayByCard = false,
-  onPayByCard,
-  payByCardLabel = 'Finalement, je paie par carte',
   onContinueShopping,
 }: OrderTicketModalProps) => {
   const ticketRef = useRef<HTMLDivElement | null>(null)
