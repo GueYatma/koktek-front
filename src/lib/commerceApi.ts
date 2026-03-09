@@ -797,11 +797,20 @@ export const getAdminOrdersDashboard = async (input?: {
 
     const totalPayeClient = Number(d?.total_paye_client ?? o.total_price ?? 0);
     const fraisPortEncaisses = Number(d?.frais_port_encaisses ?? o.shipping_price ?? 0);
-    const fraisStripe = Number(d?.frais_stripe ?? 0);
+    const rawFraisStripe = Number(d?.frais_stripe ?? 0);
     // URSSAF : 12,3% du CA — toujours calculé depuis le total réel si la vue ne le fournit pas
     const fraisUrssaf = Number(d?.frais_urssaf) > 0 ? Number(d.frais_urssaf) : totalPayeClient * 0.123;
     const coutProduitsEstime = Number(d?.cout_produits_estime) > 0 ? Number(d.cout_produits_estime) : immediateCogs;
     
+    // Estimation Stripe (1.5% + 0.30€) pour paiements carte si la vue SQL retourne 0
+    const isCardPayment = !['espèces', 'especes', 'cash'].some(kw =>
+      (o.payment_method || '').toLowerCase().includes(kw)
+    );
+    const stripeEstimate = isCardPayment && totalPayeClient > 0
+      ? parseFloat(((totalPayeClient * 0.015) + 0.30).toFixed(2))
+      : 0;
+    const fraisStripe = rawFraisStripe > 0 ? rawFraisStripe : stripeEstimate;
+
     // Le coût CJ n'est applicable qu'en dropshipping pur, sinon on prend le port encaissé comme estimation de départ (si non défini)
     const coutExpeditionEstime = d?.cout_expedition_estime && d.cout_expedition_estime > 0 ? d.cout_expedition_estime : (immediateCogs > 0 ? fraisPortEncaisses : 0);
     

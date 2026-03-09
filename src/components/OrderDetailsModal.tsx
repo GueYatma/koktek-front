@@ -66,11 +66,18 @@ const OrderDetailsModal = ({ isOpen, order, onClose }: OrderDetailsModalProps) =
     : 0
   const costCJ = rawCostCJ > 0 ? rawCostCJ : itemsCostCJ
   const shippingCJ = rawShippingCJ > 0 ? rawShippingCJ : itemsShippingCJ
-  const stripe = n(order.frais_stripe)
+  const rawStripe = n(order.frais_stripe)
   const urssaf = n(order.frais_urssaf)
-  // Recalcul du bénéfice si les coûts CJ ont été recalculés depuis les items
+  // Estimation Stripe si paiement carte et vue SQL retourne 0
+  const isCardPayment = !['espèces', 'especes', 'cash'].some(kw =>
+    (order.methode_paiement || '').toLowerCase().includes(kw)
+  )
+  const stripeEstimate = isCardPayment && total > 0 ? parseFloat(((total * 0.015) + 0.30).toFixed(2)) : 0
+  const stripe = rawStripe > 0 ? rawStripe : stripeEstimate
+  // Recalcul du bénéfice si les coûts CJ et/ou Stripe ont été recalculés depuis les items
   const rawProfit = n(order.benefice_net_estime)
-  const profit = (rawCostCJ === 0 && itemsCostCJ > 0)
+  const needsRecalc = (rawCostCJ === 0 && itemsCostCJ > 0) || (rawStripe === 0 && stripe > 0)
+  const profit = needsRecalc
     ? total - costCJ - shippingCJ - stripe - urssaf
     : rawProfit
   const marginRate = total > 0 ? (profit / total) * 100 : 0
@@ -184,16 +191,16 @@ const OrderDetailsModal = ({ isOpen, order, onClose }: OrderDetailsModalProps) =
                 <span>− Expédition CJ</span>
                 <span className="text-rose-500">-{formatPrice(shippingCJ)}</span>
               </div>
-              {stripe > 0 && (
-                <div className="flex justify-between text-gray-500 dark:text-gray-400">
-                  <span>− Frais Stripe (1.5%+0.25€)</span>
-                  <span className="text-violet-500">-{formatPrice(stripe)}</span>
-                </div>
-              )}
               <div className="flex justify-between text-gray-500 dark:text-gray-400">
                 <span>− URSSAF (12.3%)</span>
                 <span className="text-amber-600 dark:text-amber-400">-{formatPrice(urssaf)}</span>
               </div>
+              {stripe > 0 && (
+                <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                  <span>− Frais Stripe (1.5%+{formatPrice(0.30)})</span>
+                  <span className="text-violet-500">-{formatPrice(stripe)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-gray-500 dark:text-gray-400 border-t border-dashed border-slate-300 dark:border-gray-600 pt-1.5">
                 <span>Total charges</span>
                 <span className="font-semibold text-gray-700 dark:text-gray-300">-{formatPrice(totalCharges)}</span>
