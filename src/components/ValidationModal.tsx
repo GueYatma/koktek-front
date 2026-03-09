@@ -694,15 +694,15 @@ const ValidationModal = ({ isOpen, onClose, selectedOrder }: ValidationModalProp
                   {/* Badges internes */}
                   {order.status === order.payment_status || (order.status === 'pending' && order.payment_status === 'pending_cash') ? (
                     <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                      {order.payment_status === 'pending_cash' ? "En attente d'espèces" : translateStatus(order.status)}
+                      {order.payment_status === 'pending_cash' ? "En attente d'espèces" : translateStatus(order.status ?? undefined)}
                     </span>
                   ) : (
                     <>
                       <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                        Commande: {translateStatus(order.status)}
+                        Commande: {translateStatus(order.status ?? undefined)}
                       </span>
                       <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                        Paiement: {translateStatus(order.payment_status)}
+                        Paiement: {translateStatus(order.payment_status ?? undefined)}
                       </span>
                     </>
                   )}{" "}

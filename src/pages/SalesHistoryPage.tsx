@@ -590,11 +590,11 @@ const SalesHistoryPage = () => {
                     payment: (
                       <td key="payment" className="py-4 px-2 text-center">
                         <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold text-center leading-tight ${
-                          order.methode_paiement === 'Carte Bancaire' && paymentStatus !== 'paid'
+                          (order.methode_paiement || '').toLowerCase().includes('carte') && paymentStatus !== 'paid'
                             ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
                             : resolvePaymentTone(paymentStatus)
                         }`}>
-                          {order.methode_paiement === 'Carte Bancaire' && paymentStatus !== 'paid'
+                          {(order.methode_paiement || '').toLowerCase().includes('carte') && paymentStatus !== 'paid'
                             ? 'Abandonné'
                             : normalizePaymentStatus(paymentStatus)}
                         </span>
@@ -648,7 +648,11 @@ const SalesHistoryPage = () => {
                           <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">
                             Espèces Validées
                           </span>
-                        ) : order.methode_paiement === 'Carte Bancaire' && paymentStatus !== 'paid' ? (
+                        ) : paymentStatus === 'paid' ? (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                            {(order.methode_paiement || '').toLowerCase().includes('carte') ? 'Payé en ligne' : 'Payé'}
+                          </span>
+                        ) : (order.methode_paiement || '').toLowerCase().includes('carte') && paymentStatus !== 'paid' ? (
                           <div className="inline-flex items-center gap-1.5 justify-center w-full">
                             <button
                               type="button"
@@ -659,13 +663,9 @@ const SalesHistoryPage = () => {
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
-                        ) : paymentStatus === 'paid' ? (
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {order.methode_paiement === 'Carte Bancaire' ? 'Payé en ligne' : 'Payé'}
-                          </span>
                         ) : (
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {paymentStatus === 'canceled' || paymentStatus === 'failed' ? 'Abandonné' : 'En attente'}
+                            {paymentStatus === 'canceled' || paymentStatus === 'failed' || paymentStatus === 'abandoned' ? 'Abandonné' : 'En attente'}
                           </span>
                         )}
                       </td>
