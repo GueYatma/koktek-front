@@ -491,7 +491,6 @@ const SalesHistoryPage = () => {
                   const shippingCJ = toNumberValue(order.cout_expedition_estime)
                   const stripeFee = toNumberValue(order.frais_stripe)
                   const urssaf = toNumberValue(order.frais_urssaf)
-                  const itemsCount = toNumberValue(order.nombre_articles)
                   const netProfit = toNumberValue(order.benefice_net_estime)
                   const paymentStatus = String(order.status_paiement || '').toLowerCase()
                   const deliveryStatus = String(order.status_commande || '—')
