@@ -225,7 +225,7 @@ const AccountingPage = () => {
         marginRate: entry.revenue > 0 ? (entry.margin / entry.revenue) * 100 : 0,
       }))
       .sort((a, b) => a.key.localeCompare(b.key))
-  }, [orders, periodPreset, paymentFilter])
+  }, [orders, periodPreset])
 
   const totals = useMemo(() => {
     return rows.reduce(
