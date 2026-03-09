@@ -266,8 +266,8 @@ const CheckoutPage = () => {
     try {
       // Étape 1: passer la commande en attente de paiement espèces.
       await markOrderPaid(orderId, {
-        status: 'pending_cash',
-        payment_status: 'pending_cash',
+        status: 'pending', // Le statut de l'expédition/commande reste 'pending' (en attente d'expédition)
+        payment_status: 'pending_cash', // Le paiement lui-même est en attente d'encaissement d'espèces
         payment_method: 'Espèces',
       })
 

@@ -546,13 +546,13 @@ export const createOrderItems = async (
     currency?: string
   }>,
 ): Promise<OrderItemRecord[]> => {
-  const payload = items.map((item) => ({
+  const payload = items.map((item) => omitNil({
     order_id: item.order_id,
     product_id: item.product_id,
-    variant_id: item.variant_id ?? null,
+    variant_id: item.variant_id ?? undefined,
     quantity: item.quantity,
-    unit_price: item.unit_price ?? null,
-    line_total: item.line_total ?? null,
+    unit_price: item.unit_price ?? undefined,
+    line_total: item.line_total ?? undefined,
     currency: item.currency ?? 'EUR',
   }))
   return createMany<OrderItemRecord>('order_items', payload)
