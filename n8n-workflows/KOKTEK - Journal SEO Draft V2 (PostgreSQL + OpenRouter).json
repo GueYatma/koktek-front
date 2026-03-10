@@ -1,0 +1,332 @@
+{
+  "name": "KOKTEK - Journal SEO Draft V2 (PostgreSQL + OpenRouter)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "4fb1119d-bf0a-4d78-a4ff-d7a247b94d6e",
+      "name": "Schedule Trigger (Toutes les heures)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH next_topic AS (\\n  SELECT id\\n  FROM koktek.seo_topics\\n  WHERE status = 'approved'\\n    AND generated_post_id IS NULL\\n  ORDER BY priority ASC NULLS LAST,\\n           published_target_date ASC NULLS LAST,\\n           updated_at ASC NULLS LAST,\\n           created_at ASC NULLS LAST\\n  LIMIT 1\\n  FOR UPDATE SKIP LOCKED\\n)\\nUPDATE koktek.seo_topics st\\nSET status = 'in_progress',\\n    updated_at = NOW()\\nFROM next_topic\\nWHERE st.id = next_topic.id\\nRETURNING st.*;",
+        "options": {}
+      },
+      "id": "a2012f3f-e03b-4485-9e1e-9cb965ecb4c7",
+      "name": "Postgres : Réserver 1 Sujet SEO",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH topic AS (\\n  SELECT *\\n  FROM koktek.seo_topics\\n  WHERE id = $1\\n),\\nmanual_ids AS (\\n  SELECT jsonb_array_elements_text(\\n    CASE\\n      WHEN jsonb_typeof(COALESCE((SELECT manual_product_ids FROM topic), '[]'::jsonb)) = 'array'\\n        THEN COALESCE((SELECT manual_product_ids FROM topic), '[]'::jsonb)\\n      ELSE '[]'::jsonb\\n    END\\n  )::uuid AS product_id\\n),\\nmanual_products AS (\\n  SELECT\\n    p.id,\\n    p.title,\\n    p.slug,\\n    COALESCE(\\n      MIN(NULLIF(pv.prix_calcule, 0)),\\n      MIN(NULLIF(pv.price, 0)),\\n      p.retail_price,\\n      p.base_price\\n    ) AS retail_price,\\n    p.image,\\n    1 AS source_rank,\\n    row_number() OVER (ORDER BY p.title) AS sort_order\\n  FROM koktek.products p\\n  LEFT JOIN koktek.product_variants pv ON pv.product_id = p.id\\n  WHERE p.status = 'published'\\n    AND p.id IN (SELECT product_id FROM manual_ids)\\n  GROUP BY p.id, p.title, p.slug, p.image, p.retail_price, p.base_price\\n),\\nrandom_products AS (\\n  SELECT\\n    p.id,\\n    p.title,\\n    p.slug,\\n    COALESCE(\\n      MIN(NULLIF(pv.prix_calcule, 0)),\\n      MIN(NULLIF(pv.price, 0)),\\n      p.retail_price,\\n      p.base_price\\n    ) AS retail_price,\\n    p.image,\\n    2 AS source_rank,\\n    row_number() OVER (ORDER BY random()) AS sort_order\\n  FROM koktek.products p\\n  LEFT JOIN koktek.product_variants pv ON pv.product_id = p.id\\n  WHERE p.status = 'published'\\n    AND p.id NOT IN (SELECT product_id FROM manual_ids)\\n  GROUP BY p.id, p.title, p.slug, p.image, p.retail_price, p.base_price\\n  ORDER BY random()\\n  LIMIT GREATEST(\\n    0,\\n    COALESCE((SELECT max_products FROM topic), 4) - (SELECT COUNT(*) FROM manual_products)\\n  )\\n),\\nselected_products AS (\\n  SELECT * FROM manual_products\\n  UNION ALL\\n  SELECT * FROM random_products\\n),\\nordered_products AS (\\n  SELECT *\\n  FROM selected_products\\n  ORDER BY source_rank, sort_order\\n  LIMIT COALESCE((SELECT max_products FROM topic), 4)\\n)\\nSELECT\\n  COALESCE(\\n    json_agg(\\n      json_build_object(\\n        'id', id,\\n        'title', title,\\n        'slug', slug,\\n        'retail_price', retail_price,\\n        'image', image\\n      )\\n      ORDER BY source_rank, sort_order\\n    ) FILTER (WHERE id IS NOT NULL),\\n    '[]'::json\\n  ) AS products,\\n  COALESCE(\\n    array_agg(id ORDER BY source_rank, sort_order) FILTER (WHERE id IS NOT NULL),\\n    ARRAY[]::uuid[]\\n  ) AS product_ids,\\n  (\\n    SELECT image\\n    FROM ordered_products\\n    WHERE image IS NOT NULL\\n      AND image <> ''\\n    ORDER BY source_rank, sort_order\\n    LIMIT 1\\n  ) AS cover_image;",
+        "options": {
+          "queryReplacement": "={{ [$json.id] }}"
+        }
+      },
+      "id": "2f6238f4-d3ba-4f3f-9cd8-b21437dcb122",
+      "name": "Postgres : Sélectionner Produits du Sujet",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalizeArray = (value) => {\\n  if (Array.isArray(value)) return value;\\n  if (typeof value === 'string' && value.trim()) {\\n    try {\\n      const parsed = JSON.parse(value);\\n      if (Array.isArray(parsed)) return parsed;\\n    } catch {}\\n\\n    return value\\n      .replace(/^\\{/, '')\\n      .replace(/\\}$/, '')\\n      .split(',')\\n      .map((entry) => entry.trim())\\n      .filter(Boolean);\\n  }\\n  return [];\\n};\\n\\nconst topic = $('Postgres : Réserver 1 Sujet SEO').first().json;\\nconst selection = items[0]?.json ?? {};\\n\\nconst rawProducts = normalizeArray(selection.products).map((product) => {\\n  if (typeof product === 'string') {\\n    try {\\n      return JSON.parse(product);\\n    } catch {\\n      return null;\\n    }\\n  }\\n  return product;\\n}).filter(Boolean);\\n\\nconst rawProductIds = normalizeArray(selection.product_ids).map((id) => String(id)).filter(Boolean);\\nconst uniqueProductIds = [...new Set(rawProductIds)];\\n\\nconst productsText = rawProducts.length > 0\\n  ? rawProducts\\n      .map((product) => `- ${product.title} (Prix indicatif : ${product.retail_price ?? 'N/A'}€)`)\\n      .join('\\\\n')\\n  : 'Aucun produit imposé pour ce sujet. Utilise une recommandation très légère ou aucune si ce n\\'est pas pertinent.';\\n\\nreturn [{\\n  json: {\\n    topic_id: topic.id,\\n    topic_title: topic.title,\\n    target_keyword: topic.target_keyword || '',\\n    secondary_keywords: topic.secondary_keywords || '',\\n    search_intent: topic.search_intent || 'informational',\\n    pillar: topic.pillar || '',\\n    article_type: topic.article_type || 'guide',\\n    angle: topic.angle || '',\\n    audience: topic.audience || '',\\n    brief: topic.brief || '',\\n    seasonality: topic.seasonality || 'evergreen',\\n    min_words: Number(topic.min_words || 900),\\n    max_products: Number(topic.max_products || 4),\\n    products: rawProducts,\\n    products_text: productsText,\\n    product_ids: uniqueProductIds,\\n    cover_image: selection.cover_image || null,\\n  }\\n}];"
+      },
+      "id": "d028a6f4-4494-4ccc-ad03-bdd4d7b07d85",
+      "name": "Code : Préparer Brief SEO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sujet SEO validé pour le Journal KOKTEK :\\nTitre interne : {{ $json.topic_title }}\\nMot-clé principal : {{ $json.target_keyword || 'Non précisé' }}\\nMots-clés secondaires : {{ $json.secondary_keywords || 'Aucun' }}\\nIntention : {{ $json.search_intent || 'informational' }}\\nPilier : {{ $json.pillar || 'general' }}\\nType d'article : {{ $json.article_type || 'guide' }}\\nAngle : {{ $json.angle || 'Aucun angle imposé' }}\\nAudience : {{ $json.audience || 'Grand public' }}\\nSaisonnalité : {{ $json.seasonality || 'evergreen' }}\\nBrief : {{ $json.brief || 'Répondre clairement au besoin de l\\'internaute.' }}\\nLongueur minimale : {{ $json.min_words || 900 }} mots\\nNombre maximum de produits à citer : {{ $json.max_products || 4 }}\\n\\nProduits KOKTEK disponibles si et seulement si pertinents :\\n{{ $json.products_text }}\\n\\nConsignes :\\n1. Répondre d'abord à la question de l'internaute, sans ton publicitaire.\\n2. Produire un vrai brouillon éditorial du Journal KOKTEK, utile, clair et crédible.\\n3. Ne jamais transformer l'article en fiche produit déguisée.\\n4. Si des produits sont pertinents, les citer surtout dans la deuxième moitié ou la fin de l'article, comme solutions discrètes.\\n5. Utiliser du HTML propre avec des <h2>, <h3>, <p>, <ul>, <li> et <strong>.\\n6. Ajouter un chapo utile, des sous-titres lisibles et une vraie progression logique.\\n7. Renvoyer strictement l'objet JSON brut, rien d'autre.",
+        "options": {
+          "systemMessage": "Tu es le rédacteur SEO senior du Journal KOKTEK. Tu écris des brouillons premium, utiles et crédibles, à l'intersection de la tech du quotidien, de la mobilité, du lifestyle et de la protection smartphone.\\n\\nTu dois toujours renvoyer UNIQUEMENT un objet JSON valide avec exactement ces 7 clés :\\n\\n\\\"title\\\" : titre SEO naturel, humain, non racoleur.\\n\\\"slug\\\" : slug URL en minuscules, sans accents, avec des tirets.\\n\\\"excerpt\\\" : chapo / résumé de 2 à 3 phrases.\\n\\\"seo_title\\\" : balise title SEO de max 65 caractères.\\n\\\"seo_description\\\" : meta description de max 155 caractères.\\n\\\"cover_image_alt\\\" : texte alternatif descriptif de l'image de couverture.\\n\\\"content\\\" : contenu HTML complet, utile, structuré, avec au moins la longueur demandée.\\n\\nRègles absolues :\\n- Le premier paragraphe doit répondre au problème, pas vendre.\\n- Le ton doit être expert, simple, premium et concret.\\n- Pas de fausse actualité, pas d'invention de chiffres, pas de prix fantaisistes.\\n- Si un produit est cité, il doit apparaître comme une recommandation contextuelle, pas comme l'objet principal de l'article.\\n- Aucun texte hors JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        912,
+        0
+      ],
+      "id": "4571558b-3bb1-46e5-a294-8f1e8ce4e86f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        912,
+        304
+      ],
+      "id": "28f2fd62-e0a9-4f26-9f76-32f38f8b57a1",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "cVPDbiG2sQv7okss",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const toSlug = (value) => value\\n  .toLowerCase()\\n  .normalize('NFD')\\n  .replace(/[\\\\u0300-\\\\u036f]/g, '')\\n  .replace(/[^a-z0-9]+/g, '-')\\n  .replace(/(^-|-$)+/g, '');\\n\\nconst stripHtml = (value) => value\\n  .replace(/<style[\\\\s\\\\S]*?<\\\\/style>/gi, ' ')\\n  .replace(/<script[\\\\s\\\\S]*?<\\\\/script>/gi, ' ')\\n  .replace(/<[^>]+>/g, ' ')\\n  .replace(/&nbsp;/g, ' ')\\n  .replace(/\\\\s+/g, ' ')\\n  .trim();\\n\\nconst normalizeIds = (value) => {\\n  if (Array.isArray(value)) return value.map((id) => String(id)).filter(Boolean);\\n  if (typeof value === 'string' && value.trim()) {\\n    return value\\n      .replace(/^\\{/, '')\\n      .replace(/\\}$/, '')\\n      .split(',')\\n      .map((entry) => entry.trim())\\n      .filter(Boolean);\\n  }\\n  return [];\\n};\\n\\nlet aiText = items[0].json.output || items[0].json.text || items[0].json.message?.content || items[0].json.message || '';\\n\\nif (typeof aiText !== 'string' || !aiText.trim()) {\\n  throw new Error('La réponse du modèle est vide ou illisible.');\\n}\\n\\naiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();\\n\\nconst start = aiText.indexOf('{');\\nconst end = aiText.lastIndexOf('}');\\nconst jsonSlice = start !== -1 && end !== -1 && end > start\\n  ? aiText.slice(start, end + 1)\\n  : aiText;\\n\\nlet aiResponse;\\ntry {\\n  aiResponse = JSON.parse(aiText);\\n} catch {\\n  aiResponse = JSON.parse(jsonSlice);\\n}\\n\\nconst preparedData = $('Code : Préparer Brief SEO').first().json;\\nconst title = typeof aiResponse.title === 'string' ? aiResponse.title.trim() : '';\\nconst safeTitle = title || preparedData.topic_title || 'Article Journal KOKTEK';\\nconst safeSlug = toSlug((typeof aiResponse.slug === 'string' ? aiResponse.slug : safeTitle) || `article-${Date.now()}`);\\nconst summary = typeof aiResponse.excerpt === 'string' ? aiResponse.excerpt.trim() : '';\\nconst content = typeof aiResponse.content === 'string' ? aiResponse.content.trim() : '';\\nconst seoTitle = typeof aiResponse.seo_title === 'string' ? aiResponse.seo_title.trim() : safeTitle;\\nconst seoDescription = typeof aiResponse.seo_description === 'string' ? aiResponse.seo_description.trim() : summary;\\nconst coverImageAlt = typeof aiResponse.cover_image_alt === 'string' ? aiResponse.cover_image_alt.trim() : safeTitle;\\nconst productIds = normalizeIds(preparedData.product_ids);\\nconst coverImage = preparedData.cover_image || null;\\n\\nif (!content) {\\n  throw new Error('Le brouillon généré ne contient aucun contenu exploitable.');\\n}\\n\\nconst wordCount = stripHtml(content).split(/\\\\s+/).filter(Boolean).length;\\nconst readingTime = Math.max(1, Math.ceil(wordCount / 220));\\n\\nreturn [{\\n  json: {\\n    topic_id: preparedData.topic_id,\\n    title: safeTitle,\\n    slug: safeSlug,\\n    summary,\\n    content,\\n    cover_image: coverImage,\\n    cover_image_alt: coverImageAlt,\\n    product_ids: productIds,\\n    pillar: preparedData.pillar || null,\\n    article_type: preparedData.article_type || null,\\n    reading_time: readingTime,\\n    target_keyword: preparedData.target_keyword || null,\\n    search_intent: preparedData.search_intent || null,\\n    seasonality: preparedData.seasonality || null,\\n    author_label: 'Journal KOKTEK',\\n    seo_title: seoTitle,\\n    seo_description: seoDescription,\\n  }\\n}];"
+      },
+      "id": "a0a0a4da-b27f-4931-a8fd-8f6c56b5426c",
+      "name": "Code : Parser le JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO koktek.blog_posts (\\n  status,\\n  title,\\n  slug,\\n  summary,\\n  content,\\n  cover_image,\\n  cover_image_alt,\\n  pillar,\\n  article_type,\\n  reading_time,\\n  target_keyword,\\n  search_intent,\\n  seasonality,\\n  manual_review_status,\\n  source_topic,\\n  author_label,\\n  seo_title,\\n  seo_description,\\n  date_created\\n)\\nVALUES (\\n  'draft',\\n  $1,\\n  $2,\\n  $3,\\n  $4,\\n  $5,\\n  $6,\\n  $7,\\n  $8,\\n  $9,\\n  $10,\\n  $11,\\n  $12,\\n  'needs_review',\\n  $13,\\n  $14,\\n  $15,\\n  $16,\\n  NOW()\\n)\\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [$json.title, $json.slug, $json.summary, $json.content, $json.cover_image, $json.cover_image_alt, $json.pillar, $json.article_type, $json.reading_time, $json.target_keyword, $json.search_intent, $json.seasonality, $json.topic_id, $json.author_label, $json.seo_title, $json.seo_description] }}"
+        }
+      },
+      "id": "eadf542f-8890-4660-9d25-5a1638f6c4d6",
+      "name": "Postgres : Créer Brouillon",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1424,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const blogPostId = items[0].json.id;\\nconst productIds = $('Code : Parser le JSON').first().json.product_ids || [];\\n\\nreturn productIds.map((productId) => ({\\n  json: {\\n    blog_posts_id: blogPostId,\\n    products_id: productId,\\n  }\\n}));"
+      },
+      "id": "ab00f929-6c5b-4f8d-bf3f-bd4fbefdf6cc",
+      "name": "Code : Préparer Jointures M2M",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.blog_posts_products (blog_posts_id, products_id)\\nVALUES ($1, $2);",
+        "options": {
+          "queryReplacement": "={{ [$json.blog_posts_id, $json.products_id] }}"
+        }
+      },
+      "id": "164e9890-df45-4f5c-b4e2-6df7f123b3c9",
+      "name": "Postgres : Lier Produits à l'Article",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1904,
+        -112
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE koktek.seo_topics\\nSET status = 'generated',\\n    generated_post_id = $1,\\n    last_generated_at = NOW(),\\n    updated_at = NOW()\\nWHERE id = $2\\nRETURNING id, status, generated_post_id;",
+        "options": {
+          "queryReplacement": "={{ [$json.id, $('Code : Parser le JSON').first().json.topic_id] }}"
+        }
+      },
+      "id": "d46d1f53-c1a4-4e1b-8c5f-d9b64f61f75f",
+      "name": "Postgres : Finaliser Sujet SEO",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1664,
+        112
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger (Toutes les heures)": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Réserver 1 Sujet SEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres : Réserver 1 Sujet SEO": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Sélectionner Produits du Sujet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres : Sélectionner Produits du Sujet": {
+      "main": [
+        [
+          {
+            "node": "Code : Préparer Brief SEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Préparer Brief SEO": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code : Parser le JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Parser le JSON": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Créer Brouillon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres : Créer Brouillon": {
+      "main": [
+        [
+          {
+            "node": "Code : Préparer Jointures M2M",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Postgres : Finaliser Sujet SEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Préparer Jointures M2M": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Lier Produits à l'Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "29803ee9-e649-4b6f-8b56-a2f4432d8123",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "QdHeP4VDyrM9Jn7K",
+  "tags": []
+}
