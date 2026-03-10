@@ -4,8 +4,9 @@ import { useTheme } from '../../context/ThemeContext'
 
 const navItems = [
   { label: 'Une', href: '/blog' },
-  { label: 'Thématiques', href: '/blog#themes' },
-  { label: 'Guides', href: '/blog#guides' },
+  { label: 'Auto & Mobilite', href: '/blog/theme/auto-mobilite' },
+  { label: 'Tech & Productivite', href: '/blog/theme/tech-productivite' },
+  { label: 'Lifestyle & Protection', href: '/blog/theme/lifestyle-protection' },
 ]
 
 const JournalHeader = () => {
@@ -34,16 +35,12 @@ const JournalHeader = () => {
 
           <nav className="ml-auto hidden items-center gap-2 lg:flex">
             {navItems.map((item) => {
-              const isActive = item.href === '/blog' && isHome
-              return item.href.startsWith('/blog#') ? (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/80 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900/70 dark:hover:text-white"
-                >
-                  {item.label}
-                </a>
-              ) : (
+              const isActive =
+                item.href === '/blog'
+                  ? isHome
+                  : location.pathname === item.href
+
+              return (
                 <Link
                   key={item.href}
                   to={item.href}
@@ -81,27 +78,17 @@ const JournalHeader = () => {
 
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
           {navItems.map((item) =>
-            item.href.startsWith('/blog#') ? (
-              <a
-                key={item.href}
-                href={item.href}
-                className="whitespace-nowrap rounded-full border border-slate-300/70 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
-              >
-                {item.label}
-              </a>
-            ) : (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  isHome
-                    ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950'
-                    : 'border border-slate-300/70 bg-white/80 text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ),
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
+                (item.href === '/blog' ? isHome : location.pathname === item.href)
+                  ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950'
+                  : 'border border-slate-300/70 bg-white/80 text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200'
+              }`}
+            >
+              {item.label}
+            </Link>,
           )}
           <Link
             to="/catalogue"

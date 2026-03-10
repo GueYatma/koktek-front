@@ -21,6 +21,7 @@ const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
 const SalesHistoryPage = lazy(() => import('./pages/SalesHistoryPage'))
 const AccountingPage = lazy(() => import('./pages/AccountingPage'))
 const BlogListPage = lazy(() => import('./pages/BlogListPage'))
+const BlogPillarPage = lazy(() => import('./pages/BlogPillarPage'))
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'))
 
 const AdminRedirect = () => {
@@ -49,6 +50,7 @@ const App = () => {
 
             <Route element={<JournalLayout />}>
               <Route path="/blog" element={<BlogListPage />} />
+              <Route path="/blog/theme/:slug" element={<BlogPillarPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
             </Route>
 

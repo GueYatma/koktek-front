@@ -1010,8 +1010,9 @@ export const getBlogPosts = async (options: {
   limit?: number
   offset?: number
   category?: string
+  pillar?: string
 }): Promise<BlogPostListItem[]> => {
-  const { limit = 20, offset = 0, category } = options
+  const { limit = 20, offset = 0, category, pillar } = options
 
   const params: Record<string, string> = {
     'filter[status][_eq]': 'published',
@@ -1022,6 +1023,9 @@ export const getBlogPosts = async (options: {
   }
   if (category) {
     params['filter[category][_eq]'] = category
+  }
+  if (pillar) {
+    params['filter[pillar][_eq]'] = pillar
   }
 
   try {

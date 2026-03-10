@@ -20,10 +20,10 @@ const JournalFooter = () => {
         <div>
           <p className="text-sm font-semibold text-white">Thématiques</p>
           <div className="mt-4 flex flex-col gap-3 text-sm text-slate-300">
-            <a href="/blog#themes" className="transition hover:text-white">Auto & Mobilite</a>
-            <a href="/blog#themes" className="transition hover:text-white">Tech & Productivite</a>
-            <a href="/blog#themes" className="transition hover:text-white">Lifestyle & Protection</a>
-            <a href="/blog#guides" className="transition hover:text-white">Guides du moment</a>
+            <Link to="/blog/theme/auto-mobilite" className="transition hover:text-white">Auto & Mobilite</Link>
+            <Link to="/blog/theme/tech-productivite" className="transition hover:text-white">Tech & Productivite</Link>
+            <Link to="/blog/theme/lifestyle-protection" className="transition hover:text-white">Lifestyle & Protection</Link>
+            <Link to="/blog/theme/guides-achat" className="transition hover:text-white">Guides d Achat</Link>
           </div>
         </div>
 

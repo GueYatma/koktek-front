@@ -10,7 +10,13 @@ import {
 } from '../lib/commerceApi'
 import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
-import { estimateReadingTime, prepareArticleContent } from '../utils/journal'
+import JournalPillarNav from '../components/journal/JournalPillarNav'
+import {
+  estimateReadingTime,
+  getJournalPillarMeta,
+  getJournalStoryLabel,
+  prepareArticleContent,
+} from '../utils/journal'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import BackButton from '../components/BackButton'
 
@@ -33,9 +39,6 @@ const formatDate = (iso?: string | null) => {
     year: 'numeric',
   }).format(new Date(iso.endsWith('Z') || iso.includes('+') ? iso : `${iso}Z`))
 }
-
-const storyLabel = (post: BlogPostListItem | BlogPost) =>
-  post.pillar ?? post.category ?? post.article_type ?? 'Guide pratique'
 
 const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
   const image = resolveImageUrl(product.image_url, '')
@@ -99,8 +102,8 @@ const RelatedArticleCard = ({ post }: { post: BlogPostListItem }) => {
 
       <div className="mt-5 flex flex-1 flex-col">
         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span className="rounded-full border border-slate-300/70 bg-white/80 px-2.5 py-1 font-semibold uppercase tracking-[0.18em] text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200">
-            {storyLabel(post)}
+            <span className="rounded-full border border-slate-300/70 bg-white/80 px-2.5 py-1 font-semibold uppercase tracking-[0.18em] text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200">
+            {getJournalStoryLabel(post)}
           </span>
           {post.published_at && <time>{formatDate(post.published_at)}</time>}
         </div>
@@ -165,21 +168,30 @@ const BlogPostPage = () => {
       try {
         const primary = await getBlogPosts({
           limit: 6,
-          category: post.category ?? undefined,
+          pillar: post.pillar ?? undefined,
+          category: post.pillar ? undefined : post.category ?? undefined,
         })
 
         const next = primary.filter((item) => item.id !== post.id)
+        const seenIds = new Set<string>([post.id, ...next.map((item) => item.id)])
 
-        if (next.length < 3) {
-          const fallback = await getBlogPosts({ limit: 12 })
-          const seenIds = new Set<string>([post.id, ...next.map((item) => item.id)])
-
-          fallback.forEach((item) => {
+        const appendUnique = (items: BlogPostListItem[]) => {
+          items.forEach((item) => {
             if (!seenIds.has(item.id) && next.length < 3) {
               seenIds.add(item.id)
               next.push(item)
             }
           })
+        }
+
+        if (next.length < 3 && post.pillar && post.category) {
+          const categoryFallback = await getBlogPosts({ limit: 12, category: post.category })
+          appendUnique(categoryFallback)
+        }
+
+        if (next.length < 3) {
+          const fallback = await getBlogPosts({ limit: 12 })
+          appendUnique(fallback)
         }
 
         if (!isCancelled) {
@@ -197,7 +209,7 @@ const BlogPostPage = () => {
     return () => {
       isCancelled = true
     }
-  }, [post?.id, post?.category])
+  }, [post?.id, post?.category, post?.pillar])
 
   useDocumentMeta({
     title: post?.seo_title ?? (post?.title ? `${post.title} | Journal KOKTEK` : undefined),
@@ -216,6 +228,7 @@ const BlogPostPage = () => {
     : ''
   const preparedContent = prepareArticleContent(sanitizedContent)
   const readingTime = post?.reading_time ?? estimateReadingTime(post?.content ?? post?.summary ?? null)
+  const pillarMeta = getJournalPillarMeta(post?.pillar)
 
   if (loading) {
     return (
@@ -269,7 +282,18 @@ const BlogPostPage = () => {
         <Link to="/blog" className="transition hover:text-gray-700 dark:hover:text-gray-300">
           Journal
         </Link>
-        {post.category && (
+        {pillarMeta && (
+          <>
+            <span>/</span>
+            <Link
+              to={`/blog/theme/${pillarMeta.key}`}
+              className="text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            >
+              {pillarMeta.label}
+            </Link>
+          </>
+        )}
+        {!pillarMeta && post.category && (
           <>
             <span>/</span>
             <span className="text-gray-500 dark:text-gray-400">{post.category}</span>
@@ -281,7 +305,7 @@ const BlogPostPage = () => {
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
             <Tag className="h-3 w-3" />
-            {storyLabel(post)}
+            {getJournalStoryLabel(post)}
           </span>
           {post.article_type && (
             <span className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-800 dark:text-slate-400">
@@ -401,6 +425,11 @@ const BlogPostPage = () => {
               <p>Le Journal KOKTEK part du besoin, pas du produit.</p>
               <p>Chaque article garde un lien avec la boutique sans redevenir une grille catalogue.</p>
             </div>
+            {pillarMeta && (
+              <div className="mt-5">
+                <JournalPillarNav activePillar={pillarMeta.key} />
+              </div>
+            )}
             <Link
               to="/catalogue"
               className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
