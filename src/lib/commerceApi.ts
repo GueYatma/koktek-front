@@ -884,8 +884,14 @@ export type BlogProduct = {
   status?: string | null
 }
 
-/** Un article de blog tel que livré par Directus */
-export type BlogPost = {
+/** Structure brute retournée par Directus pour une ligne de junction M2M blog_posts_products */
+type BlogProductJunction = {
+  id: number
+  products_id: BlogProduct | null
+}
+
+/** Un article de blog tel que livré par Directus (avant normalisation M2M) */
+type BlogPostRaw = {
   id: string
   slug: string
   title: string
@@ -897,14 +903,18 @@ export type BlogPost = {
   content?: string | null
   seo_title?: string | null
   seo_description?: string | null
-  /** Relation M2M – peuplée uniquement dans `getBlogPost` */
+  products?: BlogProductJunction[]
+}
+
+/** Un article de blog normalisé (produits à plat) */
+export type BlogPost = Omit<BlogPostRaw, 'products'> & {
   products?: BlogProduct[]
 }
 
 type BlogPostListItem = Omit<BlogPost, 'content' | 'products' | 'seo_title' | 'seo_description'>
 
 type DirectusBlogListResponse = {
-  data: BlogPost[]
+  data: BlogPostRaw[]
 }
 
 const BLOG_LIST_FIELDS = [
@@ -921,15 +931,22 @@ const BLOG_LIST_FIELDS = [
 const BLOG_DETAIL_FIELDS = [
   'id', 'slug', 'title', 'summary', 'cover_image', 'category',
   'published_at', 'status', 'content', 'seo_title', 'seo_description',
-  // M2M junction: blog_posts_products → expand product fields
+  // M2M Directus : structure junction → products_id.*
   'products.id',
-  'products.title',
-  'products.slug',
-  'products.retail_price',
-  'products.prix_calcule',
-  'products.image_url',
-  'products.status',
+  'products.products_id.id',
+  'products.products_id.title',
+  'products.products_id.slug',
+  'products.products_id.retail_price',
+  'products.products_id.prix_calcule',
+  'products.products_id.image_url',
+  'products.products_id.status',
 ].join(',')
+
+/** Normalise le tableau M2M Directus : extrait products_id.* et met à plat */
+const normalizeProducts = (junctions?: BlogProductJunction[]): BlogProduct[] =>
+  (junctions ?? [])
+    .map((j) => j.products_id)
+    .filter((p): p is BlogProduct => p !== null && p !== undefined)
 
 /** Liste les articles publiés du blog (pour la page /blog) */
 export const getBlogPosts = async (options: {
@@ -964,6 +981,9 @@ export const getBlogPost = async (slug: string): Promise<BlogPost | null> => {
   }
 
   const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', { params })
-  return payload.data?.[0] ?? null
+  const raw = payload.data?.[0]
+  if (!raw) return null
+  // Normalise la M2M : products[i].products_id.* → products[i].*
+  return { ...raw, products: normalizeProducts(raw.products) }
 }
 
