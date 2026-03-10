@@ -868,3 +868,102 @@ export const getAdminOrdersDashboard = async (input?: {
 export const deleteOrderById = async (orderId: string): Promise<void> => {
   await requestDirectus<void>(`/items/orders/${orderId}`, { method: 'DELETE' })
 }
+
+// ─────────────────────────────────────────────
+//  BLOG API
+// ─────────────────────────────────────────────
+
+/** Produit recommandé tel que retourné dans la relation M2M */
+export type BlogProduct = {
+  id: string
+  title: string
+  slug: string
+  retail_price?: number | null
+  prix_calcule?: number | null
+  image_url?: string | null
+  status?: string | null
+}
+
+/** Un article de blog tel que livré par Directus */
+export type BlogPost = {
+  id: string
+  slug: string
+  title: string
+  summary?: string | null
+  cover_image?: string | null
+  category?: string | null
+  published_at?: string | null
+  status?: string
+  content?: string | null
+  seo_title?: string | null
+  seo_description?: string | null
+  /** Relation M2M – peuplée uniquement dans `getBlogPost` */
+  products?: BlogProduct[]
+}
+
+type BlogPostListItem = Omit<BlogPost, 'content' | 'products' | 'seo_title' | 'seo_description'>
+
+type DirectusBlogListResponse = {
+  data: BlogPost[]
+}
+
+const BLOG_LIST_FIELDS = [
+  'id',
+  'slug',
+  'title',
+  'summary',
+  'cover_image',
+  'category',
+  'published_at',
+  'status',
+].join(',')
+
+const BLOG_DETAIL_FIELDS = [
+  'id', 'slug', 'title', 'summary', 'cover_image', 'category',
+  'published_at', 'status', 'content', 'seo_title', 'seo_description',
+  // M2M junction: blog_posts_products → expand product fields
+  'products.id',
+  'products.title',
+  'products.slug',
+  'products.retail_price',
+  'products.prix_calcule',
+  'products.image_url',
+  'products.status',
+].join(',')
+
+/** Liste les articles publiés du blog (pour la page /blog) */
+export const getBlogPosts = async (options: {
+  limit?: number
+  offset?: number
+  category?: string
+}): Promise<BlogPostListItem[]> => {
+  const { limit = 20, offset = 0, category } = options
+
+  const params: Record<string, string> = {
+    'filter[status][_eq]': 'published',
+    'sort': '-published_at',
+    'fields': BLOG_LIST_FIELDS,
+    'limit': String(limit),
+    'offset': String(offset),
+  }
+  if (category) {
+    params['filter[category][_eq]'] = category
+  }
+
+  const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', { params })
+  return payload.data ?? []
+}
+
+/** Récupère un article complet via son slug, avec les produits recommandés */
+export const getBlogPost = async (slug: string): Promise<BlogPost | null> => {
+  const params: Record<string, string> = {
+    'filter[slug][_eq]': slug,
+    'filter[status][_eq]': 'published',
+    'fields': BLOG_DETAIL_FIELDS,
+    'limit': '1',
+  }
+
+  const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', { params })
+  return payload.data?.[0] ?? null
+}
+

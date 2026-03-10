@@ -19,6 +19,8 @@ const TermsPage = lazy(() => import('./pages/TermsPage'))
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
 const SalesHistoryPage = lazy(() => import('./pages/SalesHistoryPage'))
 const AccountingPage = lazy(() => import('./pages/AccountingPage'))
+const BlogListPage = lazy(() => import('./pages/BlogListPage'))
+const BlogPostPage = lazy(() => import('./pages/BlogPostPage'))
 
 const AdminRedirect = () => {
   const location = useLocation()
@@ -42,6 +44,8 @@ const App = () => {
             <Route path="/mentions-legales" element={<LegalNoticePage />} />
             <Route path="/livraison" element={<ShippingPage />} />
             <Route path="/cgv" element={<TermsPage />} />
+            <Route path="/blog" element={<BlogListPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route
               path="*"
               element={
