@@ -6,7 +6,7 @@ import { resolveImageUrl } from '../utils/image'
 import { formatPrice } from '../utils/format'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import BackButton from '../components/BackButton'
-import { ArrowLeft, Calendar, Tag } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock3, Tag } from 'lucide-react'
 
 const formatDate = (iso?: string | null) => {
   if (!iso) return ''
@@ -80,7 +80,7 @@ const BlogPostPage = () => {
 
   // SEO dynamique
   useDocumentMeta({
-    title: post?.seo_title ?? post?.title ?? undefined,
+    title: post?.seo_title ?? (post?.title ? `${post.title} | Journal KOKTEK` : undefined),
     description: post?.seo_description ?? post?.summary ?? undefined,
     image: post?.cover_image ? resolveImageUrl(post.cover_image, '') : undefined,
     type: 'article',
@@ -111,7 +111,7 @@ const BlogPostPage = () => {
   // ── Error / not found ─────────────────────────────────────────────────────
   if (error || !post) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
         <p className="text-5xl mb-4">🔍</p>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
           {error ?? 'Article introuvable'}
@@ -121,10 +121,10 @@ const BlogPostPage = () => {
         </p>
         <Link
           to="/blog"
-          className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+          className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour au blog
+          Retour au Journal
         </Link>
       </div>
     )
@@ -132,12 +132,12 @@ const BlogPostPage = () => {
 
   // ── Article ───────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       {/* Fil d'ariane */}
       <nav className="mb-8 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-        <BackButton fallback="/blog" className="shrink-0" />
+        <BackButton fallback="/blog" className="shrink-0" label="Retour" />
         <span>/</span>
-        <Link to="/blog" className="hover:text-gray-700 dark:hover:text-gray-300 transition">Blog</Link>
+        <Link to="/blog" className="transition hover:text-gray-700 dark:hover:text-gray-300">Journal</Link>
         {post.category && (
           <>
             <span>/</span>
@@ -147,35 +147,47 @@ const BlogPostPage = () => {
       </nav>
 
       {/* Méta header */}
-      <header className="mb-8">
+      <header className="mb-8 rounded-[32px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
         {post.category && (
-          <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-100 dark:bg-indigo-950/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+          <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
             <Tag className="h-3 w-3" />
             {post.category}
           </span>
         )}
-        <h1 className="mt-2 text-3xl font-bold leading-tight text-gray-900 dark:text-gray-100 sm:text-4xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
+          Journal KOKTEK
+        </p>
+        <h1 className="font-journal-display mt-3 text-4xl leading-[0.98] text-gray-900 dark:text-gray-100 sm:text-5xl">
           {post.title}
         </h1>
         {post.summary && (
-          <p className="mt-3 text-lg text-gray-500 dark:text-gray-400 leading-relaxed">
+          <p className="mt-4 text-lg leading-relaxed text-gray-500 dark:text-gray-400">
             {post.summary}
           </p>
         )}
-        {post.published_at && (
-          <div className="mt-4 flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500">
-            <Calendar className="h-4 w-4" />
-            <time>{formatDate(post.published_at)}</time>
-          </div>
-        )}
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-400 dark:text-gray-500">
+          {post.published_at && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              <time>{formatDate(post.published_at)}</time>
+            </div>
+          )}
+          {post.reading_time && (
+            <div className="flex items-center gap-1.5">
+              <Clock3 className="h-4 w-4" />
+              <span>{post.reading_time} min de lecture</span>
+            </div>
+          )}
+          {post.author_label && <span>{post.author_label}</span>}
+        </div>
       </header>
 
       {/* Image de couverture */}
       {coverImage && (
-        <div className="mb-10 overflow-hidden rounded-2xl shadow-sm">
+        <div className="mb-10 overflow-hidden rounded-[32px] border border-slate-200/80 shadow-[0_24px_60px_-35px_rgba(15,23,42,0.45)] dark:border-slate-800">
           <img
             src={coverImage}
-            alt={post.title}
+            alt={post.cover_image_alt ?? post.title}
             className="w-full object-cover max-h-[480px]"
             loading="lazy"
             decoding="async"
@@ -185,20 +197,22 @@ const BlogPostPage = () => {
 
       {/* Contenu HTML riche */}
       {post.content ? (
-        <div
-          className="blog-prose"
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(post.content, {
-              ALLOWED_TAGS: [
-                'h1','h2','h3','h4','h5','h6','p','a','ul','ol','li',
-                'blockquote','strong','em','b','i','u','s','code','pre',
-                'img','table','thead','tbody','tr','th','td','hr','br',
-                'figure','figcaption','span','div',
-              ],
-              ALLOWED_ATTR: ['href','src','alt','title','class','target','rel','width','height'],
-            }),
-          }}
-        />
+        <div className="rounded-[32px] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
+          <div
+            className="blog-prose"
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(post.content, {
+                ALLOWED_TAGS: [
+                  'h1','h2','h3','h4','h5','h6','p','a','ul','ol','li',
+                  'blockquote','strong','em','b','i','u','s','code','pre',
+                  'img','table','thead','tbody','tr','th','td','hr','br',
+                  'figure','figcaption','span','div',
+                ],
+                ALLOWED_ATTR: ['href','src','alt','title','class','target','rel','width','height'],
+              }),
+            }}
+          />
+        </div>
       ) : (
         <p className="text-gray-400 dark:text-gray-500 italic text-center py-12">
           Le contenu de cet article n'est pas encore disponible.
@@ -229,7 +243,7 @@ const BlogPostPage = () => {
           className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour au blog
+          Retour au Journal
         </Link>
       </div>
     </div>

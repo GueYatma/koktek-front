@@ -902,7 +902,18 @@ type BlogPostRaw = {
   title: string
   summary?: string | null
   cover_image?: string | null
+  cover_image_alt?: string | null
   category?: string | null
+  pillar?: string | null
+  article_type?: string | null
+  featured?: boolean | null
+  reading_time?: number | null
+  target_keyword?: string | null
+  search_intent?: string | null
+  seasonality?: string | null
+  manual_review_status?: string | null
+  source_topic?: string | null
+  author_label?: string | null
   published_at?: string | null
   status?: string
   content?: string | null
@@ -928,14 +939,33 @@ const BLOG_LIST_FIELDS = [
   'title',
   'summary',
   'cover_image',
+  'cover_image_alt',
+  'category',
+  'pillar',
+  'article_type',
+  'featured',
+  'reading_time',
+  'author_label',
+  'published_at',
+  'status',
+].join(',')
+
+const BLOG_LIST_FALLBACK_FIELDS = [
+  'id',
+  'slug',
+  'title',
+  'summary',
+  'cover_image',
   'category',
   'published_at',
   'status',
 ].join(',')
 
 const BLOG_DETAIL_FIELDS = [
-  'id', 'slug', 'title', 'summary', 'cover_image', 'category',
-  'published_at', 'status', 'content', 'seo_title', 'seo_description',
+  'id', 'slug', 'title', 'summary', 'cover_image', 'cover_image_alt', 'category',
+  'pillar', 'article_type', 'featured', 'reading_time', 'target_keyword',
+  'search_intent', 'seasonality', 'manual_review_status', 'source_topic',
+  'author_label', 'published_at', 'status', 'content', 'seo_title', 'seo_description',
   // M2M Directus : structure junction → products_id.*
   'products.id',
   'products.products_id.id',
@@ -994,8 +1024,15 @@ export const getBlogPosts = async (options: {
     params['filter[category][_eq]'] = category
   }
 
-  const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', { params })
-  return payload.data ?? []
+  try {
+    const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', { params })
+    return payload.data ?? []
+  } catch {
+    const fallbackPayload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', {
+      params: { ...params, fields: BLOG_LIST_FALLBACK_FIELDS },
+    })
+    return fallbackPayload.data ?? []
+  }
 }
 
 /** Récupère un article complet via son slug, avec les produits recommandés */
