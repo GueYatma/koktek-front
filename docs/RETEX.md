@@ -171,3 +171,291 @@ Ne jamais se contenter de créer un nouveau trigger sans s'assurer qu'aucun anci
 *   **Performance :** Hook useMemo déployés, écouteurs de Scroll / Click Events nettoyés au démontage du composant.
 *   **Clean Code :** Supression des anciens `console.log()` parasites et des TODOs. Compilation TypeScript strictement validée (`tsc --noEmit`).
 *   **Environnement :** Aucune clé Stripe ou Auth écrite en clair dans les fichiers (`secrets` GitHub exclusifs).
+
+---
+
+## 🗞 Post-Mortem : Intégration du Blog (Mars 2026)
+
+> **Contexte :** Ajout d'une section Blog SEO (`/blog`) avec relation M2M vers `products`, workflow n8n de rédaction automatique par IA, et insertion programmatique des articles. Ce qui aurait dû prendre 2h a pris une journée complète.
+
+---
+
+### Bug 15 : Conflit de droits PostgreSQL — `ALTER TABLE` refusé par Directus
+
+**Date :** 10 mars 2026  
+**Sévérité :** 🔴 Critique (bloquant — impossible de créer la relation M2M depuis l'UI)
+
+**Symptôme :**
+```
+[INTERNAL_SERVER_ERROR] alter table "..." add constraint "..." foreign key
+("blog_posts_id") references "blog_posts" ("id") on delete SET NULL
+— permission denied for table blog_posts
+```
+
+**Cause racine :**
+Les tables `koktek.blog_posts` et `koktek.products` avaient été créées manuellement via **pgAdmin, connecté en superadmin** (`n8n_user` ou `postgres`). Ces tables appartenaient donc à ce compte. Lorsque Directus (connecté en tant que `directus_user`) essaie d'ajouter une contrainte de clé étrangère pour créer la relation M2M, PostgreSQL refuse : seul le **propriétaire** d'une table peut la modifier.
+
+**Résolution :**
+```sql
+ALTER TABLE koktek.blog_posts OWNER TO directus_user;
+ALTER TABLE koktek.products   OWNER TO directus_user;
+GRANT USAGE, CREATE ON SCHEMA koktek TO directus_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA koktek TO directus_user;
+```
+
+**Leçon retenue :**
+> ⚠️ **Règle d'or** : Toute table destinée à être gérée par Directus **doit impérativement être créée avec `directus_user` comme owner**, ou faire l'objet d'un `ALTER TABLE ... OWNER TO directus_user` immédiatement après sa création.  
+> Ne jamais créer une table "Directus" depuis pgAdmin connecté en superadmin sans corriger le owner derrière.
+
+---
+
+### Bug 16 : Collections fantômes Directus (`blog_posts_products_1`, `_2`, `_3`)
+
+**Date :** 10 mars 2026  
+**Sévérité :** 🟠 Majeur (pollution du Data Model, confusion, risque de corruption)
+
+**Symptôme :**
+À chaque tentative échouée de création de la relation M2M depuis l'UI Directus, le système générait une nouvelle collection fantôme suffixée : `blog_posts_products_1`, `blog_posts_products_2`, `blog_posts_products_3`…
+
+**Cause racine :**
+Directus tente de créer la junction table, échoue à mi-chemin (erreur SQL de permission), mais a déjà enregistré partiellement la collection dans ses tables système (`directus_collections`, `directus_fields`, `directus_relations`). La prochaine tentative ne retrouvant pas l'ancienne entrée exacte, elle incrémente le suffixe.
+
+**Résolution :**
+```sql
+-- Nettoyage manuel dans les tables système Directus
+DELETE FROM directus_fields     WHERE collection LIKE 'blog_posts_products_%';
+DELETE FROM directus_relations  WHERE many_collection LIKE 'blog_posts_products_%'
+                                   OR one_collection  LIKE 'blog_posts_products_%';
+DELETE FROM directus_collections WHERE id LIKE 'blog_posts_products_%';
+DROP TABLE IF EXISTS blog_posts_products_1 CASCADE;
+DROP TABLE IF EXISTS blog_posts_products_2 CASCADE;
+DROP TABLE IF EXISTS blog_posts_products_3 CASCADE;
+```
+Suivi d'un `docker restart koktek_directus` pour vider le cache mémoire de Directus.
+
+**Leçon retenue :**
+> Avant toute tentative de création d'une relation Directus, **s'assurer que tous les droits PostgreSQL sont en place**. Si une création échoue, **toujours nettoyer les tables système Directus** avant de réessayer, sinon on accumule des collections zombies.
+
+---
+
+### Bug 17 : Tables de jointure M2M créées dans `public` au lieu de `koktek`
+
+**Date :** 10 mars 2026  
+**Sévérité :** 🟠 Majeur (problème de droits pour n8n, incohérence d'architecture)
+
+**Symptôme :**
+Directus crée la junction table `blog_posts_products` dans le schéma `public` par défaut, alors que toutes les tables métier du projet sont dans le schéma `koktek`. Résultat : l'utilisateur `n8n_user` (qui a des droits sur `koktek` mais pas sur `public`) ne peut pas insérer de liaisons produits via le workflow automatisé.
+
+**Cause racine :**
+Directus ne dispose pas d'un paramètre natif pour choisir dans quel schéma PostgreSQL créer ses tables de jointure M2M. Il utilise son `search_path` par défaut, qui pointe vers `public`.
+
+**Résolution (court terme) :**
+```sql
+GRANT ALL PRIVILEGES ON TABLE public.blog_posts_products TO n8n_user;
+GRANT USAGE, SELECT ON SEQUENCE public.blog_posts_products_id_seq TO n8n_user;
+```
+
+**Résolution (long terme / propre) :**
+```yaml
+# docker-compose.yml — forcer le search_path Directus
+environment:
+  DB_SEARCH_PATH: "koktek,public"
+```
+```sql
+ALTER TABLE public.blog_posts_products SET SCHEMA koktek;
+```
+Puis `docker restart koktek_directus`.
+
+**Leçon retenue :**
+> Documenter la position de chaque table de jointure dès sa création. Si le projet utilise un schéma custom, **configurer `DB_SEARCH_PATH`** dans le docker-compose de Directus **avant** de créer les premières relations M2M.
+
+---
+
+### Bug 18 : Champs `summary` et `published_at` inconnus de Directus
+
+**Date :** 10 mars 2026  
+**Sévérité :** 🟡 Moyen (API retournait FORBIDDEN sur ces champs)
+
+**Symptôme :**
+```json
+{"errors": [{"message": "You don't have permission to access fields
+\"summary\", \"published_at\" in collection \"blog_posts\" or they do not exist."}]}
+```
+
+**Cause racine :**
+Les colonnes existaient dans la table PostgreSQL (créées via pgAdmin), mais n'étaient pas enregistrées dans la table système `directus_fields`. Directus refuse d'exposer tout champ non déclaré dans son registre interne, même si la colonne existe physiquement en base.
+
+**Résolution :**
+```sql
+INSERT INTO directus_fields (collection, field, special, interface, display, sort)
+VALUES
+  ('blog_posts', 'summary',      NULL,           'textarea', 'raw',      20),
+  ('blog_posts', 'published_at', 'date-created', 'datetime', 'datetime', 21);
+```
+Suivi d'un redémarrage Directus pour invalider le cache de métadonnées.
+
+**Leçon retenue :**
+> Toute colonne ajoutée directement en SQL (sans passer par l'UI Directus) **doit être déclarée dans `directus_fields`** ou ajoutée via *Data Model → Add Field → Existing Column*. Sinon, Directus l'ignore complètement même si elle est visible dans pgAdmin.
+
+---
+
+### Bug 19 : Page `/blog` affichait "Impossible de charger" malgré une API fonctionnelle
+
+**Date :** 10 mars 2026  
+**Sévérité :** 🟡 Moyen (bloquant pour l'utilisateur final, trompeur pour le debug)
+
+**Symptôme :**
+Le frontend affichait le message d'erreur "Impossible de charger les articles." alors que `curl` sur le même endpoint retournait `{"data":[]}` sans erreur.
+
+**Cause racine :**
+Le message d'erreur masquait en réalité l'erreur `FORBIDDEN` sur les champs `summary` et `published_at` (Bug 18). La liste de champs demandée par `getBlogPosts()` contenait ces deux champs non déclarés dans Directus → l'API retournait un `403`, capturé par le `.catch()` du front, qui affichait le message générique.
+
+**Timing :** Ce bug a été résolu en même temps que le Bug 18. Le `curl` de vérification initialement testé ne demandait **pas** les champs problématiques, ce qui a créé une fausse piste ("l'API marche, le bug doit être ailleurs").
+
+**Leçon retenue :**
+> Pour déboguer une erreur API front, **toujours tester avec exactement les mêmes champs** que la requête du code (`BLOG_LIST_FIELDS`), pas avec un subset simplifié. Utiliser l'URL encodée complète depuis le code source plutôt qu'une URL recomposée à la main.
+
+---
+
+## 🤔 Analyse Stratégique : Directus vs Supabase
+
+### Aurions-nous eu ces problèmes avec Supabase self-hosted ?
+
+**Réponse honnête : en partie non, en partie oui.**
+
+| Problème rencontré | Directus | Supabase self-hosted |
+|---|---|---|
+| Conflit owner PostgreSQL | ✅ Présent | ⚠️ Aussi possible si tables créées hors Supabase |
+| Collections fantômes (cache corrompu) | ✅ Présent | ❌ N/A — Supabase n'a pas ce concept |
+| Junction M2M dans mauvais schéma | ✅ Présent | ❌ N/A — Supabase n'abstrait pas les jointures |
+| Champs invisibles (`directus_fields`) | ✅ Présent | ❌ N/A — Supabase expose directement le schéma SQL |
+| Peer auth PostgreSQL | ✅ Présent | ✅ Aussi présent (même PostgreSQL derrière) |
+
+**Ce que Supabase change fondamentalement :**
+- Supabase **expose directement le schéma PostgreSQL** via une API REST auto-générée (PostgREST). Il n'y a pas de "couche de modèle" entre la DB et l'API : ce que tu crées en SQL est immédiatement disponible.
+- Pas de `directus_fields`, `directus_collections`, `directus_relations` à synchronized. **Le schéma SQL EST le modèle.**
+- La Studio UI de Supabase permet d'exécuter du SQL directement, de voir les triggers, les fonctions RPC, les politiques RLS.
+
+**Ce que Supabase ne résout PAS :**
+- Les conflits de droits PostgreSQL existent aussi (même moteur). Supabase gère ça via **RLS (Row Level Security)** — plus élégant, mais avec sa propre courbe d'apprentissage.
+- La version **self-hosted** est plus complexe à maintenir que la version Cloud (stack Docker avec une dizaine de services : PostgREST, GoTrue, Realtime, Storage, Kong…).
+- La **version self-hosted ne bénéficie pas des mises à jour automatiques** et des optimisations Cloud.
+
+---
+
+### Verdict : Faut-il remplacer Directus par Supabase ?
+
+| Critère | Directus | Supabase Cloud | Supabase Self-hosted |
+|---|---|---|---|
+| **Facilité de setup** | ✅ 1 conteneur Docker | ✅ Zéro infra | ⚠️ ~12 services Docker |
+| **UI d'admin** | ✅ Excellente | ✅ Excellente | ✅ Excellente |
+| **Relation M2M** | ⚠️ Complexe (vu ce soir) | ✅ SQL pur, simple | ✅ SQL pur, simple |
+| **Exposition API** | ✅ REST configurable | ✅ REST + Realtime + GraphQL | ✅ Idem |
+| **Gestion des droits** | ⚠️ Via `directus_users` + owner PG | ✅ RLS PostgreSQL natif | ✅ RLS PostgreSQL natif |
+| **Compatibilité n8n** | ✅ Nœud natif n8n | ✅ Nœud natif n8n + HTTP | ✅ Idem |
+| **Coût Cloud** | N/A (self-hosted) | 💰 25$/mois (Pro) | Gratuit (infra propre) |
+| **Robustesse production** | ⚠️ Quelques bugs cache | ✅ Très solide | ⚠️ Dépend de l'infra |
+| **Intégration Stripe** | ✅ Via webhooks n8n | ✅ Via Edge Functions | ✅ Via webhooks n8n |
+
+**Recommandation :**
+
+> 🔵 **Court terme (0-6 mois) :** Garder Directus. La stack fonctionne, les bugs sont documentés et évitables. Migrer maintenant aurait un coût élevé pour un gain incertain.
+
+> 🟢 **Moyen terme (6-12 mois) :** Si vous lancez une **V2 de l'architecture** (nouveau projet, refonte majeure), **Supabase Cloud est clairement supérieur** pour ce cas d'usage (e-commerce, blog, automatisations n8n). L'API auto-générée, le RLS, et la studio évitent 80% des frictions rencontrées avec Directus.
+
+> ⚠️ **Supabase self-hosted** n'est pas recommandé à moins d'avoir un DevOps dédié. La stack Docker est lourde (12+ services) et les mises à jour manuelles sont un risque.
+
+**Si migration vers Supabase Cloud un jour :**
+1. Export PostgreSQL → Import dans Supabase (migration straightforward, même schéma)
+2. Remplacer les appels `requestDirectus('/items/...')` par `supabase.from('...').select()`
+3. Migrer les politiques Directus en **Row Level Security (RLS)** PostgreSQL
+4. Les workflows n8n changent de nœud (`Supabase` au lieu de `Directus`)
+
+---
+
+### Supabase Free — Quand faut-il passer Pro ?
+
+| Ressource | Limite Free | KOKTEK estimé | Verdict |
+|---|---|---|---|
+| Base de données | 500 MB | ~30-50 MB | ✅ Des années de marge |
+| Bandwidth | 5 GB/mois | Blog + API | ✅ OK |
+| Stockage fichiers | 1 GB | Dépend des images | ⚠️ Voir section images |
+| API requests | Illimité | — | ✅ |
+| Backups automatiques | ❌ (Pro only) | Critique en prod | ⚠️ Risque |
+
+**⚠️ Piège critique du Free : pause automatique après 7 jours d'inactivité.**
+Solution gratuite : cron n8n toutes les 6 jours avec un simple `SELECT 1`.
+
+**Moment réel pour passer Pro :** Quand le CA dépasse ~1 000€/mois (les 25$/mois deviennent négligeables) ET/OU pour activer les backups journaliers automatiques.
+
+---
+
+## 🖼 Hébergement Images — Stratégie Recommandée
+
+### Contexte
+
+Le champ `image_url` dans `products` et `cover_image` dans `blog_posts` peuvent stocker :
+- Un **UUID** → Directus le résout via `https://directus.koktek.com/assets/{uuid}`
+- Une **URL externe complète** → déjà gérée nativement par `resolveImageUrl()` dans le front
+
+```typescript
+// src/utils/image.ts — extrait
+if (/^https?:\/\//i.test(raw)) return raw  // URL externe = passée telle quelle ✅
+```
+
+**Aucun changement de code nécessaire** pour utiliser des URLs externes dans les champs image.
+
+---
+
+### Comparaison des hébergeurs (2026)
+
+| Hébergeur | Free | CDN | Transformations | Fiabilité commerciale |
+|---|---|---|---|---|
+| **Cloudinary** | 25 GB stockage + 25 GB bw | ✅ Mondial | ✅ `?w=800&f=webp&q=auto` | ✅ Recommandé |
+| **ImgBB** | Illimité, permanent | ✅ | ❌ | ✅ Bon pour blog |
+| **Imgur** | Gratuit | ✅ | ❌ | ❌ Supprime les images commerciales depuis 2023 |
+| **Bunny.net** | ~1€/mois | ✅ Ultra-rapide | ❌ | ✅ Pro |
+
+**Choix recommandé : Cloudinary (free tier)**
+- 25 GB = des milliers d'images produits
+- Transformations à la volée via l'URL : `../upload/w_800,h_800,c_fill,f_webp,q_auto/photo.jpg`
+- CDN mondial inclus → images chargées en ~50ms partout
+
+---
+
+### Workflow d'ajout d'image avec Cloudinary
+
+```
+1. Upload sur cloudinary.com (drag & drop)
+2. Copier l'URL : https://res.cloudinary.com/votre-compte/image/upload/v1/photo.jpg
+3. Coller dans Directus → champ image_url du produit ou cover_image du blog post
+4. Le front l'affiche automatiquement via resolveImageUrl() ✅
+```
+
+### Migration `cover_image` (UUID → TEXT) pour les blog posts
+
+Actuellement `cover_image` est de type `UUID` (FK vers `directus_files`). Pour accepter des URLs externes :
+
+```sql
+-- Sur le VPS (en postgres superuser)
+ALTER TABLE koktek.blog_posts
+  ALTER COLUMN cover_image TYPE TEXT USING cover_image::TEXT;
+```
+
+Puis dans Directus → Data Model → `blog_posts` → champ `cover_image` → changer l'interface de `image` vers `input (text)`.
+
+---
+
+## 📋 Récapitulatif des Décisions Architecturales (Mars 2026)
+
+| Décision | Choix retenu | Raison |
+|---|---|---|
+| Backend CMS | **Directus** (court terme) | Stack existante fonctionnelle |
+| Backend CMS V2 | **Supabase Cloud** | SQL natif, RLS, API auto, Studio |
+| Hébergement images | **Cloudinary free** | CDN + transformations + fiable |
+| Schéma PostgreSQL | **`koktek`** pour les tables métier | Isolation propre |
+| Tables de jointure M2M | **`public`** (Directus par défaut) | GRANT accordé à n8n_user en attendant |
+| Hébergement frontend | **VPS + Nginx + Docker** via GitHub Actions | Maîtrise totale du déploiement |
+| Blog SEO | **React SPA /blog** alimenté par Directus | Aucun SSR, rendu client |
+
+

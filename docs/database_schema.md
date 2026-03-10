@@ -215,3 +215,115 @@ Voici la liste de toutes tes tables et de leurs colonnes (champs) extraites de t
 - `image_proof_url`: text
 - `refund_amount`: numeric
 - `created_at`: timestamp without time zone
+
+---
+
+## Table: `blog_posts` *(schéma : `koktek`)*
+
+> Créée le 10 mars 2026. Owner PostgreSQL : `directus_user`.
+
+- `id`: uuid — clé primaire
+- `status`: character varying — valeurs : `published`, `draft`, `archived`
+- `user_created`: uuid — FK → `directus_users.id`
+- `date_created`: timestamp with time zone
+- `title`: character varying — titre de l'article
+- `slug`: character varying — identifiant URL unique (index unique `blog_posts_slug_unique`)
+- `excerpt`: text — résumé court (champ legacy, utiliser `summary`)
+- `summary`: text — résumé affiché sur la carte de liste
+- `cover_image`: uuid — FK → `directus_files.id` (image de couverture)
+- `category`: character varying — catégorie libre (ex: "Accessoires", "Guides")
+- `published_at`: timestamp with time zone — date de publication affichée
+- `content`: text — contenu HTML riche (WYSIWYG Directus)
+- `seo_title`: character varying — balise `<title>` SEO personnalisée
+- `seo_description`: character varying — meta description SEO
+
+### Relation M2M : `blog_posts` ↔ `products`
+
+| Côté | Détail |
+|------|--------|
+| Table de jointure | `blog_posts_products` |
+| Champ Directus | `products` (M2M sur `blog_posts`) |
+| Junction field A | `blog_posts_id` → `blog_posts.id` |
+| Junction field B | `products_id` → `products.id` |
+| Usage | Afficher des "Produits recommandés" en bas de chaque article |
+
+---
+
+## Table: `blog_posts_products` *(schéma : `public`)*
+
+> Table de jointure M2M créée automatiquement par Directus le 10 mars 2026.
+
+- `id`: integer — clé primaire auto-incrémentée
+- `blog_posts_id`: uuid — FK → `koktek.blog_posts.id` ON DELETE SET NULL
+- `products_id`: uuid — FK → `koktek.products.id` ON DELETE SET NULL
+
+---
+
+## Notes de configuration PostgreSQL
+
+### Schémas utilisés
+
+| Schéma | Tables | Owner |
+|--------|--------|-------|
+| `koktek` | `blog_posts`, `products`, `orders`, `order_items`, etc. | `directus_user` |
+| `public` | Tables système Directus + `blog_posts_products` | `directus_user` / `postgres` |
+
+### Droits accordés (session 10 mars 2026)
+
+```sql
+-- directus_user : propriétaire + tous droits sur koktek
+ALTER TABLE koktek.blog_posts OWNER TO directus_user;
+ALTER TABLE koktek.products   OWNER TO directus_user;
+GRANT USAGE, CREATE ON SCHEMA koktek TO directus_user;
+GRANT ALL PRIVILEGES ON ALL TABLES    IN SCHEMA koktek TO directus_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA koktek TO directus_user;
+
+-- n8n_user : droits d'écriture (pgAdmin + workflows n8n)
+GRANT ALL PRIVILEGES ON ALL TABLES    IN SCHEMA koktek TO n8n_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA koktek TO n8n_user;
+GRANT USAGE ON SCHEMA koktek TO n8n_user;
+
+-- n8n_user : droits sur la table de jointure (schéma public, 10 mars 2026)
+GRANT ALL PRIVILEGES ON TABLE public.blog_posts_products TO n8n_user;
+GRANT USAGE, SELECT ON SEQUENCE public.blog_posts_products_id_seq TO n8n_user;
+```
+
+---
+
+## Permissions Directus (rôle Public)
+
+| Collection | Create | Read | Update | Delete |
+|------------|--------|------|--------|--------|
+| `blog_posts` | ✗ | ✅ | ✗ | ✗ |
+| `blog_posts_products` | ✗ | ✅ | ✗ | ✗ |
+| `products` | ✗ | ✅ | ✗ | ✗ |
+| `cart_items` | ✅ | ✅ | ✅ | ✗ |
+
+---
+
+## Frontend — Appels API Blog (`commerceApi.ts`)
+
+### `getBlogPosts({ limit, offset, category })`
+```
+GET /items/blog_posts
+  ?filter[status][_eq]=published
+  &sort=-published_at
+  &fields=id,slug,title,summary,cover_image,category,published_at,status
+```
+
+### `getBlogPost(slug)`
+```
+GET /items/blog_posts
+  ?filter[slug][_eq]={slug}
+  &filter[status][_eq]=published
+  &fields=id,slug,title,summary,cover_image,category,published_at,
+          status,content,seo_title,seo_description,
+          products.id,products.title,products.slug,
+          products.retail_price,products.prix_calcule,
+          products.image_url,products.status
+```
+
+### Routes React (`App.tsx`)
+- `/blog` → `BlogListPage.tsx` (grille d'articles)
+- `/blog/:slug` → `BlogPostPage.tsx` (article + produits recommandés)
+
