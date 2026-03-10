@@ -23,11 +23,11 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, title, retail_price, image \nFROM koktek.products \nWHERE status = 'published' \nORDER BY random() \nLIMIT 3;",
+        "query": "SELECT p.id,\n       p.title,\n       COALESCE(\n         MIN(NULLIF(pv.prix_calcule, 0)),\n         MIN(NULLIF(pv.price, 0)),\n         p.retail_price,\n         p.base_price\n       ) AS retail_price,\n       p.image\nFROM koktek.products p\nLEFT JOIN koktek.product_variants pv ON pv.product_id = p.id\nWHERE p.status = 'published'\nGROUP BY p.id, p.title, p.image, p.retail_price, p.base_price\nORDER BY random()\nLIMIT 4;",
         "options": {}
       },
       "id": "45ff7e61-a878-4426-962f-592cbb4852d3",
-      "name": "Postgres : Tirer 3 Produits",
+      "name": "Postgres : Tirer 4 Produits",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.3,
       "position": [
@@ -92,7 +92,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// L'ID du nouvel article\nconst blogPostId = items[0].json.id;\n// Les IDs des produits (récupérés du noeud précédent)\nconst productIds = $('Code : Parser le JSON').first().json.product_ids;\n\n// On crée un tableau d'objets pour chaque lien (1 article = 3 liens produits)\nreturn productIds.map(productId => ({\n  json: {\n    blog_posts_id: blogPostId,\n    products_id: productId\n  }\n}));"
+        "jsCode": "// L'ID du nouvel article\nconst blogPostId = items[0].json.id;\n// Les IDs des produits (récupérés du noeud précédent)\nconst productIds = $('Code : Parser le JSON').first().json.product_ids;\n\n// On crée un tableau d'objets pour chaque lien produit à afficher sous l'article\nreturn productIds.map(productId => ({\n  json: {\n    blog_posts_id: blogPostId,\n    products_id: productId\n  }\n}));"
       },
       "id": "b001b78c-60aa-4372-867b-69e29517461a",
       "name": "Code : Préparer Jointures M2M",
@@ -129,7 +129,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Voici 3 produits tirés de notre catalogue KOKTEK :\n{{ $('Code : Préparer Data pour LLM').item.json.products_text }}\n\nInstructions pour cet article :\n1. Analyse ces produits et trouve un angle thématique pertinent ou un guide d'achat qui les relie intelligemment (ex: \"Les indispensables pour votre voiture\", \"Comment bien protéger son smartphone\", etc.).\n2. Rédige l'article autour de ce thème.\n3. Intègre très naturellement la mention de ces 3 produits dans le corps du texte (présente-les comme des recommandations ou des solutions de la rédaction KOKTEK).\n4. Rappel : Ne renvoie strictement que l'objet JSON brut.",
+        "text": "=Voici 4 produits tirés de notre catalogue KOKTEK :\n{{ $('Code : Préparer Data pour LLM').item.json.products_text }}\n\nInstructions pour cet article :\n1. Analyse ces produits et trouve un angle thématique pertinent ou un guide d'achat qui les relie intelligemment (ex: \"Les indispensables pour votre voiture\", \"Comment bien protéger son smartphone\", etc.).\n2. Rédige l'article autour de ce thème.\n3. Intègre très naturellement la mention de ces 4 produits dans le corps du texte (présente-les comme des recommandations ou des solutions de la rédaction KOKTEK).\n4. Rappel : Ne renvoie strictement que l'objet JSON brut.",
         "options": {
           "systemMessage": "Tu es un expert SEO et rédacteur web pro pour KOKTEK, une marque française spécialisée dans les accessoires Tech, Auto et Lifestyle (chargeurs, supports de téléphone, coques, audio).\nTon objectif est de rédiger des articles de blog captivants, parfaitement optimisés pour Google, avec un ton moderne, dynamique et expert.\n\nRÈGLE STRICTE ET ABSOLUE : Tu dois toujours renvoyer UNIQUEMENT un objet JSON valide, sans aucune phrase d'introduction ou de conclusion en dehors du JSON. Le JSON doit contenir exactement ces 4 clés :\n\n\"title\" : Le titre optimisé SEO de l'article.\n\n\"slug\" : L'URL de l'article (tout en minuscules, sans accents, espaces remplacés par des tirets).\n\n\"excerpt\" : Un résumé accrocheur de 2 ou 3 phrases pour donner envie de lire.\n\n\"content\" : Le contenu complet de l'article en HTML pur. Utilise des balises <h2>, <h3>, <p>, <ul>, <li> et <strong>. Le texte doit être bien structuré, aéré et faire au moins 400 mots."
         }
@@ -169,14 +169,14 @@
       "main": [
         [
           {
-            "node": "Postgres : Tirer 3 Produits",
+            "node": "Postgres : Tirer 4 Produits",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Postgres : Tirer 3 Produits": {
+    "Postgres : Tirer 4 Produits": {
       "main": [
         [
           {
