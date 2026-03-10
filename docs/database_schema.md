@@ -230,7 +230,7 @@ Voici la liste de toutes tes tables et de leurs colonnes (champs) extraites de t
 - `slug`: character varying — identifiant URL unique (index unique `blog_posts_slug_unique`)
 - `excerpt`: text — résumé court (champ legacy, utiliser `summary`)
 - `summary`: text — résumé affiché sur la carte de liste
-- `cover_image`: uuid — FK → `directus_files.id` (image de couverture)
+- `cover_image`: text — ID d'asset Directus ou URL externe de l'image de couverture
 - `category`: character varying — catégorie libre (ex: "Accessoires", "Guides")
 - `published_at`: timestamp with time zone — date de publication affichée
 - `content`: text — contenu HTML riche (WYSIWYG Directus)
@@ -318,12 +318,12 @@ GET /items/blog_posts
   &filter[status][_eq]=published
   &fields=id,slug,title,summary,cover_image,category,published_at,
           status,content,seo_title,seo_description,
-          products.id,products.title,products.slug,
-          products.retail_price,products.prix_calcule,
-          products.image_url,products.status
+          products.id,
+          products.products_id.id,products.products_id.title,
+          products.products_id.slug,products.products_id.retail_price,
+          products.products_id.image,products.products_id.status
 ```
 
 ### Routes React (`App.tsx`)
 - `/blog` → `BlogListPage.tsx` (grille d'articles)
 - `/blog/:slug` → `BlogPostPage.tsx` (article + produits recommandés)
-

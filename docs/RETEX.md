@@ -434,7 +434,7 @@ if (/^https?:\/\//i.test(raw)) return raw  // URL externe = passée telle quelle
 
 ### Migration `cover_image` (UUID → TEXT) pour les blog posts
 
-Actuellement `cover_image` est de type `UUID` (FK vers `directus_files`). Pour accepter des URLs externes :
+Si `cover_image` est encore de type `UUID` (FK vers `directus_files`), le migrer en `TEXT` pour accepter des URLs externes :
 
 ```sql
 -- Sur le VPS (en postgres superuser)
@@ -457,5 +457,4 @@ Puis dans Directus → Data Model → `blog_posts` → champ `cover_image` → c
 | Tables de jointure M2M | **`public`** (Directus par défaut) | GRANT accordé à n8n_user en attendant |
 | Hébergement frontend | **VPS + Nginx + Docker** via GitHub Actions | Maîtrise totale du déploiement |
 | Blog SEO | **React SPA /blog** alimenté par Directus | Aucun SSR, rendu client |
-
 

@@ -884,10 +884,15 @@ export type BlogProduct = {
   status?: string | null
 }
 
+type BlogProductRaw = Omit<BlogProduct, 'image_url'> & {
+  image?: string | null
+  image_url?: string | null
+}
+
 /** Structure brute retournée par Directus pour une ligne de junction M2M blog_posts_products */
 type BlogProductJunction = {
   id: number
-  products_id: BlogProduct | null
+  products_id: BlogProductRaw | null
 }
 
 /** Un article de blog tel que livré par Directus (avant normalisation M2M) */
@@ -937,16 +942,38 @@ const BLOG_DETAIL_FIELDS = [
   'products.products_id.title',
   'products.products_id.slug',
   'products.products_id.retail_price',
-  'products.products_id.prix_calcule',
-  'products.products_id.image_url',
+  'products.products_id.image',
   'products.products_id.status',
 ].join(',')
+
+const BLOG_DETAIL_FALLBACK_FIELDS = [
+  'id',
+  'slug',
+  'title',
+  'summary',
+  'cover_image',
+  'category',
+  'published_at',
+  'status',
+  'content',
+].join(',')
+
+const normalizeProduct = (product: BlogProductRaw): BlogProduct => ({
+  id: product.id,
+  title: product.title,
+  slug: product.slug,
+  retail_price: product.retail_price,
+  prix_calcule: product.prix_calcule,
+  image_url: product.image_url ?? product.image ?? null,
+  status: product.status,
+})
 
 /** Normalise le tableau M2M Directus : extrait products_id.* et met à plat */
 const normalizeProducts = (junctions?: BlogProductJunction[]): BlogProduct[] =>
   (junctions ?? [])
     .map((j) => j.products_id)
-    .filter((p): p is BlogProduct => p !== null && p !== undefined)
+    .filter((p): p is BlogProductRaw => p !== null && p !== undefined)
+    .map(normalizeProduct)
 
 /** Liste les articles publiés du blog (pour la page /blog) */
 export const getBlogPosts = async (options: {
@@ -976,14 +1003,23 @@ export const getBlogPost = async (slug: string): Promise<BlogPost | null> => {
   const params: Record<string, string> = {
     'filter[slug][_eq]': slug,
     'filter[status][_eq]': 'published',
-    'fields': BLOG_DETAIL_FIELDS,
     'limit': '1',
   }
 
-  const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', { params })
-  const raw = payload.data?.[0]
-  if (!raw) return null
-  // Normalise la M2M : products[i].products_id.* → products[i].*
-  return { ...raw, products: normalizeProducts(raw.products) }
+  try {
+    const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', {
+      params: { ...params, fields: BLOG_DETAIL_FIELDS },
+    })
+    const raw = payload.data?.[0]
+    if (!raw) return null
+    // Normalise la M2M : products[i].products_id.* → products[i].*
+    return { ...raw, products: normalizeProducts(raw.products) }
+  } catch {
+    const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', {
+      params: { ...params, fields: BLOG_DETAIL_FALLBACK_FIELDS },
+    })
+    const raw = payload.data?.[0]
+    if (!raw) return null
+    return { ...raw, products: [] }
+  }
 }
-

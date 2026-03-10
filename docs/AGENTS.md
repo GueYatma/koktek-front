@@ -26,6 +26,16 @@ When the user says "push to GitHub":
 - Build stamp uses `VITE_BUILD_ID` (set from `GITHUB_SHA` in CI).
 - Stamp is shown in the footer to confirm the deployed version.
 
+## Protocole d'accès et secrets
+
+- Mode par défaut : toujours travailler en **autorisation par défaut** tant que la tâche peut être réalisée localement dans le workspace.
+- Si une tâche nécessite un accès réel hors sandbox (base PostgreSQL, Directus, n8n, VPS, logs système, réseau, fichiers hors workspace, ou commandes bloquées), **le demander explicitement à l'utilisateur avant d'aller plus loin**.
+- Si des identifiants sont nécessaires, l'utilisateur peut les déposer dans `docs/keys.md`.
+- Ne consulter `docs/keys.md` que si la tâche en a réellement besoin et **après accord explicite de l'utilisateur** pour utiliser ces accès.
+- Une fois l'accès complet accordé, annoncer brièvement l'action sensible visée (ex: requête SQL, vérification Directus, inspection VPS) avant exécution.
+- Revenir au mode le plus restrictif possible dès que l'action nécessitant l'accès complet est terminée.
+- En cas de blocage, doute, ou échec lié aux permissions/accès, ne pas improviser : demander l'accès complet plutôt que forcer un contournement fragile.
+
 ## ⛔ Fichiers d'infrastructure — NE PAS MODIFIER
 
 Les fichiers suivants contrôlent le déploiement vers le VPS.

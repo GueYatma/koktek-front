@@ -1,0 +1,270 @@
+{
+  "name": "KOKTEK - Auto-Blogging SEO (PostgreSQL + OpenRouter)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "8b1f3479-3af3-40be-ab03-417690cd5592",
+      "name": "Schedule Trigger (Toutes les heures)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, title, retail_price, image \nFROM koktek.products \nWHERE status = 'published' \nORDER BY random() \nLIMIT 3;",
+        "options": {}
+      },
+      "id": "45ff7e61-a878-4426-962f-592cbb4852d3",
+      "name": "Postgres : Tirer 3 Produits",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = items\n  .map(item => `- ${item.json.title} (Prix: ${item.json.retail_price}€)`)\n  .join('\\n');\n\nconst productIds = items.map(item => item.json.id);\nconst coverImage = items\n  .map(item => typeof item.json.image === 'string' ? item.json.image.trim() : '')\n  .find(Boolean) || null;\n\nreturn [{\n  json: {\n    products_text: products,\n    product_ids: productIds,\n    cover_image: coverImage,\n  }\n}];"
+      },
+      "id": "9770dba2-85bb-42c1-ada9-b7372767d809",
+      "name": "Code : Préparer Data pour LLM",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const toSlug = (value) => value\n  .toLowerCase()\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/(^-|-$)+/g, '');\n\nlet aiText = items[0].json.output || items[0].json.text || items[0].json.message?.content || items[0].json.message || '';\n\nif (typeof aiText !== 'string' || !aiText.trim()) {\n  throw new Error('La réponse du modèle est vide ou illisible.');\n}\n\naiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nconst start = aiText.indexOf('{');\nconst end = aiText.lastIndexOf('}');\nconst jsonSlice = start !== -1 && end !== -1 && end > start\n  ? aiText.slice(start, end + 1)\n  : aiText;\n\nlet aiResponse;\ntry {\n  aiResponse = JSON.parse(aiText);\n} catch {\n  aiResponse = JSON.parse(jsonSlice);\n}\n\nconst preparedData = $('Code : Préparer Data pour LLM').first().json;\nconst productIds = preparedData.product_ids || [];\nconst coverImage = preparedData.cover_image || null;\nconst title = typeof aiResponse.title === 'string' ? aiResponse.title.trim() : '';\nconst summarySource = typeof aiResponse.excerpt === 'string'\n  ? aiResponse.excerpt\n  : typeof aiResponse.summary === 'string'\n    ? aiResponse.summary\n    : '';\nconst content = typeof aiResponse.content === 'string' ? aiResponse.content.trim() : '';\nconst slugSource = typeof aiResponse.slug === 'string' ? aiResponse.slug : title;\nconst safeSlug = toSlug(slugSource || title || `article-${Date.now()}`);\n\nreturn [{\n  json: {\n    title: title || 'Article KOKTEK',\n    slug: safeSlug,\n    summary: summarySource.trim(),\n    content,\n    cover_image: coverImage,\n    product_ids: productIds,\n  }\n}];"
+      },
+      "id": "5e1314da-b2bd-42ff-93b4-54ff1609e14b",
+      "name": "Code : Parser le JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO koktek.blog_posts (status, title, slug, summary, content, cover_image, date_created, published_at) \nVALUES ('published', $1, $2, $3, $4, $5, NOW(), NOW()) \nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [$json.title, $json.slug, $json.summary, $json.content, $json.cover_image] }}"
+        }
+      },
+      "id": "2ae7b4cc-702d-4839-9eaf-12e7cfe8695e",
+      "name": "Postgres : Créer Article",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// L'ID du nouvel article\nconst blogPostId = items[0].json.id;\n// Les IDs des produits (récupérés du noeud précédent)\nconst productIds = $('Code : Parser le JSON').first().json.product_ids;\n\n// On crée un tableau d'objets pour chaque lien (1 article = 3 liens produits)\nreturn productIds.map(productId => ({\n  json: {\n    blog_posts_id: blogPostId,\n    products_id: productId\n  }\n}));"
+      },
+      "id": "b001b78c-60aa-4372-867b-69e29517461a",
+      "name": "Code : Préparer Jointures M2M",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.blog_posts_products (blog_posts_id, products_id) \nVALUES ($1, $2);",
+        "options": {
+          "queryReplacement": "={{ [$json.blog_posts_id, $json.products_id] }}"
+        }
+      },
+      "id": "f4d9309e-0099-443b-9855-a6dbfe71312c",
+      "name": "Postgres : Lier Produits à l'Article",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1680,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voici 3 produits tirés de notre catalogue KOKTEK :\n{{ $('Code : Préparer Data pour LLM').item.json.products_text }}\n\nInstructions pour cet article :\n1. Analyse ces produits et trouve un angle thématique pertinent ou un guide d'achat qui les relie intelligemment (ex: \"Les indispensables pour votre voiture\", \"Comment bien protéger son smartphone\", etc.).\n2. Rédige l'article autour de ce thème.\n3. Intègre très naturellement la mention de ces 3 produits dans le corps du texte (présente-les comme des recommandations ou des solutions de la rédaction KOKTEK).\n4. Rappel : Ne renvoie strictement que l'objet JSON brut.",
+        "options": {
+          "systemMessage": "Tu es un expert SEO et rédacteur web pro pour KOKTEK, une marque française spécialisée dans les accessoires Tech, Auto et Lifestyle (chargeurs, supports de téléphone, coques, audio).\nTon objectif est de rédiger des articles de blog captivants, parfaitement optimisés pour Google, avec un ton moderne, dynamique et expert.\n\nRÈGLE STRICTE ET ABSOLUE : Tu dois toujours renvoyer UNIQUEMENT un objet JSON valide, sans aucune phrase d'introduction ou de conclusion en dehors du JSON. Le JSON doit contenir exactement ces 4 clés :\n\n\"title\" : Le titre optimisé SEO de l'article.\n\n\"slug\" : L'URL de l'article (tout en minuscules, sans accents, espaces remplacés par des tirets).\n\n\"excerpt\" : Un résumé accrocheur de 2 ou 3 phrases pour donner envie de lire.\n\n\"content\" : Le contenu complet de l'article en HTML pur. Utilise des balises <h2>, <h3>, <p>, <ul>, <li> et <strong>. Le texte doit être bien structuré, aéré et faire au moins 400 mots."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        656,
+        0
+      ],
+      "id": "05b6b87e-e56e-4fad-aad4-7f4d187a2f7c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        656,
+        304
+      ],
+      "id": "b641b1b4-ba31-4518-8a1c-5fcb635b8307",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "cVPDbiG2sQv7okss",
+          "name": "OpenRouter account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger (Toutes les heures)": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Tirer 3 Produits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres : Tirer 3 Produits": {
+      "main": [
+        [
+          {
+            "node": "Code : Préparer Data pour LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Préparer Data pour LLM": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Parser le JSON": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Créer Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres : Créer Article": {
+      "main": [
+        [
+          {
+            "node": "Code : Préparer Jointures M2M",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Préparer Jointures M2M": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Lier Produits à l'Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code : Parser le JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "774ea7d8-a76d-4e67-bcbe-77d2fc2bbc59",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "AelHSSaJfy4l70rk",
+  "tags": []
+}
