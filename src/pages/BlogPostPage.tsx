@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { getBlogPost, type BlogPost, type BlogProduct } from '../lib/commerceApi'
 import { resolveImageUrl } from '../utils/image'
@@ -58,7 +58,6 @@ const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
 // ─── Page principale ─────────────────────────────────────────────────────────
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>()
-  const navigate = useNavigate()
   const [post, setPost] = useState<BlogPost | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
