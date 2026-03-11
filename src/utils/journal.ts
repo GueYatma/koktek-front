@@ -148,6 +148,7 @@ const autoStructurePlainText = (value: string): string => {
     .replace(/<(li|ul|ol)[^>]*>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+-\s+(?=[A-ZÀ-ÖØ-Þ0-9])/g, '\n- ')
     .replace(/\r/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
@@ -182,10 +183,12 @@ const autoStructurePlainText = (value: string): string => {
     const singleLine = lines.join(' ').replace(/\s+/g, ' ').trim()
     const wordCount = singleLine.split(/\s+/).filter(Boolean).length
     const isMarkdownHeading = /^#{2,3}\s+/.test(singleLine)
+    const isQuestionHeading = singleLine.endsWith('?') && wordCount <= 14 && singleLine.length <= 120
+    const isColonHeading = singleLine.endsWith(':') && wordCount <= 14 && singleLine.length <= 120
     const isShortHeading =
-      wordCount <= 10 &&
-      singleLine.length <= 90 &&
-      !/[.!?]$/.test(singleLine)
+      singleLine.length <= 110 &&
+      !/[.!]$/.test(singleLine) &&
+      (wordCount <= 10 || isQuestionHeading || isColonHeading)
 
     if (isMarkdownHeading || isShortHeading) {
       const level = singleLine.startsWith('###') ? 'h3' : 'h2'

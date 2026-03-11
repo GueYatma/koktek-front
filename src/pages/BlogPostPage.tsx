@@ -43,6 +43,18 @@ const formatDate = (iso?: string | null) => {
   }).format(new Date(iso.endsWith('Z') || iso.includes('+') ? iso : `${iso}Z`))
 }
 
+const decodeEscapedRichHtml = (value?: string | null) => {
+  if (!value) return ''
+  if (typeof document === 'undefined') return value
+
+  const containsEscapedHtml = /&lt;\/?(?:h[1-6]|p|ul|ol|li|strong|em|blockquote|br|a|table|figure)\b/i.test(value)
+  if (!containsEscapedHtml) return value
+
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = value
+  return textarea.value
+}
+
 const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
   const image = resolveImageUrl(product.image_url, '')
   const price = product.prix_calcule ?? product.retail_price
@@ -255,7 +267,7 @@ const BlogPostPage = () => {
   })
   const recommendedProducts = (post?.products ?? []).filter((item) => item.status === 'published' || !item.status)
   const sanitizedContent = post?.content
-    ? DOMPurify.sanitize(post.content, {
+    ? DOMPurify.sanitize(decodeEscapedRichHtml(post.content), {
         ALLOWED_TAGS,
         ALLOWED_ATTR,
       })
