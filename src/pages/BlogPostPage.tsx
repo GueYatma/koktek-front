@@ -48,10 +48,8 @@ const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
   const price = product.prix_calcule ?? product.retail_price
 
   return (
-    <Link
-      to={`/produit/${product.slug}`}
-      className="group flex gap-3 rounded-2xl border border-slate-200/80 bg-white/92 p-3 transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80"
-    >
+    <article className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white/92 p-3 transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80">
+      <Link to={`/produit/${product.slug}`} className="flex gap-3">
       {image ? (
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
           <img
@@ -76,7 +74,21 @@ const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
           </p>
         )}
       </div>
-    </Link>
+      </Link>
+
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200/80 pt-3 dark:border-slate-700/70">
+        <span className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+          Produit recommande
+        </span>
+        <Link
+          to={`/produit/${product.slug}`}
+          className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 dark:bg-white dark:text-slate-950 dark:hover:bg-amber-200"
+        >
+          Voir le produit
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </article>
   )
 }
 
