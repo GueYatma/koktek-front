@@ -85,9 +85,6 @@ const StoryImage = ({
 }) => {
   const image = resolveJournalCoverImage({
     coverImage: post.cover_image,
-    title: post.title,
-    pillar: post.pillar,
-    category: post.category,
     fallback: '',
   })
   const isPackshot = isPackshotStory(post)
@@ -125,16 +122,19 @@ const StoryImage = ({
 
 export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
   <article className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-[#f8f2e8]/94 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.38)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
-    <div className="grid lg:auto-rows-fr lg:grid-cols-[1.15fr_0.85fr]">
-      <Link to={`/blog/${post.slug}`} className="block h-full overflow-hidden">
+    <div className="flex flex-col lg:min-h-[40rem] lg:flex-row lg:items-stretch">
+      <Link
+        to={`/blog/${post.slug}`}
+        className="block overflow-hidden lg:w-[56%] lg:self-stretch"
+      >
         <StoryImage
           post={post}
-          frameClassName="h-full min-h-[360px] w-full lg:min-h-full"
+          frameClassName="h-[360px] w-full sm:h-[420px] lg:h-full lg:min-h-[40rem]"
           imageClassName="transition duration-700 hover:scale-[1.03]"
         />
       </Link>
 
-      <div className="flex flex-col justify-between p-6 sm:p-7">
+      <div className="flex flex-col justify-between p-6 sm:p-7 lg:w-[44%]">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600 dark:text-amber-400">
             À la une

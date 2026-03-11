@@ -27,9 +27,6 @@ const BlogPillarPage = () => {
   const featuredImage = toAbsoluteUrl(
     resolveJournalCoverImage({
       coverImage: featuredPost?.cover_image,
-      title: featuredPost?.title,
-      pillar: featuredPost?.pillar,
-      category: featuredPost?.category,
       fallback: '',
     }),
   )

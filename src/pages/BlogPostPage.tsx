@@ -83,9 +83,6 @@ const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
 const RelatedArticleCard = ({ post }: { post: BlogPostListItem }) => {
   const image = resolveJournalCoverImage({
     coverImage: post.cover_image,
-    title: post.title,
-    pillar: post.pillar,
-    category: post.category,
     fallback: '',
   })
   const pillarMeta = getJournalPillarMeta(post.pillar)
@@ -242,9 +239,6 @@ const BlogPostPage = () => {
 
   const coverImage = resolveJournalCoverImage({
     coverImage: post?.cover_image,
-    title: post?.title,
-    pillar: post?.pillar,
-    category: post?.category,
     fallback: '',
   })
   const recommendedProducts = (post?.products ?? []).filter((item) => item.status === 'published' || !item.status)
