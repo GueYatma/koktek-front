@@ -120,7 +120,8 @@ export const resolveJournalCoverImage = ({
   fallback?: string
 }): string => {
   const resolved = resolveImageUrl(coverImage, '');
-  if (resolved) return resolved;
+  const shouldIgnoreCover = isLikelyPackshotImage(coverImage);
+  if (resolved && !shouldIgnoreCover) return resolved;
 
   const haystack = [title, pillar, category].filter(Boolean).join(' ');
   const match = JOURNAL_FALLBACKS.find((entry) => entry.matcher.test(haystack));
