@@ -53,6 +53,7 @@ const BlogListPage = () => {
       JOURNAL_PILLARS.map((pillar) => ({
         ...pillar,
         count: posts.filter((post) => getJournalPillarMeta(post.pillar)?.key === pillar.key).length,
+        leadPost: posts.find((post) => getJournalPillarMeta(post.pillar)?.key === pillar.key),
       })),
     [posts],
   )
@@ -244,17 +245,40 @@ const BlogListPage = () => {
                       <p className="mt-4 flex-1 text-sm leading-7 text-slate-600 dark:text-slate-300">
                         {theme.description}
                       </p>
+                      {theme.leadPost && (
+                        <div className="mt-5 rounded-2xl border border-slate-200/80 bg-slate-50/85 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            A lire d abord
+                          </p>
+                          <Link
+                            to={`/blog/${theme.leadPost.slug}`}
+                            className="mt-2 block text-sm font-semibold leading-6 text-slate-900 transition hover:text-amber-700 dark:text-white dark:hover:text-amber-300"
+                          >
+                            {theme.leadPost.title}
+                          </Link>
+                        </div>
+                      )}
                       <div className="mt-5 flex items-center justify-between gap-4">
                         <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                           {theme.count} article{theme.count > 1 ? 's' : ''}
                         </span>
-                        <Link
-                          to={`/blog/theme/${theme.key}`}
-                          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
-                        >
-                          Explorer
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
+                        <div className="flex flex-wrap items-center justify-end gap-4">
+                          {theme.leadPost && (
+                            <Link
+                              to={`/blog/${theme.leadPost.slug}`}
+                              className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                            >
+                              Lire l article
+                            </Link>
+                          )}
+                          <Link
+                            to={`/blog/theme/${theme.key}`}
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
+                          >
+                            Explorer
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </article>

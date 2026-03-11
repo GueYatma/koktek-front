@@ -245,6 +245,34 @@ const BlogPillarPage = () => {
               </div>
             </section>
           )}
+
+          <section className="px-4 py-8 sm:px-6">
+            <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
+              <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
+                  Explorer aussi
+                </p>
+                <h2 className="font-journal-display mt-3 text-4xl leading-none text-slate-950 dark:text-white">
+                  D autres chemins du Journal KOKTEK.
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                  Passez d un univers a l autre pour continuer la lecture selon vos usages, votre mobilite ou vos besoins du moment.
+                </p>
+              </div>
+              <div className="mt-6">
+                <JournalPillarNav activePillar={pillar.key} />
+              </div>
+              <div className="mt-6">
+                <Link
+                  to="/blog"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
+                >
+                  Revenir a la une du Journal
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </section>
         </>
       )}
     </div>

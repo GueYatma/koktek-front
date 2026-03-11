@@ -81,6 +81,7 @@ const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
 
 const RelatedArticleCard = ({ post }: { post: BlogPostListItem }) => {
   const image = resolveImageUrl(post.cover_image, '')
+  const pillarMeta = getJournalPillarMeta(post.pillar)
 
   return (
     <article className="group flex h-full flex-col rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
@@ -104,9 +105,18 @@ const RelatedArticleCard = ({ post }: { post: BlogPostListItem }) => {
 
       <div className="mt-5 flex flex-1 flex-col">
         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+          {pillarMeta ? (
+            <Link
+              to={`/blog/theme/${pillarMeta.key}`}
+              className="rounded-full border border-slate-300/70 bg-white/80 px-2.5 py-1 font-semibold uppercase tracking-[0.18em] text-slate-700 transition hover:border-slate-400 hover:text-slate-950 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:text-white"
+            >
+              {pillarMeta.label}
+            </Link>
+          ) : (
             <span className="rounded-full border border-slate-300/70 bg-white/80 px-2.5 py-1 font-semibold uppercase tracking-[0.18em] text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200">
-            {getJournalStoryLabel(post)}
-          </span>
+              {getJournalStoryLabel(post)}
+            </span>
+          )}
           {post.published_at && <time>{formatDate(post.published_at)}</time>}
         </div>
 
@@ -122,13 +132,23 @@ const RelatedArticleCard = ({ post }: { post: BlogPostListItem }) => {
           </p>
         )}
 
-        <Link
-          to={`/blog/${post.slug}`}
-          className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
-        >
-          Lire aussi
-          <ArrowUpRight className="h-4 w-4" />
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <Link
+            to={`/blog/${post.slug}`}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
+          >
+            Lire aussi
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+          {pillarMeta && (
+            <Link
+              to={`/blog/theme/${pillarMeta.key}`}
+              className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            >
+              Voir le pilier
+            </Link>
+          )}
+        </div>
       </div>
     </article>
   )
@@ -454,6 +474,27 @@ const BlogPostPage = () => {
         </div>
 
         <aside className="space-y-6 xl:sticky xl:top-28 xl:self-start">
+          {pillarMeta && (
+            <section className="rounded-[28px] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
+                Explorer ce pilier
+              </p>
+              <h2 className="font-journal-display mt-3 text-3xl leading-tight text-slate-950 dark:text-white">
+                {pillarMeta.label}
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                {pillarMeta.description}
+              </p>
+              <Link
+                to={`/blog/theme/${pillarMeta.key}`}
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
+              >
+                Voir tous les articles de cette thematique
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </section>
+          )}
+
           {preparedContent.toc.length > 0 && (
             <section className="rounded-[28px] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
@@ -483,11 +524,9 @@ const BlogPostPage = () => {
               <p>Le Journal KOKTEK part du besoin, pas du produit.</p>
               <p>Chaque article garde un lien avec la boutique sans redevenir une grille catalogue.</p>
             </div>
-            {pillarMeta && (
-              <div className="mt-5">
-                <JournalPillarNav activePillar={pillarMeta.key} />
-              </div>
-            )}
+            <div className="mt-5">
+              <JournalPillarNav activePillar={pillarMeta?.key} />
+            </div>
             <Link
               to="/catalogue"
               className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"

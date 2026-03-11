@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Clock3 } from 'lucide-react'
 import { type BlogPost } from '../../lib/commerceApi'
 import { resolveImageUrl } from '../../utils/image'
-import { getJournalStoryLabel } from '../../utils/journal'
+import { getJournalPillarMeta, getJournalStoryLabel } from '../../utils/journal'
 
 export type JournalStoryCardPost = Omit<
   BlogPost,
@@ -21,6 +21,37 @@ const formatDate = (iso?: string | null) => {
 const getReadingLabel = (post: JournalStoryCardPost) =>
   post.reading_time ? `${post.reading_time} min de lecture` : 'Lecture essentielle'
 
+const StoryTopicChip = ({
+  post,
+  compact = false,
+}: {
+  post: JournalStoryCardPost
+  compact?: boolean
+}) => {
+  const pillarMeta = getJournalPillarMeta(post.pillar)
+
+  if (pillarMeta) {
+    return (
+      <Link
+        to={`/blog/theme/${pillarMeta.key}`}
+        className={`rounded-full border border-slate-300/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 transition dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 ${
+          compact
+            ? 'hover:border-slate-400 hover:text-slate-950 dark:hover:border-slate-500 dark:hover:text-white'
+            : 'hover:border-slate-950 hover:text-slate-950 dark:hover:border-slate-400 dark:hover:text-white'
+        }`}
+      >
+        {pillarMeta.label}
+      </Link>
+    )
+  }
+
+  return (
+    <span className="rounded-full border border-slate-300/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200">
+      {getJournalStoryLabel(post)}
+    </span>
+  )
+}
+
 export const StoryMeta = ({
   post,
   compact = false,
@@ -31,9 +62,7 @@ export const StoryMeta = ({
   <div
     className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-sm ${compact ? 'text-slate-500 dark:text-slate-400' : 'text-slate-600 dark:text-slate-300'}`}
   >
-    <span className="rounded-full border border-slate-300/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200">
-      {getJournalStoryLabel(post)}
-    </span>
+    <StoryTopicChip post={post} compact={compact} />
     {post.published_at && <time>{formatDate(post.published_at)}</time>}
     <span className="inline-flex items-center gap-1">
       <Clock3 className="h-3.5 w-3.5" />
@@ -105,13 +134,23 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
 
         <div className="mt-8 space-y-5">
           <StoryMeta post={post} />
-          <Link
-            to={`/blog/${post.slug}`}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-950 transition hover:gap-3 dark:text-white"
-          >
-            Lire l article
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              to={`/blog/${post.slug}`}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-950 transition hover:gap-3 dark:text-white"
+            >
+              Lire l article
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            {getJournalPillarMeta(post.pillar) && (
+              <Link
+                to={`/blog/theme/${getJournalPillarMeta(post.pillar)?.key}`}
+                className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              >
+                Explorer la thématique
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -141,6 +180,15 @@ export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
           {post.summary}
         </p>
       )}
+      {getJournalPillarMeta(post.pillar) && (
+        <Link
+          to={`/blog/theme/${getJournalPillarMeta(post.pillar)?.key}`}
+          className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+        >
+          Voir la thématique
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
     </div>
   </article>
 )
@@ -168,13 +216,23 @@ export const GuideCard = ({ post }: { post: JournalStoryCardPost }) => (
           {post.summary}
         </p>
       )}
-      <Link
-        to={`/blog/${post.slug}`}
-        className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
-      >
-        Continuer
-        <ArrowRight className="h-4 w-4" />
-      </Link>
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        <Link
+          to={`/blog/${post.slug}`}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
+        >
+          Continuer
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        {getJournalPillarMeta(post.pillar) && (
+          <Link
+            to={`/blog/theme/${getJournalPillarMeta(post.pillar)?.key}`}
+            className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          >
+            Voir le pilier
+          </Link>
+        )}
+      </div>
     </div>
   </article>
 )
