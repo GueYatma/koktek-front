@@ -125,11 +125,11 @@ const StoryImage = ({
 
 export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
   <article className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-[#f8f2e8]/94 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.38)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
-    <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
-      <Link to={`/blog/${post.slug}`} className="block overflow-hidden">
+    <div className="grid lg:auto-rows-fr lg:grid-cols-[1.15fr_0.85fr]">
+      <Link to={`/blog/${post.slug}`} className="block h-full overflow-hidden">
         <StoryImage
           post={post}
-          frameClassName="h-full min-h-[360px] w-full"
+          frameClassName="h-full min-h-[360px] w-full lg:min-h-full"
           imageClassName="transition duration-700 hover:scale-[1.03]"
         />
       </Link>
