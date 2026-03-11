@@ -36,6 +36,15 @@ When the user says "push to GitHub":
 - Revenir au mode le plus restrictif possible dès que l'action nécessitant l'accès complet est terminée.
 - En cas de blocage, doute, ou échec lié aux permissions/accès, ne pas improviser : demander l'accès complet plutôt que forcer un contournement fragile.
 
+## Protocole n8n
+
+- Pour tout nouveau workflow n8n ou toute modification de workflow n8n, **livrer le JSON complet dans le chat**.
+- L'utilisateur importe, colle, construit ou modifie lui-même le workflow dans son interface n8n.
+- L'utilisateur effectue le premier test dans n8n et confirme le résultat.
+- Après confirmation utilisateur, aider à corriger, ajuster ou expliquer le workflow si nécessaire.
+- **Ne jamais importer, modifier, publier, supprimer ou exécuter directement un workflow n8n sur le VPS** sans validation explicite de l'utilisateur.
+- Si un test live n8n est nécessaire, proposer d'abord la marche à suivre ou le JSON à importer, plutôt que d'agir directement sur l'instance.
+
 ## ⛔ Fichiers d'infrastructure — NE PAS MODIFIER
 
 Les fichiers suivants contrôlent le déploiement vers le VPS.

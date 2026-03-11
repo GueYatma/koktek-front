@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock3 } from 'lucide-react'
 import { type BlogPost } from '../../lib/commerceApi'
-import { isLikelyPackshotImage, resolveImageUrl } from '../../utils/image'
+import { isLikelyPackshotImage, resolveJournalCoverImage } from '../../utils/image'
 import { getJournalPillarMeta, getJournalStoryLabel } from '../../utils/journal'
 
 export type JournalStoryCardPost = Omit<
@@ -80,8 +80,14 @@ const StoryImage = ({
   frameClassName: string
   imageClassName?: string
 }) => {
-  const image = resolveImageUrl(post.cover_image, '')
-  const isPackshot = isLikelyPackshotImage(post.cover_image)
+  const image = resolveJournalCoverImage({
+    coverImage: post.cover_image,
+    title: post.title,
+    pillar: post.pillar,
+    category: post.category,
+    fallback: '',
+  })
+  const isPackshot = Boolean(post.cover_image) && isLikelyPackshotImage(post.cover_image)
 
   if (!image) {
     return (
@@ -111,22 +117,22 @@ const StoryImage = ({
 }
 
 export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-[#f8f2e8]/92 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.38)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
-    <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
+  <article className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-[#f8f2e8]/94 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.38)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+    <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
       <Link to={`/blog/${post.slug}`} className="block overflow-hidden">
         <StoryImage
           post={post}
-          frameClassName="h-full min-h-[320px] w-full"
+          frameClassName="h-full min-h-[360px] w-full"
           imageClassName="transition duration-700 hover:scale-[1.03]"
         />
       </Link>
 
-      <div className="flex flex-col justify-between p-7 sm:p-8">
+      <div className="flex flex-col justify-between p-6 sm:p-7">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600 dark:text-amber-400">
             À la une
           </p>
-          <h2 className="font-journal-display mt-4 text-3xl leading-[1.02] text-slate-950 dark:text-white sm:text-4xl">
+          <h2 className="font-journal-display mt-3 text-[2.05rem] leading-[1.02] text-slate-950 dark:text-white sm:text-[2.45rem]">
             <Link
               to={`/blog/${post.slug}`}
               className="transition hover:text-amber-700 dark:hover:text-amber-300"
@@ -134,7 +140,7 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
               {post.title}
             </Link>
           </h2>
-          <p className="mt-4 text-base leading-8 text-slate-600 dark:text-slate-300">
+          <p className="mt-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
             {post.summary ??
               'Un guide utile, concret et directement connecté aux usages réellement recherchés.'}
           </p>
@@ -166,10 +172,10 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
 )
 
 export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[#f8f2e8]/90 p-4 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+  <article className="overflow-hidden rounded-[26px] border border-slate-200/80 bg-[#f8f2e8]/92 p-4 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
     <Link
       to={`/blog/${post.slug}`}
-      className="block aspect-[5/4] overflow-hidden rounded-[22px] bg-[#efe4d5] dark:bg-slate-900"
+      className="block aspect-[4/5] overflow-hidden rounded-[20px] bg-[#efe4d5] dark:bg-slate-900"
     >
       <StoryImage
         post={post}
@@ -179,7 +185,7 @@ export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
     </Link>
     <div className="mt-4">
       <StoryMeta post={post} compact />
-      <h3 className="font-journal-display mt-3 text-2xl leading-tight text-slate-950 dark:text-white">
+      <h3 className="font-journal-display mt-3 text-[1.9rem] leading-[1.08] text-slate-950 dark:text-white">
         <Link
           to={`/blog/${post.slug}`}
           className="transition hover:text-amber-700 dark:hover:text-amber-300"
@@ -188,7 +194,7 @@ export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
         </Link>
       </h3>
       {post.summary && (
-        <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+        <p className="mt-3 line-clamp-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
           {post.summary}
         </p>
       )}
@@ -206,10 +212,10 @@ export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
 )
 
 export const GuideCard = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="group flex h-full flex-col rounded-[28px] border border-slate-200/80 bg-[#f8f2e8]/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.5)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
+  <article className="group flex h-full flex-col rounded-[26px] border border-slate-200/80 bg-[#f8f2e8]/92 p-4 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.48)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
     <Link
       to={`/blog/${post.slug}`}
-      className="block aspect-[5/4] overflow-hidden rounded-[22px] bg-[#efe4d5] dark:bg-slate-900"
+      className="block aspect-[4/5] overflow-hidden rounded-[20px] bg-[#efe4d5] dark:bg-slate-900"
     >
       <StoryImage
         post={post}
@@ -228,7 +234,7 @@ export const GuideCard = ({ post }: { post: JournalStoryCardPost }) => (
         </Link>
       </h3>
       {post.summary && (
-        <p className="mt-3 line-clamp-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+        <p className="mt-3 line-clamp-4 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
           {post.summary}
         </p>
       )}

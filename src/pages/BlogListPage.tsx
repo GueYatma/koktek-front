@@ -12,7 +12,7 @@ import {
   type JournalStoryCardPost,
 } from '../components/journal/JournalStoryCards'
 import { JOURNAL_PILLARS, getJournalPillarMeta, getJournalStoryLabel } from '../utils/journal'
-import { resolveImageUrl } from '../utils/image'
+import { resolveJournalCoverImage } from '../utils/image'
 import { buildBreadcrumbJsonLd, toAbsoluteSiteUrl, toAbsoluteUrl } from '../utils/seo'
 
 const BlogListPage = () => {
@@ -23,7 +23,15 @@ const BlogListPage = () => {
   const [error, setError] = useState<string | null>(null)
 
   const featuredPost = posts.find((post) => post.featured) ?? posts[0]
-  const featuredImage = toAbsoluteUrl(resolveImageUrl(featuredPost?.cover_image, ''))
+  const featuredImage = toAbsoluteUrl(
+    resolveJournalCoverImage({
+      coverImage: featuredPost?.cover_image,
+      title: featuredPost?.title,
+      pillar: featuredPost?.pillar,
+      category: featuredPost?.category,
+      fallback: '',
+    }),
+  )
 
   useDocumentMeta({
     title: 'Journal KOKTEK',
@@ -94,22 +102,22 @@ const BlogListPage = () => {
   })
 
   return (
-    <div className="pb-20">
-      <section className="px-4 pb-8 sm:px-6">
-        <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="overflow-hidden rounded-[36px] bg-[#112033] px-7 py-8 text-white shadow-[0_28px_90px_-35px_rgba(15,23,42,0.7)] sm:px-10 sm:py-10">
+    <div className="pb-16">
+      <section className="px-4 pb-6 sm:px-6">
+        <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[1.18fr_0.82fr]">
+          <div className="overflow-hidden rounded-[34px] bg-[#112033] px-6 py-7 text-white shadow-[0_28px_90px_-35px_rgba(15,23,42,0.7)] sm:px-9 sm:py-9">
             <p className="text-xs font-semibold uppercase tracking-[0.38em] text-amber-300">
               Journal premium
             </p>
             <h1 className="font-journal-display mt-5 max-w-3xl text-5xl leading-[0.94] sm:text-6xl">
               Le Journal KOKTEK
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
+            <p className="mt-5 max-w-2xl text-[15px] leading-7 text-slate-300 sm:text-[1.08rem]">
               Astuces, guides et inspirations pour tirer le meilleur de vos équipements tech au
               quotidien.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 to={featuredPost ? `/blog/${featuredPost.slug}` : '/catalogue'}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-100"
@@ -126,7 +134,7 @@ const BlogListPage = () => {
             </div>
 
             {editorialTags.length > 0 && (
-              <div className="mt-8 flex flex-wrap gap-2">
+              <div className="mt-7 flex flex-wrap gap-2">
                 {editorialTags.map((tag) => (
                   <span
                     key={tag}
@@ -139,20 +147,19 @@ const BlogListPage = () => {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-[36px] border border-slate-200/70 bg-[#f8f2e8]/78 p-7 shadow-[0_20px_70px_-35px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
+          <div className="overflow-hidden rounded-[34px] border border-slate-200/70 bg-[#f8f2e8]/84 p-6 shadow-[0_20px_70px_-35px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
               <Sparkles className="h-4 w-4" />
               À la une
             </div>
-            <h2 className="font-journal-display mt-5 text-3xl leading-tight text-slate-950 dark:text-white">
+            <h2 className="font-journal-display mt-4 text-[2rem] leading-tight text-slate-950 dark:text-white">
               Explorez nos dernières découvertes
             </h2>
-            <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              <p>Des contenus utiles pour mieux choisir, utiliser et protéger vos équipements tech.</p>
-              <p>Des guides concrets pour la mobilité, le bureau, la création mobile et le quotidien.</p>
-              <p>Des recommandations simples pour avancer plus vite, sans jargon inutile.</p>
+            <div className="mt-4 space-y-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+              <p>Retrouvez ici nos guides, astuces et sélections d’experts pour booster votre quotidien tech.</p>
+              <p>Des formats courts, concrets et pensés pour agir vite, sans jargon inutile.</p>
             </div>
-            <div className="mt-6">
+            <div className="mt-5">
               <JournalPillarNav />
             </div>
           </div>
@@ -188,8 +195,8 @@ const BlogListPage = () => {
             <h2 className="font-journal-display mt-4 text-4xl text-slate-950 dark:text-white">
               Le prochain article arrive bientôt.
             </h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              La structure éditoriale est en place. Il manque seulement le prochain sujet publié.
+            <p className="mt-4 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+              Retrouvez ici nos guides, astuces et sélections d’experts pour booster votre quotidien tech.
             </p>
           </div>
         </section>
@@ -197,18 +204,17 @@ const BlogListPage = () => {
 
       {!loading && !error && featuredPost && (
         <>
-          <section className="px-4 py-6 sm:px-6">
-            <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="px-4 py-5 sm:px-6">
+            <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[1.18fr_0.82fr]">
               <FeaturedStory post={featuredPost} />
 
-              <div className="space-y-6">
-                <div className="rounded-[28px] border border-slate-200/70 bg-[#f8f2e8]/80 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
+              <div className="space-y-4">
+                <div className="rounded-[26px] border border-slate-200/70 bg-[#f8f2e8]/84 p-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                     Dernières lectures
                   </p>
-                  <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                    Explorez nos dernières découvertes et trouvez rapidement le guide qui vous
-                    correspond.
+                  <p className="mt-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+                    Retrouvez ici nos guides, astuces et sélections d’experts pour booster votre quotidien tech.
                   </p>
                 </div>
                 {sideStories.map((post) => (
@@ -218,7 +224,7 @@ const BlogListPage = () => {
             </div>
           </section>
 
-          <section id="themes" className="px-4 py-10 sm:px-6">
+          <section id="themes" className="px-4 py-8 sm:px-6">
             <div className="mx-auto max-w-6xl">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
@@ -229,24 +235,24 @@ const BlogListPage = () => {
                 </h2>
               </div>
 
-              <div className="mt-8 grid gap-5 lg:grid-cols-3">
+              <div className="mt-7 grid gap-4 lg:grid-cols-3">
                 {themeCards.map((theme) => (
                   <article
                     key={theme.key}
                     className={`overflow-hidden rounded-[30px] bg-gradient-to-br ${theme.accentClass} p-[1px] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.55)]`}
                   >
-                    <div className="flex h-full flex-col rounded-[29px] bg-[#f8f2e8]/94 p-6 dark:bg-slate-950/80">
+                    <div className="flex h-full flex-col rounded-[29px] bg-[#f8f2e8]/94 p-5 dark:bg-slate-950/80">
                       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                         {theme.eyebrow}
                       </p>
                       <h3 className="font-journal-display mt-3 text-3xl leading-tight text-slate-950 dark:text-white">
                         {theme.label}
                       </h3>
-                      <p className="mt-4 flex-1 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                      <p className="mt-3 flex-1 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
                         {theme.description}
                       </p>
                       {theme.leadPost && (
-                        <div className="mt-5 rounded-2xl border border-slate-200/80 bg-[#fbf7f1]/92 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                        <div className="mt-4 rounded-2xl border border-slate-200/80 bg-[#fbf7f1]/92 p-4 dark:border-slate-800 dark:bg-slate-900/70">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                             À lire d’abord
                           </p>
@@ -258,7 +264,7 @@ const BlogListPage = () => {
                           </Link>
                         </div>
                       )}
-                      <div className="mt-5 flex items-center justify-between gap-4">
+                      <div className="mt-4 flex items-center justify-between gap-4">
                         <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                           {theme.count} article{theme.count > 1 ? 's' : ''}
                         </span>
@@ -288,7 +294,7 @@ const BlogListPage = () => {
           </section>
 
           {guideStories.length > 0 && (
-            <section id="guides" className="px-4 py-8 sm:px-6">
+            <section id="guides" className="px-4 py-7 sm:px-6">
               <div className="mx-auto max-w-6xl">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="max-w-2xl">
@@ -308,7 +314,7 @@ const BlogListPage = () => {
                   </Link>
                 </div>
 
-                <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {guideStories.map((post) => (
                     <GuideCard key={post.id} post={post} />
                   ))}

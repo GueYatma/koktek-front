@@ -19,18 +19,18 @@ const JournalHeader = () => {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200/70 bg-[#f6f0e6]/88 backdrop-blur-xl dark:border-slate-800/70 dark:bg-[#0b1320]/88">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Link to="/" className="shrink-0">
-            <span className="logo-koktek text-2xl font-black uppercase text-slate-950 dark:text-white">
+            <span className="logo-koktek text-[2rem] font-black uppercase text-slate-950 dark:text-white sm:text-[2.2rem]">
               KOKTEK
             </span>
           </Link>
 
-          <div className="hidden min-w-0 border-l border-slate-300/70 pl-4 lg:block dark:border-slate-700/70">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
+          <div className="hidden min-w-0 border-l border-slate-300/70 pl-5 lg:block dark:border-slate-700/70">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-slate-500 dark:text-slate-400">
               Journal KOKTEK
             </p>
-            <p className="max-w-[18rem] text-[11px] leading-4 text-slate-600 dark:text-slate-300">
+            <p className="max-w-[26rem] text-[14px] font-semibold leading-[1.3rem] text-slate-800 dark:text-slate-100 xl:text-[15px] xl:leading-[1.45rem]">
               Le magazine pratique des usages smartphone, mobilité et lifestyle.
             </p>
           </div>

@@ -12,7 +12,7 @@ import {
   type JournalStoryCardPost,
 } from '../components/journal/JournalStoryCards'
 import { getJournalPillarMeta } from '../utils/journal'
-import { resolveImageUrl } from '../utils/image'
+import { resolveJournalCoverImage } from '../utils/image'
 import { buildBreadcrumbJsonLd, toAbsoluteSiteUrl, toAbsoluteUrl } from '../utils/seo'
 
 const BlogPillarPage = () => {
@@ -24,7 +24,15 @@ const BlogPillarPage = () => {
 
   const pillarUrl = pillar ? toAbsoluteSiteUrl(`/blog/theme/${pillar.key}`) : undefined
   const featuredPost = posts.find((post) => post.featured) ?? posts[0]
-  const featuredImage = toAbsoluteUrl(resolveImageUrl(featuredPost?.cover_image, ''))
+  const featuredImage = toAbsoluteUrl(
+    resolveJournalCoverImage({
+      coverImage: featuredPost?.cover_image,
+      title: featuredPost?.title,
+      pillar: featuredPost?.pillar,
+      category: featuredPost?.category,
+      fallback: '',
+    }),
+  )
 
   useDocumentMeta({
     title: pillar ? `${pillar.label} | Journal KOKTEK` : 'Journal KOKTEK',
@@ -116,14 +124,24 @@ const BlogPillarPage = () => {
   const remainingPosts = featuredPost ? posts.filter((post) => post.id !== featuredPost.id) : []
   const sideStories = remainingPosts.slice(0, 2)
   const guideStories = remainingPosts.slice(2)
+  const pillarSupportCards = [
+    {
+      title: 'Lecture express',
+      text: 'Retrouvez ici nos guides, astuces et sélections d’experts pour booster votre quotidien tech.',
+    },
+    {
+      title: 'Rester dans le bon pilier',
+      text: 'Même avec peu d’articles, la lecture reste fluide et recentrée sur les conseils les plus utiles de cette thématique.',
+    },
+  ]
 
   return (
-    <div className="pb-20">
-      <section className="px-4 pb-8 sm:px-6">
+    <div className="pb-16">
+      <section className="px-4 pb-6 sm:px-6">
         <div
-          className={`mx-auto overflow-hidden rounded-[36px] bg-gradient-to-br ${pillar.accentClass} p-[1px] shadow-[0_28px_90px_-35px_rgba(15,23,42,0.7)]`}
+          className={`mx-auto overflow-hidden rounded-[34px] bg-gradient-to-br ${pillar.accentClass} p-[1px] shadow-[0_28px_90px_-35px_rgba(15,23,42,0.7)]`}
         >
-          <div className="rounded-[35px] bg-slate-950/18 px-7 py-8 backdrop-blur-[2px] sm:px-10 sm:py-10">
+          <div className="rounded-[33px] bg-slate-950/18 px-6 py-7 backdrop-blur-[2px] sm:px-9 sm:py-9">
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/72">
               <Link to="/blog" className="transition hover:text-white">
                 Journal
@@ -132,21 +150,21 @@ const BlogPillarPage = () => {
               <span>{pillar.eyebrow}</span>
             </div>
 
-            <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
               <div>
                 <h1 className="font-journal-display max-w-3xl text-5xl leading-[0.95] text-white sm:text-6xl">
                   {pillar.label}
                 </h1>
-                <p className="mt-5 max-w-2xl text-base leading-8 text-white sm:text-lg">
+                <p className="mt-4 max-w-2xl text-[15px] leading-7 text-white sm:text-[1.08rem]">
                   {pillar.description}
                 </p>
               </div>
 
-              <div className="rounded-[28px] border border-white/14 bg-white/10 p-6 backdrop-blur-sm">
+              <div className="rounded-[26px] border border-white/14 bg-white/10 p-5 backdrop-blur-sm">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/72">
                   Navigation éditoriale
                 </p>
-                <p className="mt-3 text-sm leading-7 text-white">
+                <p className="mt-3 text-[15px] leading-7 text-white">
                   Naviguez par thématique pour trouver le guide, l’astuce ou l’accessoire qui correspond exactement à vos besoins.
                 </p>
                 <div className="mt-5">
@@ -187,8 +205,8 @@ const BlogPillarPage = () => {
             <h2 className="font-journal-display mt-4 text-4xl text-slate-950 dark:text-white">
               Ce pilier attend encore ses premiers articles.
             </h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              La structure est prête. Il reste à publier les prochains sujets liés à cette thématique.
+            <p className="mt-4 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+              Retrouvez ici nos guides, astuces et sélections d’experts pour booster votre quotidien tech.
             </p>
           </div>
         </section>
@@ -196,19 +214,33 @@ const BlogPillarPage = () => {
 
       {!loading && !error && featuredPost && (
         <>
-          <section className="px-4 py-6 sm:px-6">
-            <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="px-4 py-5 sm:px-6">
+            <div className={`mx-auto grid max-w-6xl gap-4 ${sideStories.length > 0 ? 'lg:grid-cols-[1.18fr_0.82fr]' : 'lg:grid-cols-[1.1fr_0.9fr]'}`}>
               <FeaturedStory post={featuredPost} />
 
-              <div className="space-y-6">
-                <div className="rounded-[28px] border border-slate-200/70 bg-[#f8f2e8]/80 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
+              <div className={sideStories.length > 0 ? 'space-y-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-1'}>
+                <div className="rounded-[26px] border border-slate-200/70 bg-[#f8f2e8]/84 p-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                     Dans ce pilier
                   </p>
-                  <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                    Une lecture resserrée sur le même territoire éditorial, avec une logique de média plutôt que de catalogue.
+                  <p className="mt-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+                    Retrouvez ici nos guides, astuces et sélections d’experts pour booster votre quotidien tech.
                   </p>
                 </div>
+                {sideStories.length === 0 &&
+                  pillarSupportCards.map((card) => (
+                    <div
+                      key={card.title}
+                      className="rounded-[26px] border border-slate-200/70 bg-white/88 p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-950/70"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                        {card.title}
+                      </p>
+                      <p className="mt-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+                        {card.text}
+                      </p>
+                    </div>
+                  ))}
                 {sideStories.map((post) => (
                   <CompactStory key={post.id} post={post} />
                 ))}
@@ -217,7 +249,7 @@ const BlogPillarPage = () => {
           </section>
 
           {guideStories.length > 0 && (
-            <section className="px-4 py-8 sm:px-6">
+            <section className="px-4 py-7 sm:px-6">
               <div className="mx-auto max-w-6xl">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="max-w-2xl">
@@ -237,7 +269,7 @@ const BlogPillarPage = () => {
                   </Link>
                 </div>
 
-                <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {guideStories.map((post) => (
                     <GuideCard key={post.id} post={post} />
                   ))}
@@ -246,8 +278,8 @@ const BlogPillarPage = () => {
             </section>
           )}
 
-          <section className="px-4 py-8 sm:px-6">
-            <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200/80 bg-[#f8f2e8]/92 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
+          <section className="px-4 py-7 sm:px-6">
+            <div className="mx-auto max-w-6xl rounded-[30px] border border-slate-200/80 bg-[#f8f2e8]/92 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-7">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
                   Explorer aussi
@@ -255,7 +287,7 @@ const BlogPillarPage = () => {
                 <h2 className="font-journal-display mt-3 text-4xl leading-none text-slate-950 dark:text-white">
                   D’autres chemins du Journal KOKTEK.
                 </h2>
-                <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                <p className="mt-4 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
                   Passez d’un univers à l’autre pour continuer la lecture selon vos usages, votre mobilité ou vos besoins du moment.
                 </p>
               </div>

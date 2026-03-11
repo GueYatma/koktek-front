@@ -971,6 +971,7 @@ const BLOG_DETAIL_FIELDS = [
   'products.products_id.id',
   'products.products_id.title',
   'products.products_id.slug',
+  'products.products_id.prix_calcule',
   'products.products_id.retail_price',
   'products.products_id.image',
   'products.products_id.status',

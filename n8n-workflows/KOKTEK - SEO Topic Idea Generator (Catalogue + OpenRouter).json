@@ -1,12 +1,10 @@
 {
-  "name": "KOKTEK - SEO Topic Idea Generator (Catalogue + OpenRouter)",
   "nodes": [
     {
       "parameters": {
         "rule": {
           "interval": [
             {
-              "daysInterval": 1,
               "triggerAtHour": 4
             }
           ]
@@ -17,18 +15,7 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        0,
-        -160
-      ]
-    },
-    {
-      "parameters": {},
-      "id": "dfd72454-75a7-4274-a94f-020f4ef90156",
-      "name": "Manual Trigger",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        0,
+        -16,
         0
       ]
     },
@@ -55,7 +42,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const products = items\n  .map((item) => item.json)\n  .filter((product) => product && product.id && product.title && product.slug);\n\nif (products.length === 0) {\n  throw new Error('Aucun produit publié exploitable dans le catalogue.');\n}\n\nconst inferPillar = (title) => {\n  const value = String(title || '').toLowerCase();\n\n  if (/(voiture|gps|support voiture|chargeur voiture|moto)/.test(value)) return 'auto-mobilite';\n  if (/(selfie|camera|capture|ring light|lumineux|photo|video|tr[eé]pied)/.test(value)) return 'creation-mobile';\n  if (/(coque|protection|verre|objectif|anneau de protection)/.test(value)) return 'lifestyle-protection';\n  if (/(chargeur|batterie|usb|magsafe|gan|cable|audio|ecouteur|casque|induction)/.test(value)) return 'tech-productivite';\n  return 'guides-achat';\n};\n\nconst catalogLines = products.map((product) => {\n  const pillar = inferPillar(product.title);\n  const price = product.retail_price ?? 'N/A';\n  return '- [' + product.id + '] ' + product.title + ' | slug: ' + product.slug + ' | pilier: ' + pillar + ' | prix: ' + price + '€';\n});\n\nconst prompt = [\n  'Catalogue Koktek réellement vendu :',\n  ...catalogLines,\n  '',\n  'Mission : proposer 5 sujets SEO premium strictement alignés sur ces produits exacts.',\n  'Tu ne dois jamais inventer un produit, un accessoire ou un usage impossible à servir avec ce catalogue.',\n  'Chaque idée doit pouvoir recommander de 1 à 4 produits exacts présents dans la liste ci-dessus.',\n  'Si un angle paraît séduisant mais ne correspond à aucun produit listé, il doit être rejeté.',\n  'Privilégier des sujets evergreen, utiles, inbound et réellement vendables.',\n  'Favoriser en priorité les familles réellement monétisables et universelles : charge, batterie, support, mobilité auto, bureau, photo mobile, coque transparente ou antichoc, protection écran.',\n  '',\n  'Tu dois renvoyer UNIQUEMENT un JSON avec une clé \"ideas\" contenant un tableau de 5 objets ayant exactement ces clés :',\n  'title, target_keyword, secondary_keywords, search_intent, pillar, article_type, angle, audience, brief, seasonality, priority, max_products, manual_product_ids',\n  '',\n  'Règles :',\n  '1. title = sujet éditorial interne, clair et vendeur sans être publicitaire.',\n  '2. target_keyword = requête Google plausible en français.',\n  '3. pillar doit être l'un de : auto-mobilite, tech-productivite, lifestyle-protection, creation-mobile, guides-achat.',\n  '4. article_type doit être l'un de : guide, checklist, comparatif, decryptage, selection, faq.',\n  '5. manual_product_ids doit contenir uniquement des IDs présents dans le catalogue fourni.',\n  '6. Ne jamais proposer un brassard de running, une montre ou tout autre produit absent du catalogue.',\n  '7. Priorité haute si le sujet répond à un problème concret et vendable.',\n].join('\\n');\n\nreturn [{\n  json: {\n    products,\n    product_ids: products.map((product) => String(product.id)),\n    prompt,\n  }\n}];"
+        "jsCode": "// 1. Défense de base : on s'assure que les données entrantes existent\nif (!items || !Array.isArray(items)) {\n  throw new Error(\"Erreur système : les items d'entrée sont invalides ou manquants.\");\n}\n\n// 2. Extraction et filtrage ultra-robuste des produits\nconst products = items\n  .map((item) => item?.json)\n  .filter((product) => product && product.id && product.title && product.slug);\n\nif (products.length === 0) {\n  throw new Error(\"Aucun produit publié exploitable dans le catalogue.\");\n}\n\n// 3. Fonction de classification (Piliers) avec nettoyage des espaces\nconst inferPillar = (title) => {\n  const value = String(title || \"\").toLowerCase().trim();\n\n  if (/(voiture|gps|support voiture|chargeur voiture|moto)/.test(value)) return \"auto-mobilite\";\n  if (/(selfie|camera|capture|ring light|lumineux|photo|video|tr[eé]pied)/.test(value)) return \"creation-mobile\";\n  if (/(coque|protection|verre|objectif|anneau de protection)/.test(value)) return \"lifestyle-protection\";\n  if (/(chargeur|batterie|usb|magsafe|gan|c[aâ]ble|audio|ecouteur|écouteur|casque|induction)/.test(value)) return \"tech-productivite\";\n  \n  return \"guides-achat\";\n};\n\n// 4. Création des lignes du catalogue avec \"Template Literals\" (plus propre)\nconst catalogLines = products.map((product) => {\n  const pillar = inferPillar(product.title);\n  const price = product.retail_price ?? \"N/A\";\n  return `- [${product.id}] ${product.title} | slug: ${product.slug} | pilier: ${pillar} | prix: ${price}€`;\n});\n\n// 5. Construction du prompt \n// /!\\ CORRECTION MAJEURE : Utilisation stricte de guillemets doubles (\" \") pour \n// encadrer les phrases. Cela empêche les apostrophes (ex: l'un, l'autre) de faire crasher n8n.\nconst prompt = [\n  \"Catalogue Koktek réellement vendu :\",\n  ...catalogLines,\n  \"\",\n  \"Mission : proposer 5 sujets SEO premium strictement alignés sur ces produits exacts.\",\n  \"Tu ne dois jamais inventer un produit, un accessoire ou un usage impossible à servir avec ce catalogue.\",\n  \"Chaque idée doit pouvoir recommander de 1 à 4 produits exacts présents dans la liste ci-dessus.\",\n  \"Si un angle paraît séduisant mais ne correspond à aucun produit listé, il doit être rejeté.\",\n  \"Privilégier des sujets evergreen, utiles, inbound et réellement vendables.\",\n  \"Favoriser en priorité les familles réellement monétisables et universelles : charge, batterie, support, mobilité auto, bureau, photo mobile, coque transparente ou antichoc, protection écran.\",\n  \"\",\n  \"Tu dois renvoyer UNIQUEMENT un JSON avec une clé \\\"ideas\\\" contenant un tableau de 5 objets ayant exactement ces clés :\",\n  \"title, target_keyword, secondary_keywords, search_intent, pillar, article_type, angle, audience, brief, seasonality, priority, max_products, manual_product_ids\",\n  \"\",\n  \"Règles :\",\n  \"1. title = sujet éditorial interne, clair et vendeur sans être publicitaire.\",\n  \"2. target_keyword = requête Google plausible en français.\",\n  \"3. pillar doit être l'un de : auto-mobilite, tech-productivite, lifestyle-protection, creation-mobile, guides-achat.\",\n  \"4. article_type doit être l'un de : guide, checklist, comparatif, decryptage, selection, faq.\",\n  \"5. manual_product_ids doit contenir uniquement des IDs présents dans le catalogue fourni.\",\n  \"6. Ne jamais proposer un brassard de running, une montre ou tout autre produit absent du catalogue.\",\n  \"7. Priorité haute si le sujet répond à un problème concret et vendable.\"\n].join(\"\\n\");\n\n// 6. Renvoi final sécurisé\nreturn [{\n  json: {\n    products,\n    product_ids: products.map((product) => String(product.id)),\n    prompt,\n  }\n}];"
       },
       "id": "ffe2faff-86ec-407b-ba78-67857e6c70e8",
       "name": "Code : Préparer Brief Catalogue",
@@ -104,21 +91,21 @@
     },
     {
       "parameters": {
-        "jsCode": "const prepared = $('Code : Préparer Brief Catalogue').first().json;\nconst availableIds = new Set((prepared.product_ids || []).map((id) => String(id)));\nlet aiText = items[0].json.output || items[0].json.text || items[0].json.message?.content || items[0].json.message || '';\n\nif (typeof aiText !== 'string' || !aiText.trim()) {\n  throw new Error('La réponse du modèle est vide ou illisible.');\n}\n\naiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nconst start = aiText.indexOf('{');\nconst end = aiText.lastIndexOf('}');\nconst jsonSlice = start !== -1 && end !== -1 && end > start\n  ? aiText.slice(start, end + 1)\n  : aiText;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(aiText);\n} catch {\n  parsed = JSON.parse(jsonSlice);\n}\n\nconst normalizeArray = (value) => Array.isArray(value) ? value : [];\nconst ideas = normalizeArray(parsed.ideas);\nconst seen = new Set();\n\nreturn ideas\n  .map((idea) => {\n    const ids = normalizeArray(idea.manual_product_ids)\n      .map((id) => String(id))\n      .filter((id) => availableIds.has(id));\n\n    const title = String(idea.title || '').trim();\n    const keyword = String(idea.target_keyword || '').trim();\n    const dedupeKey = keyword.toLowerCase() || title.toLowerCase();\n\n    if (!title || !keyword || ids.length === 0 || seen.has(dedupeKey)) return null;\n    seen.add(dedupeKey);\n\n    return {\n      json: {\n        title,\n        target_keyword: keyword,\n        secondary_keywords: String(idea.secondary_keywords || '').trim(),\n        search_intent: String(idea.search_intent || 'informational').trim() || 'informational',\n        pillar: String(idea.pillar || 'guides-achat').trim() || 'guides-achat',\n        article_type: String(idea.article_type || 'guide').trim() || 'guide',\n        angle: String(idea.angle || '').trim(),\n        audience: String(idea.audience || 'Grand public').trim() || 'Grand public',\n        brief: String(idea.brief || '').trim(),\n        seasonality: String(idea.seasonality || 'evergreen').trim() || 'evergreen',\n        priority: Number(idea.priority || 80),\n        max_products: Math.min(4, Math.max(1, Number(idea.max_products || ids.length || 2))),\n        manual_product_ids: JSON.stringify(ids),\n        source_label: 'idea-generator',\n      }\n    };\n  })\n  .filter(Boolean)\n  .slice(0, 5);"
+        "jsCode": "// 1. Récupérer les IDs disponibles de manière sécurisée\nconst preparedNode = $('Code : Préparer Brief Catalogue').first();\nif (!preparedNode || !preparedNode.json) {\n  throw new Error(\"Impossible de trouver les données du catalogue précédent.\");\n}\nconst availableIds = new Set((preparedNode.json.product_ids || []).map((id) => String(id)));\n\n// 2. Extraire le texte de l'IA (LangChain / OpenRouter)\nlet aiText = items[0]?.json?.output || items[0]?.json?.text || items[0]?.json?.message?.content || items[0]?.json?.message || '';\n\nif (typeof aiText !== 'string' || !aiText.trim()) {\n  throw new Error('La réponse de l\\'IA est vide ou illisible.');\n}\n\n// 3. Nettoyage du markdown (les fameux ```json)\naiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nconst start = aiText.indexOf('{');\nconst end = aiText.lastIndexOf('}');\nconst jsonSlice = start !== -1 && end !== -1 && end > start\n  ? aiText.slice(start, end + 1)\n  : aiText;\n\n// 4. Double filet de sécurité pour le parsing JSON\nlet parsed;\ntry {\n  parsed = JSON.parse(aiText);\n} catch (e1) {\n  try {\n    parsed = JSON.parse(jsonSlice);\n  } catch (e2) {\n    throw new Error(\"L'IA n'a pas renvoyé un JSON valide. Réponse brute : \" + aiText.substring(0, 100) + \"...\");\n  }\n}\n\n// 5. Normalisation et filtrage des idées\nconst normalizeArray = (value) => Array.isArray(value) ? value : [];\nconst ideas = normalizeArray(parsed.ideas);\nconst seen = new Set();\n\nreturn ideas\n  .map((idea) => {\n    // Ne garder que les IDs qui existent VRAIMENT dans la liste\n    const ids = normalizeArray(idea.manual_product_ids)\n      .map((id) => String(id))\n      .filter((id) => availableIds.has(id));\n\n    const title = String(idea.title || '').trim();\n    const keyword = String(idea.target_keyword || '').trim();\n    const dedupeKey = keyword.toLowerCase() || title.toLowerCase();\n\n    // Si l'idée est vide, n'a pas de produits, ou est un doublon : on jette\n    if (!title || !keyword || ids.length === 0 || seen.has(dedupeKey)) return null;\n    seen.add(dedupeKey);\n\n    return {\n      json: {\n        title,\n        target_keyword: keyword,\n        secondary_keywords: String(idea.secondary_keywords || '').trim(),\n        search_intent: String(idea.search_intent || 'informational').trim() || 'informational',\n        pillar: String(idea.pillar || 'guides-achat').trim() || 'guides-achat',\n        article_type: String(idea.article_type || 'guide').trim() || 'guide',\n        angle: String(idea.angle || '').trim(),\n        audience: String(idea.audience || 'Grand public').trim() || 'Grand public',\n        brief: String(idea.brief || '').trim(),\n        seasonality: String(idea.seasonality || 'evergreen').trim() || 'evergreen',\n        priority: parseInt(idea.priority) || 80,\n        max_products: Math.min(4, Math.max(1, Number(idea.max_products || ids.length || 2))),\n        manual_product_ids: JSON.stringify(ids),\n        source_label: 'idea-generator',\n      }\n    };\n  })\n  .filter(Boolean)\n  .slice(0, 5); // On ne garde que les 5 meilleurs"
       },
       "id": "a983b284-a90a-4b64-ab7f-2fb3340e4e53",
       "name": "Code : Parser les Idées SEO",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        992,
+        1072,
         0
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH existing AS (\n  SELECT 1\n  FROM koktek.seo_topics\n  WHERE lower(title) = lower($1)\n     OR lower(target_keyword) = lower($2)\n  LIMIT 1\n), inserted AS (\n  INSERT INTO koktek.seo_topics (\n    status,\n    title,\n    target_keyword,\n    secondary_keywords,\n    search_intent,\n    pillar,\n    article_type,\n    angle,\n    audience,\n    brief,\n    seasonality,\n    priority,\n    min_words,\n    max_products,\n    manual_product_ids,\n    source_label,\n    created_at,\n    updated_at\n  )\n  SELECT\n    'approved',\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6,\n    $7,\n    $8,\n    $9,\n    $10,\n    $11,\n    900,\n    $12,\n    $13::jsonb,\n    $14,\n    NOW(),\n    NOW()\n  WHERE NOT EXISTS (SELECT 1 FROM existing)\n  RETURNING id, title, status\n)\nSELECT * FROM inserted;",
+        "query": "WITH existing AS (\n  SELECT 1\n  FROM koktek.seo_topics\n  WHERE lower(title) = lower($1)\n     OR lower(target_keyword) = lower($2)\n  LIMIT 1\n), inserted AS (\n  INSERT INTO koktek.seo_topics (\n    status,\n    title,\n    target_keyword,\n    secondary_keywords,\n    search_intent,\n    pillar,\n    article_type,\n    angle,\n    audience,\n    brief,\n    seasonality,\n    priority,\n    min_words,\n    max_products,\n    manual_product_ids,\n    source_label,\n    created_at,\n    updated_at\n  )\n  SELECT\n    'approved',\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6,\n    $7,\n    $8,\n    $9,\n    $10,\n    $11,\n    400,\n    $12,\n    $13::jsonb,\n    $14,\n    NOW(),\n    NOW()\n  WHERE NOT EXISTS (SELECT 1 FROM existing)\n  RETURNING id, title, status\n)\nSELECT * FROM inserted;",
         "options": {
           "queryReplacement": "={{ [$json.title, $json.target_keyword, $json.secondary_keywords, $json.search_intent, $json.pillar, $json.article_type, $json.angle, $json.audience, $json.brief, $json.seasonality, $json.priority, $json.max_products, $json.manual_product_ids, $json.source_label] }}"
         }
@@ -140,7 +127,7 @@
     }
   ],
   "connections": {
-    "Manual Trigger": {
+    "Schedule Trigger (1 fois par jour)": {
       "main": [
         [
           {
@@ -205,30 +192,11 @@
           }
         ]
       ]
-    },
-    "Schedule Trigger (1 fois par jour)": {
-      "main": [
-        [
-          {
-            "node": "Postgres : Sélectionner Produits du Catalogue",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
-  "active": true,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false
-  },
-  "versionId": "7d82fc7a-4dbd-4a3e-b7b9-15f513297b4a",
+  "pinData": {},
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
-  },
-  "id": "389024d2ebd89255",
-  "tags": []
+  }
 }

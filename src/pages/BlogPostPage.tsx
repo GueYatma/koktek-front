@@ -8,7 +8,7 @@ import {
   type BlogPost,
   type BlogProduct,
 } from '../lib/commerceApi'
-import { resolveImageUrl } from '../utils/image'
+import { resolveImageUrl, resolveJournalCoverImage } from '../utils/image'
 import { formatPrice } from '../utils/format'
 import JournalPillarNav from '../components/journal/JournalPillarNav'
 import {
@@ -81,7 +81,13 @@ const RecommendedProductCard = ({ product }: { product: BlogProduct }) => {
 }
 
 const RelatedArticleCard = ({ post }: { post: BlogPostListItem }) => {
-  const image = resolveImageUrl(post.cover_image, '')
+  const image = resolveJournalCoverImage({
+    coverImage: post.cover_image,
+    title: post.title,
+    pillar: post.pillar,
+    category: post.category,
+    fallback: '',
+  })
   const pillarMeta = getJournalPillarMeta(post.pillar)
 
   return (
@@ -234,7 +240,13 @@ const BlogPostPage = () => {
     }
   }, [post?.id, post?.category, post?.pillar])
 
-  const coverImage = resolveImageUrl(post?.cover_image, '')
+  const coverImage = resolveJournalCoverImage({
+    coverImage: post?.cover_image,
+    title: post?.title,
+    pillar: post?.pillar,
+    category: post?.category,
+    fallback: '',
+  })
   const recommendedProducts = (post?.products ?? []).filter((item) => item.status === 'published' || !item.status)
   const sanitizedContent = post?.content
     ? DOMPurify.sanitize(post.content, {
@@ -402,7 +414,7 @@ const BlogPostPage = () => {
         </h1>
 
         {post.summary && (
-          <p className="mt-4 max-w-3xl text-lg leading-relaxed text-gray-500 dark:text-gray-400">
+          <p className="mt-4 max-w-3xl text-[1.05rem] leading-8 text-gray-500 dark:text-gray-400 sm:text-[1.12rem]">
             {post.summary}
           </p>
         )}
@@ -483,7 +495,7 @@ const BlogPostPage = () => {
               <h2 className="font-journal-display mt-3 text-3xl leading-tight text-slate-950 dark:text-white">
                 {pillarMeta.label}
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+              <p className="mt-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
                 {pillarMeta.description}
               </p>
               <Link
@@ -521,9 +533,9 @@ const BlogPostPage = () => {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
               Repère éditorial
             </p>
-            <div className="mt-4 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              <p>Le Journal KOKTEK part du besoin, pas du produit.</p>
-              <p>Chaque article garde un lien avec la boutique sans redevenir une grille catalogue.</p>
+            <div className="mt-4 space-y-4 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+              <p>Retrouvez ici nos guides, astuces et sélections d’experts pour booster votre quotidien tech.</p>
+              <p>Des formats courts, utiles et reliés à la bonne solution quand elle vous fait vraiment gagner du temps.</p>
             </div>
             <div className="mt-5">
               <JournalPillarNav activePillar={pillarMeta?.key} />
