@@ -4,9 +4,11 @@ import { useTheme } from '../../context/ThemeContext'
 
 const navItems = [
   { label: 'Une', href: '/blog' },
-  { label: 'Auto & Mobilite', href: '/blog/theme/auto-mobilite' },
-  { label: 'Tech & Productivite', href: '/blog/theme/tech-productivite' },
+  { label: 'Auto & Mobilité', href: '/blog/theme/auto-mobilite' },
+  { label: 'Tech & Productivité', href: '/blog/theme/tech-productivite' },
   { label: 'Lifestyle & Protection', href: '/blog/theme/lifestyle-protection' },
+  { label: 'Création Mobile', href: '/blog/theme/creation-mobile' },
+  { label: 'Guides d’Achat', href: '/blog/theme/guides-achat' },
 ]
 
 const JournalHeader = () => {
@@ -16,7 +18,7 @@ const JournalHeader = () => {
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200/70 bg-[#f6f0e6]/88 backdrop-blur-xl dark:border-slate-800/70 dark:bg-[#0b1320]/88">
-      <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
           <Link to="/" className="shrink-0">
             <span className="logo-koktek text-2xl font-black uppercase text-slate-950 dark:text-white">
@@ -24,16 +26,16 @@ const JournalHeader = () => {
             </span>
           </Link>
 
-          <div className="hidden min-w-0 border-l border-slate-300/70 pl-4 md:block dark:border-slate-700/70">
+          <div className="hidden min-w-0 border-l border-slate-300/70 pl-4 lg:block dark:border-slate-700/70">
             <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
               Journal KOKTEK
             </p>
-            <p className="truncate text-xs text-slate-600 dark:text-slate-300">
-              Le magazine pratique des usages smartphone, mobilite et lifestyle.
+            <p className="max-w-[18rem] text-[11px] leading-4 text-slate-600 dark:text-slate-300">
+              Le magazine pratique des usages smartphone, mobilité et lifestyle.
             </p>
           </div>
 
-          <nav className="ml-auto hidden items-center gap-2 lg:flex">
+          <nav className="ml-auto hidden items-center gap-1 xl:flex">
             {navItems.map((item) => {
               const isActive =
                 item.href === '/blog'
@@ -44,7 +46,7 @@ const JournalHeader = () => {
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  className={`rounded-full px-3.5 py-2 text-[13px] font-semibold transition ${
                     isActive
                       ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950'
                       : 'text-slate-600 hover:bg-white/80 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900/70 dark:hover:text-white'
@@ -59,7 +61,7 @@ const JournalHeader = () => {
           <div className="flex items-center gap-2">
             <Link
               to="/catalogue"
-              className="hidden items-center gap-1 rounded-full border border-slate-300/80 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:border-slate-950 hover:bg-white lg:inline-flex dark:border-slate-700 dark:bg-slate-900/70 dark:text-white dark:hover:border-slate-400"
+              className="hidden items-center gap-1 rounded-full border border-slate-300/80 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:border-slate-950 hover:bg-white xl:inline-flex dark:border-slate-700 dark:bg-slate-900/70 dark:text-white dark:hover:border-slate-400"
             >
               Boutique
               <ArrowUpRight className="h-4 w-4" />

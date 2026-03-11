@@ -55,6 +55,17 @@ const withDirectusTransforms = (url: string) => {
   return `${url}${separator}width=800&height=800&fit=cover&quality=90`;
 };
 
+export const isLikelyPackshotImage = (value?: unknown): boolean => {
+  const raw = extractImageValue(value);
+  if (!raw) return false;
+
+  return (
+    /cjdropshipping\.com/i.test(raw) ||
+    /(?:_trans|_fine)\.(?:png|jpe?g|webp)$/i.test(raw) ||
+    /\/quick\/product\//i.test(raw)
+  );
+};
+
 export const resolveImageUrl = (
   value?: unknown,
   fallback: string = FALLBACK_IMAGE_URL,

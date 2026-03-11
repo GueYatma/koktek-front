@@ -13,6 +13,7 @@ import { formatPrice } from '../utils/format'
 import JournalPillarNav from '../components/journal/JournalPillarNav'
 import {
   estimateReadingTime,
+  getJournalArticleTypeLabel,
   getJournalPillarMeta,
   getJournalStoryLabel,
   prepareArticleContent,
@@ -379,7 +380,7 @@ const BlogPostPage = () => {
         )}
       </nav>
 
-      <header className="mb-8 rounded-[32px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
+      <header className="mb-8 rounded-[32px] border border-slate-200/80 bg-[#f8f2e8]/92 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
             <Tag className="h-3 w-3" />
@@ -387,7 +388,7 @@ const BlogPostPage = () => {
           </span>
           {post.article_type && (
             <span className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-800 dark:text-slate-400">
-              {post.article_type}
+              {getJournalArticleTypeLabel(post.article_type)}
             </span>
           )}
         </div>
@@ -438,7 +439,7 @@ const BlogPostPage = () => {
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-12">
           {preparedContent.html ? (
-            <div className="rounded-[32px] border border-slate-200/80 bg-white/92 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
+            <div className="rounded-[32px] border border-slate-200/80 bg-[#f8f2e8]/92 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
               <div
                 className="blog-prose"
                 dangerouslySetInnerHTML={{ __html: preparedContent.html }}
@@ -454,13 +455,13 @@ const BlogPostPage = () => {
             <section className="rounded-[32px] border border-amber-200/70 bg-amber-50/80 p-6 shadow-[0_24px_60px_-40px_rgba(180,83,9,0.18)] dark:border-amber-500/20 dark:bg-amber-500/5">
               <div className="mb-5">
                 <p className="text-xs uppercase tracking-[0.25em] text-amber-600 dark:text-amber-300">
-                  Selection KOKTEK
+                  Sélection Koktek
                 </p>
                 <h2 className="font-journal-display mt-2 text-3xl text-slate-950 dark:text-white">
-                  Pour aller plus loin apres la lecture
+                  Pour aller plus loin après la lecture
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                  Quelques produits coherents avec le sujet, presentes comme prolongement utile et non comme point de depart.
+                  Quelques produits cohérents avec le sujet, présentés comme prolongement utile et non comme point de départ.
                 </p>
               </div>
 
@@ -475,7 +476,7 @@ const BlogPostPage = () => {
 
         <aside className="space-y-6 xl:sticky xl:top-28 xl:self-start">
           {pillarMeta && (
-            <section className="rounded-[28px] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <section className="rounded-[28px] border border-slate-200/80 bg-[#f8f2e8]/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                 Explorer ce pilier
               </p>
@@ -489,14 +490,14 @@ const BlogPostPage = () => {
                 to={`/blog/theme/${pillarMeta.key}`}
                 className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
               >
-                Voir tous les articles de cette thematique
+                Voir tous les articles de cette thématique
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </section>
           )}
 
           {preparedContent.toc.length > 0 && (
-            <section className="rounded-[28px] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <section className="rounded-[28px] border border-slate-200/80 bg-[#f8f2e8]/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                 Dans cet article
               </p>
@@ -516,9 +517,9 @@ const BlogPostPage = () => {
             </section>
           )}
 
-          <section className="rounded-[28px] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+          <section className="rounded-[28px] border border-slate-200/80 bg-[#f8f2e8]/92 p-5 shadow-[0_20px_50px_-38px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
-              Repere editorial
+              Repère éditorial
             </p>
             <div className="mt-4 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
               <p>Le Journal KOKTEK part du besoin, pas du produit.</p>
@@ -531,7 +532,7 @@ const BlogPostPage = () => {
               to="/catalogue"
               className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
             >
-              Revenir a la boutique
+              Revenir à la boutique
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           </section>
@@ -546,7 +547,7 @@ const BlogPostPage = () => {
                 Continuer la lecture
               </p>
               <h2 className="font-journal-display mt-3 text-4xl leading-none text-slate-950 dark:text-white">
-                D autres angles utiles autour du meme univers.
+                D’autres angles utiles autour du même univers.
               </h2>
             </div>
             <Link

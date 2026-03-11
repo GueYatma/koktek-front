@@ -1,0 +1,203 @@
+{
+  "name": "KOKTEK - SEO Topic Idea Generator (Catalogue + OpenRouter)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "dfd72454-75a7-4274-a94f-020f4ef90156",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  p.id,\n  p.title,\n  p.slug,\n  COALESCE(\n    MIN(NULLIF(pv.prix_calcule, 0)),\n    MIN(NULLIF(pv.price, 0)),\n    p.retail_price,\n    p.base_price\n  ) AS retail_price,\n  p.image\nFROM koktek.products p\nLEFT JOIN koktek.product_variants pv ON pv.product_id = p.id\nWHERE p.status = 'published'\n  AND p.title !~* '^(blanc|bleu|rose|rouge|vert|jaune|violet|denim|floral)\\s*-'\n  AND p.title !~* '(paillet|strass|coque paillet|coque florale)'\nGROUP BY p.id, p.title, p.slug, p.image, p.retail_price, p.base_price\nORDER BY random()\nLIMIT 24;",
+        "options": {}
+      },
+      "id": "f6d2ac59-d55c-4014-ba34-d0212d4be907",
+      "name": "Postgres : Sélectionner Produits du Catalogue",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = items\n  .map((item) => item.json)\n  .filter((product) => product && product.id && product.title && product.slug);\n\nif (products.length === 0) {\n  throw new Error('Aucun produit publié exploitable dans le catalogue.');\n}\n\nconst inferPillar = (title) => {\n  const value = String(title || '').toLowerCase();\n\n  if (/(voiture|gps|support voiture|chargeur voiture|moto)/.test(value)) return 'auto-mobilite';\n  if (/(selfie|camera|capture|ring light|lumineux|photo|video)/.test(value)) return 'creation-mobile';\n  if (/(coque|protection|verre|objectif|anneau de protection)/.test(value)) return 'lifestyle-protection';\n  if (/(chargeur|batterie|usb|magsafe|gan|cable|audio|ecouteur|casque)/.test(value)) return 'tech-productivite';\n  return 'guides-achat';\n};\n\nconst catalogLines = products.map((product) => {\n  const pillar = inferPillar(product.title);\n  const price = product.retail_price ?? 'N/A';\n  return '- [' + product.id + '] ' + product.title + ' | slug: ' + product.slug + ' | pilier: ' + pillar + ' | prix: ' + price + '€';\n});\n\nconst prompt = [\n  'Catalogue Koktek réellement vendu :',\n  ...catalogLines,\n  '',\n  'Mission : proposer 5 sujets SEO premium strictement alignés sur ces produits exacts.',\n  'Tu ne dois jamais inventer un produit, un accessoire ou un usage impossible à servir avec ce catalogue.',\n  'Chaque idée doit pouvoir recommander de 1 à 4 produits exacts présents dans la liste ci-dessus.',\n  'Si un angle paraît séduisant mais ne correspond à aucun produit listé, il doit être rejeté.',\n  'Privilégier des sujets evergreen, utiles, inbound et réellement vendables.',\n  '',\n  'Tu dois renvoyer UNIQUEMENT un JSON avec une clé \"ideas\" contenant un tableau de 5 objets ayant exactement ces clés :',\n  'title, target_keyword, secondary_keywords, search_intent, pillar, article_type, angle, audience, brief, seasonality, priority, max_products, manual_product_ids',\n  '',\n  'Règles :',\n  '1. title = sujet éditorial interne, clair et vendeur sans être publicitaire.',\n  '2. target_keyword = requête Google plausible en français.',\n  '3. pillar doit être l'un de : auto-mobilite, tech-productivite, lifestyle-protection, creation-mobile, guides-achat.',\n  '4. article_type doit être l'un de : guide, checklist, comparatif, decryptage, selection, faq.',\n  '5. manual_product_ids doit contenir uniquement des IDs présents dans le catalogue fourni.',\n  '6. Ne jamais proposer un brassard de running, une montre ou tout autre produit absent du catalogue.',\n  '7. Priorité haute si le sujet répond à un problème concret et vendable.',\n].join('\n');\n\nreturn [{\n  json: {\n    products,\n    product_ids: products.map((product) => String(product.id)),\n    prompt,\n  }\n}];"
+      },
+      "id": "ffe2faff-86ec-407b-ba78-67857e6c70e8",
+      "name": "Code : Préparer Brief Catalogue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "Tu es le stratège SEO senior de Koktek. Tu conçois des idées d'articles inbound uniquement à partir d'un catalogue réel.\n\nTu dois toujours renvoyer UNIQUEMENT un objet JSON valide avec une clé \"ideas\".\n\nRègles absolues :\n- N'invente jamais un produit, une catégorie ou un usage absent du catalogue.\n- Chaque idée doit servir directement au moins un produit réellement vendu.\n- N'utilise jamais le nom de la marque dans les titres proposés.\n- Priorise les problèmes concrets, les usages réels et les requêtes evergreen.\n- Si une idée semble séduisante mais n'est pas vendable avec le catalogue, tu l'écartes.\n- manual_product_ids doit contenir uniquement des IDs exacts du catalogue fourni.\n- Aucun texte hors JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        736,
+        0
+      ],
+      "id": "7276aa7b-fcdd-4cac-a60f-bc15e3813bbc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        736,
+        304
+      ],
+      "id": "dfd80e6e-f33a-4463-b857-1bd6710414c8",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "cVPDbiG2sQv7okss",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prepared = $('Code : Préparer Brief Catalogue').first().json;\nconst availableIds = new Set((prepared.product_ids || []).map((id) => String(id)));\nlet aiText = items[0].json.output || items[0].json.text || items[0].json.message?.content || items[0].json.message || '';\n\nif (typeof aiText !== 'string' || !aiText.trim()) {\n  throw new Error('La réponse du modèle est vide ou illisible.');\n}\n\naiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nconst start = aiText.indexOf('{');\nconst end = aiText.lastIndexOf('}');\nconst jsonSlice = start !== -1 && end !== -1 && end > start\n  ? aiText.slice(start, end + 1)\n  : aiText;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(aiText);\n} catch {\n  parsed = JSON.parse(jsonSlice);\n}\n\nconst normalizeArray = (value) => Array.isArray(value) ? value : [];\nconst ideas = normalizeArray(parsed.ideas);\nconst seen = new Set();\n\nreturn ideas\n  .map((idea) => {\n    const ids = normalizeArray(idea.manual_product_ids)\n      .map((id) => String(id))\n      .filter((id) => availableIds.has(id));\n\n    const title = String(idea.title || '').trim();\n    const keyword = String(idea.target_keyword || '').trim();\n    const dedupeKey = keyword.toLowerCase() || title.toLowerCase();\n\n    if (!title || !keyword || ids.length === 0 || seen.has(dedupeKey)) return null;\n    seen.add(dedupeKey);\n\n    return {\n      json: {\n        title,\n        target_keyword: keyword,\n        secondary_keywords: String(idea.secondary_keywords || '').trim(),\n        search_intent: String(idea.search_intent || 'informational').trim() || 'informational',\n        pillar: String(idea.pillar || 'guides-achat').trim() || 'guides-achat',\n        article_type: String(idea.article_type || 'guide').trim() || 'guide',\n        angle: String(idea.angle || '').trim(),\n        audience: String(idea.audience || 'Grand public').trim() || 'Grand public',\n        brief: String(idea.brief || '').trim(),\n        seasonality: String(idea.seasonality || 'evergreen').trim() || 'evergreen',\n        priority: Number(idea.priority || 80),\n        max_products: Math.min(4, Math.max(1, Number(idea.max_products || ids.length || 2))),\n        manual_product_ids: JSON.stringify(ids),\n        source_label: 'idea-generator',\n      }\n    };\n  })\n  .filter(Boolean)\n  .slice(0, 5);"
+      },
+      "id": "a983b284-a90a-4b64-ab7f-2fb3340e4e53",
+      "name": "Code : Parser les Idées SEO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH existing AS (\n  SELECT 1\n  FROM koktek.seo_topics\n  WHERE lower(title) = lower($1)\n     OR lower(target_keyword) = lower($2)\n  LIMIT 1\n), inserted AS (\n  INSERT INTO koktek.seo_topics (\n    status,\n    title,\n    target_keyword,\n    secondary_keywords,\n    search_intent,\n    pillar,\n    article_type,\n    angle,\n    audience,\n    brief,\n    seasonality,\n    priority,\n    min_words,\n    max_products,\n    manual_product_ids,\n    source_label,\n    created_at,\n    updated_at\n  )\n  SELECT\n    'approved',\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6,\n    $7,\n    $8,\n    $9,\n    $10,\n    $11,\n    900,\n    $12,\n    $13::jsonb,\n    $14,\n    NOW(),\n    NOW()\n  WHERE NOT EXISTS (SELECT 1 FROM existing)\n  RETURNING id, title, status\n)\nSELECT * FROM inserted;",
+        "options": {
+          "queryReplacement": "={{ [$json.title, $json.target_keyword, $json.secondary_keywords, $json.search_intent, $json.pillar, $json.article_type, $json.angle, $json.audience, $json.brief, $json.seasonality, $json.priority, $json.max_products, $json.manual_product_ids, $json.source_label] }}"
+        }
+      },
+      "id": "328658b1-6978-4163-8481-b7d7a3ce24a3",
+      "name": "Postgres : Enregistrer Sujet SEO",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "53WcsVWA57w3XMFC",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Sélectionner Produits du Catalogue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres : Sélectionner Produits du Catalogue": {
+      "main": [
+        [
+          {
+            "node": "Code : Préparer Brief Catalogue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Préparer Brief Catalogue": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code : Parser les Idées SEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code : Parser les Idées SEO": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Enregistrer Sujet SEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7d82fc7a-4dbd-4a3e-b7b9-15f513297b4a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a2a812d71c0a31481467401b1b047a4cb35fbc5b082af84a2e788f18137eff7"
+  },
+  "id": "389024d2ebd89255",
+  "tags": []
+}

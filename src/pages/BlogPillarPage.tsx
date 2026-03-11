@@ -45,7 +45,7 @@ const BlogPillarPage = () => {
     setError(null)
     getBlogPosts({ limit: 30, pillar: pillar.key })
       .then(setPosts)
-      .catch(() => setError('Impossible de charger cette thematique pour le moment.'))
+      .catch(() => setError('Impossible de charger cette thématique pour le moment.'))
       .finally(() => setLoading(false))
   }, [pillar])
 
@@ -97,10 +97,10 @@ const BlogPillarPage = () => {
           Journal KOKTEK
         </p>
         <h1 className="font-journal-display mt-4 text-4xl text-slate-950 dark:text-white">
-          Thematique introuvable.
+          Thématique introuvable.
         </h1>
         <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-          Ce pilier editorial n existe pas ou n est pas encore configure.
+          Ce pilier éditorial n’existe pas ou n’est pas encore configuré.
         </p>
         <Link
           to="/blog"
@@ -137,17 +137,17 @@ const BlogPillarPage = () => {
                 <h1 className="font-journal-display max-w-3xl text-5xl leading-[0.95] text-white sm:text-6xl">
                   {pillar.label}
                 </h1>
-                <p className="mt-5 max-w-2xl text-base leading-8 text-white/84 sm:text-lg">
+                <p className="mt-5 max-w-2xl text-base leading-8 text-white sm:text-lg">
                   {pillar.description}
                 </p>
               </div>
 
               <div className="rounded-[28px] border border-white/14 bg-white/10 p-6 backdrop-blur-sm">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/72">
-                  Navigation editoriale
+                  Navigation éditoriale
                 </p>
-                <p className="mt-3 text-sm leading-7 text-white/82">
-                  Chaque pilier regroupe les articles qui servent une meme autorite de marque.
+                <p className="mt-3 text-sm leading-7 text-white">
+                  Naviguez par thématique pour trouver le guide, l’astuce ou l’accessoire qui correspond exactement à vos besoins.
                 </p>
                 <div className="mt-5">
                   <JournalPillarNav activePillar={pillar.key} />
@@ -188,7 +188,7 @@ const BlogPillarPage = () => {
               Ce pilier attend encore ses premiers articles.
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              La structure est prete. Il reste a publier les prochains sujets lies a cette thematique.
+              La structure est prête. Il reste à publier les prochains sujets liés à cette thématique.
             </p>
           </div>
         </section>
@@ -201,12 +201,12 @@ const BlogPillarPage = () => {
               <FeaturedStory post={featuredPost} />
 
               <div className="space-y-6">
-                <div className="rounded-[28px] border border-slate-200/70 bg-white/80 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
+                <div className="rounded-[28px] border border-slate-200/70 bg-[#f8f2e8]/80 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                     Dans ce pilier
                   </p>
                   <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                    Une lecture resserree sur le meme territoire editorial, avec une logique de media plutot que de catalogue.
+                    Une lecture resserrée sur le même territoire éditorial, avec une logique de média plutôt que de catalogue.
                   </p>
                 </div>
                 {sideStories.map((post) => (
@@ -247,16 +247,16 @@ const BlogPillarPage = () => {
           )}
 
           <section className="px-4 py-8 sm:px-6">
-            <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
+            <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200/80 bg-[#f8f2e8]/92 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70 sm:p-8">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
                   Explorer aussi
                 </p>
                 <h2 className="font-journal-display mt-3 text-4xl leading-none text-slate-950 dark:text-white">
-                  D autres chemins du Journal KOKTEK.
+                  D’autres chemins du Journal KOKTEK.
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                  Passez d un univers a l autre pour continuer la lecture selon vos usages, votre mobilite ou vos besoins du moment.
+                  Passez d’un univers à l’autre pour continuer la lecture selon vos usages, votre mobilité ou vos besoins du moment.
                 </p>
               </div>
               <div className="mt-6">
@@ -267,7 +267,7 @@ const BlogPillarPage = () => {
                   to="/blog"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
                 >
-                  Revenir a la une du Journal
+                  Revenir à la une du Journal
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>

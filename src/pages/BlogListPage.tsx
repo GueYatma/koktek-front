@@ -27,7 +27,7 @@ const BlogListPage = () => {
 
   useDocumentMeta({
     title: 'Journal KOKTEK',
-    description: 'Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au quotidien.',
+    description: 'Astuces, guides et inspirations pour tirer le meilleur de vos équipements tech au quotidien.',
     image: featuredImage,
     url: journalUrl,
   })
@@ -64,7 +64,7 @@ const BlogListPage = () => {
       {
         '@type': 'CollectionPage',
         name: 'Le Journal KOKTEK',
-        description: 'Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au quotidien.',
+        description: 'Astuces, guides et inspirations pour tirer le meilleur de vos équipements tech au quotidien.',
         url: journalUrl,
         inLanguage: 'fr-FR',
         isPartOf: {
@@ -105,7 +105,7 @@ const BlogListPage = () => {
               Le Journal KOKTEK
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-              Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au
+              Astuces, guides et inspirations pour tirer le meilleur de vos équipements tech au
               quotidien.
             </p>
 
@@ -139,17 +139,17 @@ const BlogListPage = () => {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-[36px] border border-slate-200/70 bg-white/75 p-7 shadow-[0_20px_70px_-35px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
+          <div className="overflow-hidden rounded-[36px] border border-slate-200/70 bg-[#f8f2e8]/78 p-7 shadow-[0_20px_70px_-35px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
               <Sparkles className="h-4 w-4" />
-              A la une
+              À la une
             </div>
             <h2 className="font-journal-display mt-5 text-3xl leading-tight text-slate-950 dark:text-white">
-              Explorez nos dernieres decouvertes
+              Explorez nos dernières découvertes
             </h2>
             <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              <p>Des contenus utiles pour mieux choisir, utiliser et proteger vos equipements tech.</p>
-              <p>Des guides concrets pour la mobilite, le bureau, la creation mobile et le quotidien.</p>
+              <p>Des contenus utiles pour mieux choisir, utiliser et protéger vos équipements tech.</p>
+              <p>Des guides concrets pour la mobilité, le bureau, la création mobile et le quotidien.</p>
               <p>Des recommandations simples pour avancer plus vite, sans jargon inutile.</p>
             </div>
             <div className="mt-6">
@@ -186,10 +186,10 @@ const BlogListPage = () => {
               Journal KOKTEK
             </p>
             <h2 className="font-journal-display mt-4 text-4xl text-slate-950 dark:text-white">
-              Le prochain article arrive bientot.
+              Le prochain article arrive bientôt.
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              La structure editoriale est en place. Il manque seulement le prochain sujet publie.
+              La structure éditoriale est en place. Il manque seulement le prochain sujet publié.
             </p>
           </div>
         </section>
@@ -202,12 +202,12 @@ const BlogListPage = () => {
               <FeaturedStory post={featuredPost} />
 
               <div className="space-y-6">
-                <div className="rounded-[28px] border border-slate-200/70 bg-white/80 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
+                <div className="rounded-[28px] border border-slate-200/70 bg-[#f8f2e8]/80 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
-                    Dernieres lectures
+                    Dernières lectures
                   </p>
                   <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                    Explorez nos dernieres decouvertes et trouvez rapidement le guide qui vous
+                    Explorez nos dernières découvertes et trouvez rapidement le guide qui vous
                     correspond.
                   </p>
                 </div>
@@ -222,10 +222,10 @@ const BlogListPage = () => {
             <div className="mx-auto max-w-6xl">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
-                  Thématiques editoriales
+                  Thématiques éditoriales
                 </p>
                 <h2 className="font-journal-display mt-4 text-4xl leading-none text-slate-950 dark:text-white">
-                  Nos conseils d experts pour votre mobilite et vos usages tech.
+                  Nos conseils d’experts pour votre mobilité et vos usages tech.
                 </h2>
               </div>
 
@@ -235,7 +235,7 @@ const BlogListPage = () => {
                     key={theme.key}
                     className={`overflow-hidden rounded-[30px] bg-gradient-to-br ${theme.accentClass} p-[1px] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.55)]`}
                   >
-                    <div className="flex h-full flex-col rounded-[29px] bg-white/94 p-6 dark:bg-slate-950/80">
+                    <div className="flex h-full flex-col rounded-[29px] bg-[#f8f2e8]/94 p-6 dark:bg-slate-950/80">
                       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                         {theme.eyebrow}
                       </p>
@@ -246,9 +246,9 @@ const BlogListPage = () => {
                         {theme.description}
                       </p>
                       {theme.leadPost && (
-                        <div className="mt-5 rounded-2xl border border-slate-200/80 bg-slate-50/85 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                        <div className="mt-5 rounded-2xl border border-slate-200/80 bg-[#fbf7f1]/92 p-4 dark:border-slate-800 dark:bg-slate-900/70">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            A lire d abord
+                            À lire d’abord
                           </p>
                           <Link
                             to={`/blog/${theme.leadPost.slug}`}
@@ -268,7 +268,7 @@ const BlogListPage = () => {
                               to={`/blog/${theme.leadPost.slug}`}
                               className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                             >
-                              Lire l article
+                              Lire l’article
                             </Link>
                           )}
                           <Link
@@ -293,17 +293,17 @@ const BlogListPage = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="max-w-2xl">
                     <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
-                      Guides & recits utiles
+                      Guides & récits utiles
                     </p>
                     <h2 className="font-journal-display mt-4 text-4xl leading-none text-slate-950 dark:text-white">
-                      Des lectures utiles pour mieux equiper votre quotidien.
+                      Des lectures utiles pour mieux équiper votre quotidien.
                     </h2>
                   </div>
                   <Link
                     to="/catalogue"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
                   >
-                    Revenir a la boutique
+                    Revenir à la boutique
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>

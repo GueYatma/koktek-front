@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock3 } from 'lucide-react'
 import { type BlogPost } from '../../lib/commerceApi'
-import { resolveImageUrl } from '../../utils/image'
+import { isLikelyPackshotImage, resolveImageUrl } from '../../utils/image'
 import { getJournalPillarMeta, getJournalStoryLabel } from '../../utils/journal'
 
 export type JournalStoryCardPost = Omit<
@@ -73,50 +73,58 @@ export const StoryMeta = ({
 
 const StoryImage = ({
   post,
-  className,
+  frameClassName,
+  imageClassName,
 }: {
   post: JournalStoryCardPost
-  className: string
+  frameClassName: string
+  imageClassName?: string
 }) => {
   const image = resolveImageUrl(post.cover_image, '')
+  const isPackshot = isLikelyPackshotImage(post.cover_image)
 
   if (!image) {
     return (
       <div
-        className={`flex items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.75),_transparent_40%),linear-gradient(135deg,_#d9dde9,_#f7f4ee)] dark:bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.2),_transparent_40%),linear-gradient(135deg,_#162235,_#0f172a)] ${className}`}
+        className={`flex items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.7),_transparent_42%),linear-gradient(135deg,_#e9dece,_#f7f3eb)] dark:bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.2),_transparent_40%),linear-gradient(135deg,_#162235,_#0f172a)] ${frameClassName}`}
       >
         <span className="text-center font-journal-display text-3xl text-slate-500 dark:text-slate-300">
-          Journal
+          Le Journal
         </span>
       </div>
     )
   }
 
   return (
-    <img
-      src={image}
-      alt={post.cover_image_alt ?? post.title}
-      className={`${className} h-full w-full object-cover object-center`}
-      loading="lazy"
-      decoding="async"
-    />
+    <div
+      className={`overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.72),_transparent_38%),linear-gradient(135deg,_#efe5d8,_#f7f3eb)] dark:bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.14),_transparent_40%),linear-gradient(135deg,_#172335,_#0f172a)] ${frameClassName}`}
+    >
+      <img
+        src={image}
+        alt={post.cover_image_alt ?? post.title}
+        className={`h-full w-full ${isPackshot ? 'object-contain p-5 sm:p-6' : 'object-cover object-center'} ${imageClassName ?? ''}`}
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
   )
 }
 
 export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white/92 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.38)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+  <article className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-[#f8f2e8]/92 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.38)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
     <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
       <Link to={`/blog/${post.slug}`} className="block overflow-hidden">
         <StoryImage
           post={post}
-          className="h-full min-h-[320px] w-full object-cover transition duration-700 hover:scale-[1.03]"
+          frameClassName="h-full min-h-[320px] w-full"
+          imageClassName="transition duration-700 hover:scale-[1.03]"
         />
       </Link>
 
       <div className="flex flex-col justify-between p-7 sm:p-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600 dark:text-amber-400">
-            A la une
+            À la une
           </p>
           <h2 className="font-journal-display mt-4 text-3xl leading-[1.02] text-slate-950 dark:text-white sm:text-4xl">
             <Link
@@ -128,7 +136,7 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
           </h2>
           <p className="mt-4 text-base leading-8 text-slate-600 dark:text-slate-300">
             {post.summary ??
-              'Un guide utile, concret et directement connecte aux usages reellement recherches.'}
+              'Un guide utile, concret et directement connecté aux usages réellement recherchés.'}
           </p>
         </div>
 
@@ -139,7 +147,7 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
               to={`/blog/${post.slug}`}
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-950 transition hover:gap-3 dark:text-white"
             >
-              Lire l article
+              Lire l’article
               <ArrowRight className="h-4 w-4" />
             </Link>
             {getJournalPillarMeta(post.pillar) && (
@@ -158,14 +166,15 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
 )
 
 export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/88 p-4 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+  <article className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[#f8f2e8]/90 p-4 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
     <Link
       to={`/blog/${post.slug}`}
-      className="block aspect-[16/10] overflow-hidden rounded-[22px] bg-slate-100 dark:bg-slate-900"
+      className="block aspect-[5/4] overflow-hidden rounded-[22px] bg-[#efe4d5] dark:bg-slate-900"
     >
       <StoryImage
         post={post}
-        className="transition duration-700 hover:scale-[1.03]"
+        frameClassName="h-full w-full"
+        imageClassName="transition duration-700 hover:scale-[1.03]"
       />
     </Link>
     <div className="mt-4">
@@ -197,14 +206,15 @@ export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
 )
 
 export const GuideCard = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="group flex h-full flex-col rounded-[28px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.5)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
+  <article className="group flex h-full flex-col rounded-[28px] border border-slate-200/80 bg-[#f8f2e8]/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.5)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
     <Link
       to={`/blog/${post.slug}`}
-      className="block aspect-[4/3] overflow-hidden rounded-[22px] bg-slate-100 dark:bg-slate-900"
+      className="block aspect-[5/4] overflow-hidden rounded-[22px] bg-[#efe4d5] dark:bg-slate-900"
     >
       <StoryImage
         post={post}
-        className="transition duration-700 group-hover:scale-[1.04]"
+        frameClassName="h-full w-full"
+        imageClassName="transition duration-700 group-hover:scale-[1.04]"
       />
     </Link>
     <div className="mt-5 flex flex-1 flex-col">
