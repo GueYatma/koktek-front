@@ -21,6 +21,9 @@ const formatDate = (iso?: string | null) => {
 const getReadingLabel = (post: JournalStoryCardPost) =>
   post.reading_time ? `${post.reading_time} min de lecture` : 'Lecture essentielle'
 
+const isPackshotStory = (post: JournalStoryCardPost) =>
+  Boolean(post.cover_image) && isLikelyPackshotImage(post.cover_image)
+
 const StoryTopicChip = ({
   post,
   compact = false,
@@ -87,7 +90,7 @@ const StoryImage = ({
     category: post.category,
     fallback: '',
   })
-  const isPackshot = Boolean(post.cover_image) && isLikelyPackshotImage(post.cover_image)
+  const isPackshot = isPackshotStory(post)
 
   if (!image) {
     return (
@@ -108,7 +111,11 @@ const StoryImage = ({
       <img
         src={image}
         alt={post.cover_image_alt ?? post.title}
-        className={`h-full w-full ${isPackshot ? 'object-contain p-5 sm:p-6' : 'object-cover object-center'} ${imageClassName ?? ''}`}
+        className={`h-full w-full ${
+          isPackshot
+            ? 'object-contain object-center p-2.5 sm:p-3.5 scale-[1.07]'
+            : 'object-cover object-center'
+        } ${imageClassName ?? ''}`}
         loading="lazy"
         decoding="async"
       />
@@ -171,90 +178,106 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
   </article>
 )
 
-export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="overflow-hidden rounded-[26px] border border-slate-200/80 bg-[#f8f2e8]/92 p-4 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
-    <Link
-      to={`/blog/${post.slug}`}
-      className="block aspect-[4/5] overflow-hidden rounded-[20px] bg-[#efe4d5] dark:bg-slate-900"
-    >
-      <StoryImage
-        post={post}
-        frameClassName="h-full w-full"
-        imageClassName="transition duration-700 hover:scale-[1.03]"
-      />
-    </Link>
-    <div className="mt-4">
-      <StoryMeta post={post} compact />
-      <h3 className="font-journal-display mt-3 text-[1.9rem] leading-[1.08] text-slate-950 dark:text-white">
-        <Link
-          to={`/blog/${post.slug}`}
-          className="transition hover:text-amber-700 dark:hover:text-amber-300"
-        >
-          {post.title}
-        </Link>
-      </h3>
-      {post.summary && (
-        <p className="mt-3 line-clamp-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
-          {post.summary}
-        </p>
-      )}
-      {getJournalPillarMeta(post.pillar) && (
-        <Link
-          to={`/blog/theme/${getJournalPillarMeta(post.pillar)?.key}`}
-          className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-        >
-          Voir la thématique
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      )}
-    </div>
-  </article>
-)
+export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => {
+  const isPackshot = isPackshotStory(post)
 
-export const GuideCard = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="group flex h-full flex-col rounded-[26px] border border-slate-200/80 bg-[#f8f2e8]/92 p-4 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.48)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
-    <Link
-      to={`/blog/${post.slug}`}
-      className="block aspect-[4/5] overflow-hidden rounded-[20px] bg-[#efe4d5] dark:bg-slate-900"
-    >
-      <StoryImage
-        post={post}
-        frameClassName="h-full w-full"
-        imageClassName="transition duration-700 group-hover:scale-[1.04]"
-      />
-    </Link>
-    <div className="mt-5 flex flex-1 flex-col">
-      <StoryMeta post={post} compact />
-      <h3 className="font-journal-display mt-3 text-[1.9rem] leading-[1.08] text-slate-950 dark:text-white">
-        <Link
-          to={`/blog/${post.slug}`}
-          className="transition hover:text-amber-700 dark:hover:text-amber-300"
-        >
-          {post.title}
-        </Link>
-      </h3>
-      {post.summary && (
-        <p className="mt-3 line-clamp-4 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
-          {post.summary}
-        </p>
-      )}
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        <Link
-          to={`/blog/${post.slug}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
-        >
-          Continuer
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+  return (
+    <article className="overflow-hidden rounded-[26px] border border-slate-200/80 bg-[#f8f2e8]/92 p-4 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.42)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
+      <Link
+        to={`/blog/${post.slug}`}
+        className={`block overflow-hidden rounded-[20px] ${
+          isPackshot
+            ? 'aspect-[6/5] bg-[#efe0cf] dark:bg-slate-900'
+            : 'aspect-[4/5] bg-[#efe4d5] dark:bg-slate-900'
+        }`}
+      >
+        <StoryImage
+          post={post}
+          frameClassName="h-full w-full"
+          imageClassName="transition duration-700 hover:scale-[1.03]"
+        />
+      </Link>
+      <div className="mt-4">
+        <StoryMeta post={post} compact />
+        <h3 className="font-journal-display mt-3 text-[1.9rem] leading-[1.08] text-slate-950 dark:text-white">
+          <Link
+            to={`/blog/${post.slug}`}
+            className="transition hover:text-amber-700 dark:hover:text-amber-300"
+          >
+            {post.title}
+          </Link>
+        </h3>
+        {post.summary && (
+          <p className="mt-3 line-clamp-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+            {post.summary}
+          </p>
+        )}
         {getJournalPillarMeta(post.pillar) && (
           <Link
             to={`/blog/theme/${getJournalPillarMeta(post.pillar)?.key}`}
-            className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
-            Voir le pilier
+            Voir la thématique
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>
-    </div>
-  </article>
-)
+    </article>
+  )
+}
+
+export const GuideCard = ({ post }: { post: JournalStoryCardPost }) => {
+  const isPackshot = isPackshotStory(post)
+
+  return (
+    <article className="group flex h-full flex-col rounded-[26px] border border-slate-200/80 bg-[#f8f2e8]/92 p-4 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.48)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
+      <Link
+        to={`/blog/${post.slug}`}
+        className={`block overflow-hidden rounded-[20px] ${
+          isPackshot
+            ? 'aspect-[6/5] bg-[#efe0cf] dark:bg-slate-900'
+            : 'aspect-[4/5] bg-[#efe4d5] dark:bg-slate-900'
+        }`}
+      >
+        <StoryImage
+          post={post}
+          frameClassName="h-full w-full"
+          imageClassName="transition duration-700 group-hover:scale-[1.04]"
+        />
+      </Link>
+      <div className="mt-5 flex flex-1 flex-col">
+        <StoryMeta post={post} compact />
+        <h3 className="font-journal-display mt-3 text-[1.9rem] leading-[1.08] text-slate-950 dark:text-white">
+          <Link
+            to={`/blog/${post.slug}`}
+            className="transition hover:text-amber-700 dark:hover:text-amber-300"
+          >
+            {post.title}
+          </Link>
+        </h3>
+        {post.summary && (
+          <p className="mt-3 line-clamp-4 text-[15px] leading-7 text-slate-600 dark:text-slate-300">
+            {post.summary}
+          </p>
+        )}
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <Link
+            to={`/blog/${post.slug}`}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition hover:gap-3 dark:text-white"
+          >
+            Continuer
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          {getJournalPillarMeta(post.pillar) && (
+            <Link
+              to={`/blog/theme/${getJournalPillarMeta(post.pillar)?.key}`}
+              className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            >
+              Voir le pilier
+            </Link>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
