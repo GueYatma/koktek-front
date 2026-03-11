@@ -240,7 +240,7 @@ Voici la liste de toutes tes tables et de leurs colonnes (champs) extraites de t
 - `target_keyword`: character varying — mot-clé SEO principal
 - `search_intent`: character varying — intention (`informational`, `commercial`, `transactional`)
 - `seasonality`: character varying — saisonnalité (`evergreen`, `saisonnier`, `opportuniste`)
-- `manual_review_status`: character varying — état de validation humaine (`draft_ai`, `needs_review`, `approved`, `published`)
+- `manual_review_status`: character varying — état de validation humaine (`draft_ai`, `needs_review`, `reviewed`, `published`)
 - `source_topic`: uuid — FK → `koktek.seo_topics.id`
 - `author_label`: character varying — libellé auteur affiché (défaut : `Journal KOKTEK`)
 - `published_at`: timestamp with time zone — date de publication affichée
