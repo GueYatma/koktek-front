@@ -2,6 +2,26 @@
   "name": "KOKTEK - SEO Topic Idea Generator (Catalogue + OpenRouter)",
   "nodes": [
     {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 1,
+              "triggerAtHour": 4
+            }
+          ]
+        }
+      },
+      "id": "d8aaaa37-7e77-43a0-b358-76a1852eccbe",
+      "name": "Schedule Trigger (1 fois par jour)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        -160
+      ]
+    },
+    {
       "parameters": {},
       "id": "dfd72454-75a7-4274-a94f-020f4ef90156",
       "name": "Manual Trigger",
@@ -15,7 +35,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  p.id,\n  p.title,\n  p.slug,\n  COALESCE(\n    MIN(NULLIF(pv.prix_calcule, 0)),\n    MIN(NULLIF(pv.price, 0)),\n    p.retail_price,\n    p.base_price\n  ) AS retail_price,\n  p.image\nFROM koktek.products p\nLEFT JOIN koktek.product_variants pv ON pv.product_id = p.id\nWHERE p.status = 'published'\n  AND p.title !~* '^(blanc|bleu|rose|rouge|vert|jaune|violet|denim|floral)\\s*-'\n  AND p.title !~* '(paillet|strass|coque paillet|coque florale)'\nGROUP BY p.id, p.title, p.slug, p.image, p.retail_price, p.base_price\nORDER BY random()\nLIMIT 24;",
+        "query": "WITH scored_products AS (\n  SELECT\n    p.id,\n    p.title,\n    p.slug,\n    COALESCE(\n      MIN(NULLIF(pv.prix_calcule, 0)),\n      MIN(NULLIF(pv.price, 0)),\n      p.retail_price,\n      p.base_price\n    ) AS retail_price,\n    p.image,\n    CASE\n      WHEN p.title ~* '(chargeur|batterie|magsafe|usb|gan|power|induction)' THEN 0\n      WHEN p.title ~* '(support|tr[eé]pied|selfie|voiture|moto|v[eé]lo|navigation)' THEN 1\n      WHEN p.title ~* '(verre|film|protecteur|protection d''ecran|objectif)' THEN 2\n      WHEN p.title ~* '(coque transparente|antichoc|magn[eé]tique|dissipat|chargeur sans fil)' THEN 3\n      ELSE 4\n    END AS topic_priority\n  FROM koktek.products p\n  LEFT JOIN koktek.product_variants pv ON pv.product_id = p.id\n  WHERE p.status = 'published'\n    AND p.title ~* '(coque|chargeur|batterie|support|adaptateur|usb|magsafe|c[aâ]ble|cable|ecouteur|écouteur|casque|protection|verre|camera|capture|selfie|tr[eé]pied|voiture|moto|v[eé]lo|navigation|transparent|antichoc|dissipat|induction)'\n    AND p.title !~* '^(blanc|bleu|rose|rouge|vert|jaune|violet|denim|floral)\\s*-'\n    AND p.title !~* '(paillet|strass|coque paillet|coque florale|simili cuir|diamant|glitter|miroir|rabat|clamshell|peluche|sir[eè]ne|papillon|cam[eé]lia|marbre|avocat|chien blanc|l[eé]opard|no[eë]l|anti espion|special|sp[eé]ciaux|bo[iî]te en bois)'\n  GROUP BY p.id, p.title, p.slug, p.image, p.retail_price, p.base_price\n)\nSELECT\n  id,\n  title,\n  slug,\n  retail_price,\n  image\nFROM scored_products\nORDER BY topic_priority ASC, random()\nLIMIT 24;",
         "options": {}
       },
       "id": "f6d2ac59-d55c-4014-ba34-d0212d4be907",
@@ -35,7 +55,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const products = items\n  .map((item) => item.json)\n  .filter((product) => product && product.id && product.title && product.slug);\n\nif (products.length === 0) {\n  throw new Error('Aucun produit publié exploitable dans le catalogue.');\n}\n\nconst inferPillar = (title) => {\n  const value = String(title || '').toLowerCase();\n\n  if (/(voiture|gps|support voiture|chargeur voiture|moto)/.test(value)) return 'auto-mobilite';\n  if (/(selfie|camera|capture|ring light|lumineux|photo|video)/.test(value)) return 'creation-mobile';\n  if (/(coque|protection|verre|objectif|anneau de protection)/.test(value)) return 'lifestyle-protection';\n  if (/(chargeur|batterie|usb|magsafe|gan|cable|audio|ecouteur|casque)/.test(value)) return 'tech-productivite';\n  return 'guides-achat';\n};\n\nconst catalogLines = products.map((product) => {\n  const pillar = inferPillar(product.title);\n  const price = product.retail_price ?? 'N/A';\n  return '- [' + product.id + '] ' + product.title + ' | slug: ' + product.slug + ' | pilier: ' + pillar + ' | prix: ' + price + '€';\n});\n\nconst prompt = [\n  'Catalogue Koktek réellement vendu :',\n  ...catalogLines,\n  '',\n  'Mission : proposer 5 sujets SEO premium strictement alignés sur ces produits exacts.',\n  'Tu ne dois jamais inventer un produit, un accessoire ou un usage impossible à servir avec ce catalogue.',\n  'Chaque idée doit pouvoir recommander de 1 à 4 produits exacts présents dans la liste ci-dessus.',\n  'Si un angle paraît séduisant mais ne correspond à aucun produit listé, il doit être rejeté.',\n  'Privilégier des sujets evergreen, utiles, inbound et réellement vendables.',\n  '',\n  'Tu dois renvoyer UNIQUEMENT un JSON avec une clé \"ideas\" contenant un tableau de 5 objets ayant exactement ces clés :',\n  'title, target_keyword, secondary_keywords, search_intent, pillar, article_type, angle, audience, brief, seasonality, priority, max_products, manual_product_ids',\n  '',\n  'Règles :',\n  '1. title = sujet éditorial interne, clair et vendeur sans être publicitaire.',\n  '2. target_keyword = requête Google plausible en français.',\n  '3. pillar doit être l'un de : auto-mobilite, tech-productivite, lifestyle-protection, creation-mobile, guides-achat.',\n  '4. article_type doit être l'un de : guide, checklist, comparatif, decryptage, selection, faq.',\n  '5. manual_product_ids doit contenir uniquement des IDs présents dans le catalogue fourni.',\n  '6. Ne jamais proposer un brassard de running, une montre ou tout autre produit absent du catalogue.',\n  '7. Priorité haute si le sujet répond à un problème concret et vendable.',\n].join('\n');\n\nreturn [{\n  json: {\n    products,\n    product_ids: products.map((product) => String(product.id)),\n    prompt,\n  }\n}];"
+        "jsCode": "const products = items\n  .map((item) => item.json)\n  .filter((product) => product && product.id && product.title && product.slug);\n\nif (products.length === 0) {\n  throw new Error('Aucun produit publié exploitable dans le catalogue.');\n}\n\nconst inferPillar = (title) => {\n  const value = String(title || '').toLowerCase();\n\n  if (/(voiture|gps|support voiture|chargeur voiture|moto)/.test(value)) return 'auto-mobilite';\n  if (/(selfie|camera|capture|ring light|lumineux|photo|video|tr[eé]pied)/.test(value)) return 'creation-mobile';\n  if (/(coque|protection|verre|objectif|anneau de protection)/.test(value)) return 'lifestyle-protection';\n  if (/(chargeur|batterie|usb|magsafe|gan|cable|audio|ecouteur|casque|induction)/.test(value)) return 'tech-productivite';\n  return 'guides-achat';\n};\n\nconst catalogLines = products.map((product) => {\n  const pillar = inferPillar(product.title);\n  const price = product.retail_price ?? 'N/A';\n  return '- [' + product.id + '] ' + product.title + ' | slug: ' + product.slug + ' | pilier: ' + pillar + ' | prix: ' + price + '€';\n});\n\nconst prompt = [\n  'Catalogue Koktek réellement vendu :',\n  ...catalogLines,\n  '',\n  'Mission : proposer 5 sujets SEO premium strictement alignés sur ces produits exacts.',\n  'Tu ne dois jamais inventer un produit, un accessoire ou un usage impossible à servir avec ce catalogue.',\n  'Chaque idée doit pouvoir recommander de 1 à 4 produits exacts présents dans la liste ci-dessus.',\n  'Si un angle paraît séduisant mais ne correspond à aucun produit listé, il doit être rejeté.',\n  'Privilégier des sujets evergreen, utiles, inbound et réellement vendables.',\n  'Favoriser en priorité les familles réellement monétisables et universelles : charge, batterie, support, mobilité auto, bureau, photo mobile, coque transparente ou antichoc, protection écran.',\n  '',\n  'Tu dois renvoyer UNIQUEMENT un JSON avec une clé \"ideas\" contenant un tableau de 5 objets ayant exactement ces clés :',\n  'title, target_keyword, secondary_keywords, search_intent, pillar, article_type, angle, audience, brief, seasonality, priority, max_products, manual_product_ids',\n  '',\n  'Règles :',\n  '1. title = sujet éditorial interne, clair et vendeur sans être publicitaire.',\n  '2. target_keyword = requête Google plausible en français.',\n  '3. pillar doit être l'un de : auto-mobilite, tech-productivite, lifestyle-protection, creation-mobile, guides-achat.',\n  '4. article_type doit être l'un de : guide, checklist, comparatif, decryptage, selection, faq.',\n  '5. manual_product_ids doit contenir uniquement des IDs présents dans le catalogue fourni.',\n  '6. Ne jamais proposer un brassard de running, une montre ou tout autre produit absent du catalogue.',\n  '7. Priorité haute si le sujet répond à un problème concret et vendable.',\n].join('\\n');\n\nreturn [{\n  json: {\n    products,\n    product_ids: products.map((product) => String(product.id)),\n    prompt,\n  }\n}];"
       },
       "id": "ffe2faff-86ec-407b-ba78-67857e6c70e8",
       "name": "Code : Préparer Brief Catalogue",
@@ -185,9 +205,20 @@
           }
         ]
       ]
+    },
+    "Schedule Trigger (1 fois par jour)": {
+      "main": [
+        [
+          {
+            "node": "Postgres : Sélectionner Produits du Catalogue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
