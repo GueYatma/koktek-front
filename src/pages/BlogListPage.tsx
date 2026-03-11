@@ -15,7 +15,7 @@ import { JOURNAL_PILLARS, getJournalPillarMeta, getJournalStoryLabel } from '../
 const BlogListPage = () => {
   useDocumentMeta({
     title: 'Journal KOKTEK',
-    description: 'Le media pratique de KOKTEK : guides utiles, usages smartphone, mobilite et lifestyle.',
+    description: 'Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au quotidien.',
   })
 
   const [posts, setPosts] = useState<JournalStoryCardPost[]>([])
@@ -54,14 +54,14 @@ const BlogListPage = () => {
         <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="overflow-hidden rounded-[36px] bg-[#112033] px-7 py-8 text-white shadow-[0_28px_90px_-35px_rgba(15,23,42,0.7)] sm:px-10 sm:py-10">
             <p className="text-xs font-semibold uppercase tracking-[0.38em] text-amber-300">
-              Le Journal KOKTEK
+              Journal premium
             </p>
             <h1 className="font-journal-display mt-5 max-w-3xl text-5xl leading-[0.94] sm:text-6xl">
-              Une ambiance editoriale propre, sans couper le lien avec la boutique.
+              Le Journal KOKTEK
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-              Conseils reels, usages terrain, selections utiles. Ici, KOKTEK parle d abord des
-              situations de vie, ensuite seulement des solutions.
+              Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au
+              quotidien.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -97,15 +97,15 @@ const BlogListPage = () => {
           <div className="overflow-hidden rounded-[36px] border border-slate-200/70 bg-white/75 p-7 shadow-[0_20px_70px_-35px_rgba(15,23,42,0.4)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
               <Sparkles className="h-4 w-4" />
-              Manifeste editorial
+              A la une
             </div>
             <h2 className="font-journal-display mt-5 text-3xl leading-tight text-slate-950 dark:text-white">
-              Meme marque, autre ambiance.
+              Explorez nos dernieres decouvertes
             </h2>
             <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-              <p>Le Journal sert a inspirer, clarifier et aider avant de vendre.</p>
-              <p>Les sujets restent a l intersection entre smartphone, mobilite, lifestyle et usage reel.</p>
-              <p>Le produit devient une consequence logique, pas le point de depart du recit.</p>
+              <p>Des contenus utiles pour mieux choisir, utiliser et proteger vos equipements tech.</p>
+              <p>Des guides concrets pour la mobilite, le bureau, la creation mobile et le quotidien.</p>
+              <p>Des recommandations simples pour avancer plus vite, sans jargon inutile.</p>
             </div>
             <div className="mt-6">
               <JournalPillarNav />
@@ -162,7 +162,8 @@ const BlogListPage = () => {
                     Dernieres lectures
                   </p>
                   <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                    Une selection courte pour entrer dans le Journal par l usage, pas par la fiche produit.
+                    Explorez nos dernieres decouvertes et trouvez rapidement le guide qui vous
+                    correspond.
                   </p>
                 </div>
                 {sideStories.map((post) => (
@@ -179,7 +180,7 @@ const BlogListPage = () => {
                   Thématiques editoriales
                 </p>
                 <h2 className="font-journal-display mt-4 text-4xl leading-none text-slate-950 dark:text-white">
-                  Des piliers clairs pour structurer l autorite du Journal.
+                  Nos conseils d experts pour votre mobilite et vos usages tech.
                 </h2>
               </div>
 
@@ -227,7 +228,7 @@ const BlogListPage = () => {
                       Guides & recits utiles
                     </p>
                     <h2 className="font-journal-display mt-4 text-4xl leading-none text-slate-950 dark:text-white">
-                      Une lecture plus ample, moins grille e commerce.
+                      Des lectures utiles pour mieux equiper votre quotidien.
                     </h2>
                   </div>
                   <Link
