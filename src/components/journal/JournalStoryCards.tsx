@@ -120,53 +120,78 @@ const StoryImage = ({
   )
 }
 
-export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
-  <article className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-[#f8f2e8]/94 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.38)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
-    <div className="flex flex-col lg:min-h-[40rem] lg:flex-row lg:items-stretch">
-      <Link
-        to={`/blog/${post.slug}`}
-        className="block overflow-hidden lg:w-[56%] lg:self-stretch"
-      >
-        <StoryImage
-          post={post}
-          frameClassName="h-[360px] w-full sm:h-[420px] lg:h-full lg:min-h-[40rem]"
-          imageClassName="transition duration-700 hover:scale-[1.03]"
-        />
-      </Link>
+export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => {
+  const image = resolveJournalCoverImage({
+    coverImage: post.cover_image,
+    fallback: '',
+  })
+  const pillarMeta = getJournalPillarMeta(post.pillar)
 
-      <div className="flex flex-col justify-between p-6 sm:p-7 lg:w-[44%]">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-600 dark:text-amber-400">
+  return (
+    <article className="group relative min-h-[560px] overflow-hidden rounded-[30px] border border-slate-200/80 bg-slate-950 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.45)] dark:border-slate-800">
+      {image ? (
+        <Link to={`/blog/${post.slug}`} className="absolute inset-0 block overflow-hidden">
+          <img
+            src={image}
+            alt={post.cover_image_alt ?? post.title}
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+            loading="eager"
+            decoding="async"
+          />
+        </Link>
+      ) : (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_42%),linear-gradient(135deg,_#162235,_#0f172a)]" />
+      )}
+
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08)_0%,rgba(15,23,42,0.28)_26%,rgba(15,23,42,0.72)_62%,rgba(15,23,42,0.92)_100%)]" />
+
+      <div className="relative z-10 flex min-h-[560px] flex-col justify-end p-6 sm:p-7 lg:p-8">
+        <div className="max-w-[34rem] rounded-[28px] border border-white/12 bg-slate-950/28 p-5 backdrop-blur-md sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-300">
             À la une
           </p>
-          <h2 className="font-journal-display mt-3 text-[2.05rem] leading-[1.02] text-slate-950 dark:text-white sm:text-[2.45rem]">
-            <Link
-              to={`/blog/${post.slug}`}
-              className="transition hover:text-amber-700 dark:hover:text-amber-300"
-            >
+          <h2 className="font-journal-display mt-3 text-[2.05rem] leading-[1.02] text-white sm:text-[2.45rem]">
+            <Link to={`/blog/${post.slug}`} className="transition hover:text-amber-200">
               {post.title}
             </Link>
           </h2>
-          <p className="mt-3 text-[15px] leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
+          <p className="mt-3 text-[15px] leading-7 text-white/82 sm:text-base">
             {post.summary ??
               'Un guide utile, concret et directement connecté aux usages réellement recherchés.'}
           </p>
-        </div>
 
-        <div className="mt-8 space-y-5">
-          <StoryMeta post={post} />
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-white/82">
+            {pillarMeta ? (
+              <Link
+                to={`/blog/theme/${pillarMeta.key}`}
+                className="rounded-full border border-white/18 bg-white/12 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:border-white/34 hover:bg-white/16"
+              >
+                {pillarMeta.label}
+              </Link>
+            ) : (
+              <span className="rounded-full border border-white/18 bg-white/12 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+                {getJournalStoryLabel(post)}
+              </span>
+            )}
+            {post.published_at && <time>{formatDate(post.published_at)}</time>}
+            <span className="inline-flex items-center gap-1">
+              <Clock3 className="h-3.5 w-3.5" />
+              {getReadingLabel(post)}
+            </span>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-4">
             <Link
               to={`/blog/${post.slug}`}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-950 transition hover:gap-3 dark:text-white"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:gap-3"
             >
               Lire l’article
               <ArrowRight className="h-4 w-4" />
             </Link>
-            {getJournalPillarMeta(post.pillar) && (
+            {pillarMeta && (
               <Link
-                to={`/blog/theme/${getJournalPillarMeta(post.pillar)?.key}`}
-                className="text-sm font-semibold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                to={`/blog/theme/${pillarMeta.key}`}
+                className="text-sm font-semibold text-white/74 transition hover:text-white"
               >
                 Explorer la thématique
               </Link>
@@ -174,9 +199,9 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
           </div>
         </div>
       </div>
-    </div>
-  </article>
-)
+    </article>
+  )
+}
 
 export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => {
   const isPackshot = isPackshotStory(post)
