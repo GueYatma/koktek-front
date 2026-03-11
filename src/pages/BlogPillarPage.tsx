@@ -123,9 +123,9 @@ const BlogPillarPage = () => {
         <div
           className={`mx-auto overflow-hidden rounded-[36px] bg-gradient-to-br ${pillar.accentClass} p-[1px] shadow-[0_28px_90px_-35px_rgba(15,23,42,0.7)]`}
         >
-          <div className="rounded-[35px] bg-[#f6f0e6]/94 px-7 py-8 dark:bg-[#0b1320]/92 sm:px-10 sm:py-10">
-            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
-              <Link to="/blog" className="transition hover:text-slate-900 dark:hover:text-white">
+          <div className="rounded-[35px] bg-slate-950/18 px-7 py-8 backdrop-blur-[2px] sm:px-10 sm:py-10">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/72">
+              <Link to="/blog" className="transition hover:text-white">
                 Journal
               </Link>
               <span>/</span>
@@ -134,19 +134,19 @@ const BlogPillarPage = () => {
 
             <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
               <div>
-                <h1 className="font-journal-display max-w-3xl text-5xl leading-[0.95] text-slate-950 dark:text-white sm:text-6xl">
+                <h1 className="font-journal-display max-w-3xl text-5xl leading-[0.95] text-white sm:text-6xl">
                   {pillar.label}
                 </h1>
-                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 dark:text-slate-300 sm:text-lg">
+                <p className="mt-5 max-w-2xl text-base leading-8 text-white/84 sm:text-lg">
                   {pillar.description}
                 </p>
               </div>
 
-              <div className="rounded-[28px] border border-slate-200/70 bg-white/80 p-6 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/60">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
+              <div className="rounded-[28px] border border-white/14 bg-white/10 p-6 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/72">
                   Navigation editoriale
                 </p>
-                <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                <p className="mt-3 text-sm leading-7 text-white/82">
                   Chaque pilier regroupe les articles qui servent une meme autorite de marque.
                 </p>
                 <div className="mt-5">

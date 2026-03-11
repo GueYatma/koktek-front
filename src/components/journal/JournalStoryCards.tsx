@@ -96,7 +96,7 @@ const StoryImage = ({
     <img
       src={image}
       alt={post.cover_image_alt ?? post.title}
-      className={className}
+      className={`${className} h-full w-full object-cover object-center`}
       loading="lazy"
       decoding="async"
     />
@@ -159,10 +159,13 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => (
 
 export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
   <article className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/88 p-4 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/70">
-    <Link to={`/blog/${post.slug}`} className="block overflow-hidden rounded-[22px]">
+    <Link
+      to={`/blog/${post.slug}`}
+      className="block aspect-[16/10] overflow-hidden rounded-[22px] bg-slate-100 dark:bg-slate-900"
+    >
       <StoryImage
         post={post}
-        className="h-48 w-full object-cover transition duration-700 hover:scale-[1.03]"
+        className="transition duration-700 hover:scale-[1.03]"
       />
     </Link>
     <div className="mt-4">
@@ -195,10 +198,13 @@ export const CompactStory = ({ post }: { post: JournalStoryCardPost }) => (
 
 export const GuideCard = ({ post }: { post: JournalStoryCardPost }) => (
   <article className="group flex h-full flex-col rounded-[28px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.5)] backdrop-blur-sm transition hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-950/70">
-    <Link to={`/blog/${post.slug}`} className="block overflow-hidden rounded-[22px]">
+    <Link
+      to={`/blog/${post.slug}`}
+      className="block aspect-[4/3] overflow-hidden rounded-[22px] bg-slate-100 dark:bg-slate-900"
+    >
       <StoryImage
         post={post}
-        className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+        className="transition duration-700 group-hover:scale-[1.04]"
       />
     </Link>
     <div className="mt-5 flex flex-1 flex-col">
