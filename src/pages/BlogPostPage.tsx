@@ -447,7 +447,7 @@ const BlogPostPage = () => {
           <img
             src={coverImage}
             alt={post.cover_image_alt ?? post.title}
-            className="max-h-[560px] w-full object-cover"
+            className="max-h-[520px] w-full object-cover object-[center_18%] sm:max-h-[620px] sm:object-[center_16%]"
             loading="lazy"
             decoding="async"
           />

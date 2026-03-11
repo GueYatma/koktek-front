@@ -94,6 +94,115 @@ const stripHtml = (value: string) =>
     .replace(/\s+/g, ' ')
     .trim()
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+const formatInlineMarkup = (value: string) =>
+  escapeHtml(value)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+
+const splitLongParagraph = (value: string): string[] => {
+  const normalized = value.replace(/\s+/g, ' ').trim()
+  if (!normalized) return []
+
+  const sentences = normalized.split(/(?<=[.!?])\s+/).filter(Boolean)
+  if (sentences.length < 2) return [normalized]
+
+  const chunks: string[] = []
+  let current = ''
+  let currentSentenceCount = 0
+
+  sentences.forEach((sentence) => {
+    const nextValue = current ? `${current} ${sentence}` : sentence
+    const shouldFlush = current && (nextValue.length > 240 || currentSentenceCount >= 2)
+
+    if (shouldFlush) {
+      chunks.push(current.trim())
+      current = sentence
+      currentSentenceCount = 1
+      return
+    }
+
+    current = nextValue
+    currentSentenceCount += 1
+  })
+
+  if (current) {
+    chunks.push(current.trim())
+  }
+
+  return chunks
+}
+
+const autoStructurePlainText = (value: string): string => {
+  const normalized = value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|section|article|blockquote|figure|figcaption|li|ul|ol|h[1-6])>/gi, '\n')
+    .replace(/<(li|ul|ol)[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\r/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+
+  if (!normalized) return ''
+
+  const blocks = normalized
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+
+  const htmlParts: string[] = []
+
+  blocks.forEach((block) => {
+    const lines = block
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+
+    if (lines.length === 0) return
+
+    const bulletLines = lines.filter((line) => /^[-*•]\s+/.test(line))
+    if (bulletLines.length === lines.length) {
+      htmlParts.push(
+        `<ul>${bulletLines
+          .map((line) => `<li>${formatInlineMarkup(line.replace(/^[-*•]\s+/, ''))}</li>`)
+          .join('')}</ul>`,
+      )
+      return
+    }
+
+    const singleLine = lines.join(' ').replace(/\s+/g, ' ').trim()
+    const wordCount = singleLine.split(/\s+/).filter(Boolean).length
+    const isMarkdownHeading = /^#{2,3}\s+/.test(singleLine)
+    const isShortHeading =
+      wordCount <= 10 &&
+      singleLine.length <= 90 &&
+      !/[.!?]$/.test(singleLine)
+
+    if (isMarkdownHeading || isShortHeading) {
+      const level = singleLine.startsWith('###') ? 'h3' : 'h2'
+      const headingText = singleLine.replace(/^#{2,3}\s+/, '').replace(/:$/, '').trim()
+      htmlParts.push(`<${level}>${formatInlineMarkup(headingText)}</${level}>`)
+      return
+    }
+
+    const paragraphSource = lines.join(' ').replace(/\s+/g, ' ').trim()
+    splitLongParagraph(paragraphSource).forEach((paragraph) => {
+      htmlParts.push(`<p>${formatInlineMarkup(paragraph)}</p>`)
+    })
+  })
+
+  return htmlParts.join('')
+}
+
 export const normalizePillarSlug = (value?: string | null): string | null => {
   if (!value) return null
   return slugifyHeading(value)
@@ -138,6 +247,17 @@ export const prepareArticleContent = (sanitizedHtml?: string | null): PreparedAr
   const doc = parser.parseFromString(sanitizedHtml, 'text/html')
   const toc: ArticleTocItem[] = []
   const usedIds = new Set<string>()
+  const structuredBlocks = doc.body.querySelectorAll('p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, figure, table, pre, hr')
+  const structuralHighlights = doc.body.querySelectorAll('h2, h3, h4, ul, ol, blockquote, figure, table, pre')
+  const paragraphCount = doc.body.querySelectorAll('p').length
+  const bodyText = stripHtml(doc.body.innerHTML)
+  const shouldAutostructure =
+    bodyText.length > 220 &&
+    (structuredBlocks.length === 0 || (structuralHighlights.length === 0 && paragraphCount <= 1))
+
+  if (shouldAutostructure) {
+    doc.body.innerHTML = autoStructurePlainText(doc.body.innerHTML)
+  }
 
   doc.body.querySelectorAll('h2, h3').forEach((heading, index) => {
     const text = heading.textContent?.trim()

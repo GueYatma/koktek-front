@@ -128,13 +128,13 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => {
   const pillarMeta = getJournalPillarMeta(post.pillar)
 
   return (
-    <article className="group relative min-h-[560px] overflow-hidden rounded-[30px] border border-slate-200/80 bg-slate-950 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.45)] dark:border-slate-800">
+    <article className="group relative min-h-[470px] overflow-hidden rounded-[30px] border border-slate-200/80 bg-slate-950 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.45)] dark:border-slate-800 sm:min-h-[540px]">
       {image ? (
         <Link to={`/blog/${post.slug}`} className="absolute inset-0 block overflow-hidden">
           <img
             src={image}
             alt={post.cover_image_alt ?? post.title}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover object-[center_18%] transition duration-700 group-hover:scale-[1.02] sm:object-[center_16%]"
             loading="eager"
             decoding="async"
           />
@@ -145,7 +145,7 @@ export const FeaturedStory = ({ post }: { post: JournalStoryCardPost }) => {
 
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08)_0%,rgba(15,23,42,0.28)_26%,rgba(15,23,42,0.72)_62%,rgba(15,23,42,0.92)_100%)]" />
 
-      <div className="relative z-10 flex min-h-[560px] flex-col justify-end p-6 sm:p-7 lg:p-8">
+      <div className="relative z-10 flex min-h-[470px] flex-col justify-end p-6 sm:min-h-[540px] sm:p-7 lg:p-8">
         <div className="max-w-[34rem] rounded-[28px] border border-white/12 bg-slate-950/28 p-5 backdrop-blur-md sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.32em] text-amber-300">
             À la une
