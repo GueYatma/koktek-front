@@ -51,6 +51,9 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          timeout: 90s
+          proxy_timeout: 90s
+          command_timeout: 15m
           script: |
             set -e
             NEW_DIR="/root/koktek_front/dist_tmp_${{ github.sha }}"
@@ -65,6 +68,8 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          timeout: 90s
+          command_timeout: 15m
           source: "dist/*"
           target: "/root/koktek_front/dist_tmp_${{ github.sha }}/"
           strip_components: 1
@@ -77,6 +82,9 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          timeout: 90s
+          proxy_timeout: 90s
+          command_timeout: 15m
           script: |
             set -e
             NEW_DIR="/root/koktek_front/dist_tmp_${{ github.sha }}"
