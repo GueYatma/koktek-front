@@ -18,7 +18,9 @@ import {
   prepareArticleContent,
 } from '../utils/journal'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
+import { useStructuredData } from '../hooks/useStructuredData'
 import BackButton from '../components/BackButton'
+import { buildBreadcrumbJsonLd, toAbsoluteSiteUrl, toAbsoluteUrl } from '../utils/seo'
 
 type BlogPostListItem = Omit<BlogPost, 'content' | 'products' | 'seo_title' | 'seo_description'>
 
@@ -211,13 +213,6 @@ const BlogPostPage = () => {
     }
   }, [post?.id, post?.category, post?.pillar])
 
-  useDocumentMeta({
-    title: post?.seo_title ?? (post?.title ? `${post.title} | Journal KOKTEK` : undefined),
-    description: post?.seo_description ?? post?.summary ?? undefined,
-    image: post?.cover_image ? resolveImageUrl(post.cover_image, '') : undefined,
-    type: 'article',
-  })
-
   const coverImage = resolveImageUrl(post?.cover_image, '')
   const recommendedProducts = (post?.products ?? []).filter((item) => item.status === 'published' || !item.status)
   const sanitizedContent = post?.content
@@ -229,6 +224,69 @@ const BlogPostPage = () => {
   const preparedContent = prepareArticleContent(sanitizedContent)
   const readingTime = post?.reading_time ?? estimateReadingTime(post?.content ?? post?.summary ?? null)
   const pillarMeta = getJournalPillarMeta(post?.pillar)
+  const articleUrl = post?.slug ? toAbsoluteSiteUrl(`/blog/${post.slug}`) : undefined
+
+  useDocumentMeta({
+    title: post?.seo_title ?? (post?.title ? `${post.title} | Journal KOKTEK` : undefined),
+    description: post?.seo_description ?? post?.summary ?? undefined,
+    image: coverImage ? toAbsoluteUrl(coverImage) : undefined,
+    type: 'article',
+    url: articleUrl,
+  })
+
+  useStructuredData(
+    post
+      ? {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Article',
+              headline: post.title,
+              description: post.seo_description ?? post.summary ?? undefined,
+              url: articleUrl,
+              image: coverImage ? [toAbsoluteUrl(coverImage)] : undefined,
+              datePublished: post.published_at ?? undefined,
+              author: {
+                '@type': 'Organization',
+                name: post.author_label ?? 'Journal KOKTEK',
+              },
+              publisher: {
+                '@type': 'Organization',
+                name: 'KOKTEK',
+                url: toAbsoluteSiteUrl('/'),
+                logo: {
+                  '@type': 'ImageObject',
+                  url: toAbsoluteSiteUrl('/logo-tr.png'),
+                },
+              },
+              articleSection: pillarMeta?.label ?? post.category ?? 'Journal KOKTEK',
+              inLanguage: 'fr-FR',
+              mainEntityOfPage: articleUrl,
+              wordCount: sanitizedContent
+                ? sanitizedContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length
+                : undefined,
+              keywords: [
+                post.target_keyword,
+                post.category,
+                pillarMeta?.label,
+                post.article_type,
+              ]
+                .filter(Boolean)
+                .join(', ') || undefined,
+            },
+            buildBreadcrumbJsonLd([
+              { name: 'Accueil', url: toAbsoluteSiteUrl('/') },
+              { name: 'Journal KOKTEK', url: toAbsoluteSiteUrl('/blog') },
+              ...(pillarMeta
+                ? [{ name: pillarMeta.label, url: toAbsoluteSiteUrl(`/blog/theme/${pillarMeta.key}`) }]
+                : []),
+              { name: post.title, url: articleUrl ?? toAbsoluteSiteUrl('/blog') },
+            ]),
+          ],
+        }
+      : null,
+    'journal-article-structured-data',
+  )
 
   if (loading) {
     return (

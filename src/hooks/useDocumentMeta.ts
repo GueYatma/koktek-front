@@ -5,6 +5,7 @@ type MetaOptions = {
   description?: string
   image?: string
   type?: string
+  url?: string
 }
 
 const DEFAULT_TITLE = 'KOKTEK – Accessoires smartphone'
@@ -30,25 +31,54 @@ const setOg = (property: string, content: string) => {
   el.content = content
 }
 
+const removeNode = (selector: string) => {
+  document.querySelector(selector)?.remove()
+}
+
+const setCanonical = (href: string) => {
+  let el = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+  if (!el) {
+    el = document.createElement('link')
+    el.setAttribute('rel', 'canonical')
+    document.head.appendChild(el)
+  }
+  el.href = href
+}
+
 /** Injecte dynamiquement title + meta description + Open Graph dans <head>. */
-export const useDocumentMeta = ({ title, description, image, type = 'website' }: MetaOptions) => {
+export const useDocumentMeta = ({ title, description, image, type = 'website', url }: MetaOptions) => {
   useEffect(() => {
-    const resolvedTitle = title ? `${title} | KOKTEK` : DEFAULT_TITLE
+    const resolvedTitle = title
+      ? (title.includes('KOKTEK') ? title : `${title} | KOKTEK`)
+      : DEFAULT_TITLE
     const resolvedDesc  = description || DEFAULT_DESC
+    const resolvedUrl = url || window.location.href
 
     document.title = resolvedTitle
     setMeta('description', resolvedDesc)
+    setCanonical(resolvedUrl)
 
     setOg('og:title',       resolvedTitle)
     setOg('og:description', resolvedDesc)
     setOg('og:type',        type)
-    if (image) setOg('og:image', image)
+    setOg('og:url',         resolvedUrl)
+    if (image) {
+      setOg('og:image', image)
+      setMeta('twitter:image', image)
+    } else {
+      removeNode('meta[property="og:image"]')
+      removeNode('meta[name="twitter:image"]')
+    }
     setOg('og:site_name',   'KOKTEK')
     setOg('og:locale',      'fr_FR')
+
+    setMeta('twitter:card', image ? 'summary_large_image' : 'summary')
+    setMeta('twitter:title', resolvedTitle)
+    setMeta('twitter:description', resolvedDesc)
 
     return () => {
       // Restore on unmount
       document.title = DEFAULT_TITLE
     }
-  }, [title, description, image, type])
+  }, [title, description, image, type, url])
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { getBlogPosts } from '../lib/commerceApi'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
+import { useStructuredData } from '../hooks/useStructuredData'
 import JournalPillarNav from '../components/journal/JournalPillarNav'
 import {
   CompactStory,
@@ -11,16 +12,25 @@ import {
   type JournalStoryCardPost,
 } from '../components/journal/JournalStoryCards'
 import { JOURNAL_PILLARS, getJournalPillarMeta, getJournalStoryLabel } from '../utils/journal'
+import { resolveImageUrl } from '../utils/image'
+import { buildBreadcrumbJsonLd, toAbsoluteSiteUrl, toAbsoluteUrl } from '../utils/seo'
 
 const BlogListPage = () => {
-  useDocumentMeta({
-    title: 'Journal KOKTEK',
-    description: 'Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au quotidien.',
-  })
+  const journalUrl = toAbsoluteSiteUrl('/blog')
 
   const [posts, setPosts] = useState<JournalStoryCardPost[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const featuredPost = posts.find((post) => post.featured) ?? posts[0]
+  const featuredImage = toAbsoluteUrl(resolveImageUrl(featuredPost?.cover_image, ''))
+
+  useDocumentMeta({
+    title: 'Journal KOKTEK',
+    description: 'Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au quotidien.',
+    image: featuredImage,
+    url: journalUrl,
+  })
 
   useEffect(() => {
     setLoading(true)
@@ -31,7 +41,6 @@ const BlogListPage = () => {
       .finally(() => setLoading(false))
   }, [])
 
-  const featuredPost = posts.find((post) => post.featured) ?? posts[0]
   const remainingPosts = featuredPost ? posts.filter((post) => post.id !== featuredPost.id) : []
   const sideStories = remainingPosts.slice(0, 2)
   const guideStories = remainingPosts.slice(2)
@@ -47,6 +56,41 @@ const BlogListPage = () => {
       })),
     [posts],
   )
+
+  useStructuredData({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        name: 'Le Journal KOKTEK',
+        description: 'Astuces, guides et inspirations pour tirer le meilleur de vos equipements tech au quotidien.',
+        url: journalUrl,
+        inLanguage: 'fr-FR',
+        isPartOf: {
+          '@type': 'WebSite',
+          name: 'KOKTEK',
+          url: toAbsoluteSiteUrl('/'),
+        },
+        ...(posts.length > 0
+          ? {
+              mainEntity: {
+                '@type': 'ItemList',
+                itemListElement: posts.slice(0, 10).map((post, index) => ({
+                  '@type': 'ListItem',
+                  position: index + 1,
+                  url: toAbsoluteSiteUrl(`/blog/${post.slug}`),
+                  name: post.title,
+                })),
+              },
+            }
+          : {}),
+      },
+      buildBreadcrumbJsonLd([
+        { name: 'Accueil', url: toAbsoluteSiteUrl('/') },
+        { name: 'Journal KOKTEK', url: journalUrl },
+      ]),
+    ],
+  })
 
   return (
     <div className="pb-20">

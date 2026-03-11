@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { getBlogPosts } from '../lib/commerceApi'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
+import { useStructuredData } from '../hooks/useStructuredData'
 import JournalPillarNav from '../components/journal/JournalPillarNav'
 import {
   CompactStory,
@@ -11,6 +12,8 @@ import {
   type JournalStoryCardPost,
 } from '../components/journal/JournalStoryCards'
 import { getJournalPillarMeta } from '../utils/journal'
+import { resolveImageUrl } from '../utils/image'
+import { buildBreadcrumbJsonLd, toAbsoluteSiteUrl, toAbsoluteUrl } from '../utils/seo'
 
 const BlogPillarPage = () => {
   const { slug } = useParams<{ slug: string }>()
@@ -19,9 +22,15 @@ const BlogPillarPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const pillarUrl = pillar ? toAbsoluteSiteUrl(`/blog/theme/${pillar.key}`) : undefined
+  const featuredPost = posts.find((post) => post.featured) ?? posts[0]
+  const featuredImage = toAbsoluteUrl(resolveImageUrl(featuredPost?.cover_image, ''))
+
   useDocumentMeta({
     title: pillar ? `${pillar.label} | Journal KOKTEK` : 'Journal KOKTEK',
     description: pillar?.description,
+    image: featuredImage,
+    url: pillarUrl,
   })
 
   useEffect(() => {
@@ -39,6 +48,47 @@ const BlogPillarPage = () => {
       .catch(() => setError('Impossible de charger cette thematique pour le moment.'))
       .finally(() => setLoading(false))
   }, [pillar])
+
+  useStructuredData(
+    pillar
+      ? {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              name: `${pillar.label} | Journal KOKTEK`,
+              description: pillar.description,
+              url: pillarUrl,
+              inLanguage: 'fr-FR',
+              isPartOf: {
+                '@type': 'WebSite',
+                name: 'KOKTEK',
+                url: toAbsoluteSiteUrl('/'),
+              },
+              ...(posts.length > 0
+                ? {
+                    mainEntity: {
+                      '@type': 'ItemList',
+                      itemListElement: posts.slice(0, 10).map((post, index) => ({
+                        '@type': 'ListItem',
+                        position: index + 1,
+                        url: toAbsoluteSiteUrl(`/blog/${post.slug}`),
+                        name: post.title,
+                      })),
+                    },
+                  }
+                : {}),
+            },
+            buildBreadcrumbJsonLd([
+              { name: 'Accueil', url: toAbsoluteSiteUrl('/') },
+              { name: 'Journal KOKTEK', url: toAbsoluteSiteUrl('/blog') },
+              { name: pillar.label, url: pillarUrl ?? toAbsoluteSiteUrl('/blog') },
+            ]),
+          ],
+        }
+      : null,
+    'journal-pillar-structured-data',
+  )
 
   if (!pillar) {
     return (
@@ -63,7 +113,6 @@ const BlogPillarPage = () => {
     )
   }
 
-  const featuredPost = posts.find((post) => post.featured) ?? posts[0]
   const remainingPosts = featuredPost ? posts.filter((post) => post.id !== featuredPost.id) : []
   const sideStories = remainingPosts.slice(0, 2)
   const guideStories = remainingPosts.slice(2)
