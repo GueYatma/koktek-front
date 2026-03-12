@@ -935,8 +935,8 @@ type DirectusBlogListResponse = {
 
 type BlogVariantPriceRaw = {
   product_id?: string | { id?: string | null } | null
-  prix_calcule?: number | null
-  price?: number | null
+  prix_calcule?: number | string | null
+  price?: number | string | null
 }
 
 const BLOG_LIST_FIELDS = [
@@ -1018,8 +1018,23 @@ const normalizeDirectusId = (value: string | { id?: string | null } | null | und
   return null
 }
 
-const getMinPositiveValue = (values: Array<number | null | undefined>): number | null => {
-  const filtered = values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0)
+const toPositiveNumber = (value: number | string | null | undefined): number | null => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0 ? value : null
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  }
+
+  return null
+}
+
+const getMinPositiveValue = (values: Array<number | string | null | undefined>): number | null => {
+  const filtered = values
+    .map(toPositiveNumber)
+    .filter((value): value is number => value !== null)
   return filtered.length > 0 ? Math.min(...filtered) : null
 }
 
@@ -1037,7 +1052,7 @@ const fetchBlogProductsCalculatedPrices = async (productIds: string[]): Promise<
     },
   })
 
-  const grouped = new Map<string, Array<number | null | undefined>>()
+  const grouped = new Map<string, Array<number | string | null | undefined>>()
 
   ;(payload.data ?? []).forEach((variant) => {
     const productId = normalizeDirectusId(variant.product_id)
