@@ -12,7 +12,7 @@ const JournalLayout = () => {
 
       <JournalHeader />
 
-      <main className="relative min-h-screen pt-36 sm:pt-40 xl:pt-44">
+      <main className="relative min-h-screen pt-32 sm:pt-36">
         <Outlet />
       </main>
 
