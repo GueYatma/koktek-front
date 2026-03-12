@@ -936,7 +936,6 @@ type DirectusBlogListResponse = {
 type BlogVariantPriceRaw = {
   product_id?: string | { id?: string | null } | null
   prix_calcule?: number | string | null
-  price?: number | string | null
 }
 
 const BLOG_LIST_FIELDS = [
@@ -1048,7 +1047,7 @@ const fetchBlogProductsCalculatedPrices = async (productIds: string[]): Promise<
     params: {
       'filter[product_id][_in]': uniqueIds.join(','),
       'limit': '-1',
-      'fields': 'product_id,prix_calcule,price',
+      'fields': 'product_id,prix_calcule',
     },
   })
 
@@ -1059,7 +1058,7 @@ const fetchBlogProductsCalculatedPrices = async (productIds: string[]): Promise<
     if (!productId) return
 
     const bucket = grouped.get(productId) ?? []
-    bucket.push(variant.prix_calcule, variant.price)
+    bucket.push(variant.prix_calcule)
     grouped.set(productId, bucket)
   })
 
