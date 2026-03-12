@@ -933,6 +933,12 @@ type DirectusBlogListResponse = {
   data: BlogPostRaw[]
 }
 
+type BlogVariantPriceRaw = {
+  product_id?: string | { id?: string | null } | null
+  prix_calcule?: number | null
+  price?: number | null
+}
+
 const BLOG_LIST_FIELDS = [
   'id',
   'slug',
@@ -1005,6 +1011,70 @@ const normalizeProducts = (junctions?: BlogProductJunction[]): BlogProduct[] =>
     .filter((p): p is BlogProductRaw => p !== null && p !== undefined)
     .map(normalizeProduct)
 
+const normalizeDirectusId = (value: string | { id?: string | null } | null | undefined): string | null => {
+  if (!value) return null
+  if (typeof value === 'string') return value
+  if (typeof value === 'object' && typeof value.id === 'string') return value.id
+  return null
+}
+
+const getMinPositiveValue = (values: Array<number | null | undefined>): number | null => {
+  const filtered = values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0)
+  return filtered.length > 0 ? Math.min(...filtered) : null
+}
+
+const fetchBlogProductsCalculatedPrices = async (productIds: string[]): Promise<Map<string, number>> => {
+  const uniqueIds = Array.from(new Set(productIds.filter(Boolean)))
+  if (uniqueIds.length === 0) {
+    return new Map()
+  }
+
+  const payload = await requestDirectus<DirectusListResponse<BlogVariantPriceRaw>>('/items/product_variants', {
+    params: {
+      'filter[product_id][_in]': uniqueIds.join(','),
+      'limit': '-1',
+      'fields': 'product_id,prix_calcule,price',
+    },
+  })
+
+  const grouped = new Map<string, Array<number | null | undefined>>()
+
+  ;(payload.data ?? []).forEach((variant) => {
+    const productId = normalizeDirectusId(variant.product_id)
+    if (!productId) return
+
+    const bucket = grouped.get(productId) ?? []
+    bucket.push(variant.prix_calcule, variant.price)
+    grouped.set(productId, bucket)
+  })
+
+  const prices = new Map<string, number>()
+  grouped.forEach((values, productId) => {
+    const minPrice = getMinPositiveValue(values)
+    if (minPrice != null) {
+      prices.set(productId, minPrice)
+    }
+  })
+
+  return prices
+}
+
+const enrichBlogProductsWithCalculatedPrices = async (products: BlogProduct[]): Promise<BlogProduct[]> => {
+  const priceMap = await fetchBlogProductsCalculatedPrices(products.map((product) => product.id))
+
+  return products.map((product) => {
+    const calculatedPrice = priceMap.get(product.id)
+    if (calculatedPrice == null) {
+      return product
+    }
+
+    return {
+      ...product,
+      prix_calcule: calculatedPrice,
+    }
+  })
+}
+
 /** Liste les articles publiés du blog (pour la page /blog) */
 export const getBlogPosts = async (options: {
   limit?: number
@@ -1053,8 +1123,9 @@ export const getBlogPost = async (slug: string): Promise<BlogPost | null> => {
     })
     const raw = payload.data?.[0]
     if (!raw) return null
-    // Normalise la M2M : products[i].products_id.* → products[i].*
-    return { ...raw, products: normalizeProducts(raw.products) }
+    const normalizedProducts = normalizeProducts(raw.products)
+    const enrichedProducts = await enrichBlogProductsWithCalculatedPrices(normalizedProducts)
+    return { ...raw, products: enrichedProducts }
   } catch {
     const payload = await requestDirectus<DirectusBlogListResponse>('/items/blog_posts', {
       params: { ...params, fields: BLOG_DETAIL_FALLBACK_FIELDS },
